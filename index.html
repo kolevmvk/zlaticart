@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZlaticArt</title>
+    <title>Custom Portfolio</title>
     <!-- Google Font -->
     <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
     <!-- Font Awesome for Icons -->
@@ -22,6 +22,7 @@
             background-color: #f4f4f9;
             color: #333;
             display: flex;
+            padding-bottom: 0;
         }
 
         /* Sidebar */
@@ -101,7 +102,7 @@
         nav a {
             text-decoration: none;
             color: white;
-            font-size: 1.2rem;
+            font-size: 1.5rem;
             margin: 1rem 0;
             display: flex;
             align-items: center;
@@ -109,10 +110,11 @@
             transition: all 0.3s ease;
             white-space: nowrap;
             overflow: hidden;
+            
         }
 
         nav a i {
-            margin-right: 10px; /* Razmak između ikone i teksta */
+            margin-right: 20px; /* Razmak između ikone i teksta */
             transition: margin-right 0.3s ease;
         }
 
@@ -128,6 +130,13 @@
         /* Tekst i ikone kada je sidebar proširen */
         .sidebar.expanded nav a span {
             display: inline;
+        
+           
+        }
+        .sidebar.expanded nav a {
+            margin: 0;
+        
+           
         }
 
         nav a:hover {
@@ -140,6 +149,7 @@
             display: flex;
             height: 100vh;
             gap: 0;
+            font-size: xxx-large;
         }
 
         .portfolio-grid .image {
@@ -147,6 +157,13 @@
             overflow: hidden;
             position: relative;
             transition: flex 0.3s ease, height 0.3s ease;
+            text-align: center;
+        }
+        .image.expanded a {
+            font-size: xx-large;
+            border: 2px solid silver;
+            background-color: #e00b36;
+            color: #fff;
         }
 
         .portfolio-grid .image img {
@@ -178,6 +195,114 @@
         .portfolio-grid .image:hover .overlay {
             opacity: 1;
         }
+        
+  //* Stil za h1 u overlay divu */
+.portfolio-grid .image .overlay h1 {
+    font-size: 3rem; /* Podrazumevana veličina fonta */
+    text-align: center;
+    margin-bottom: 10px; /* Razmak između teksta i dugmeta */
+    transition: font-size 0.3s ease;
+}
+
+/* Media queries za mobilne uređaje */
+@media (max-width: 768px) {
+    .portfolio-grid .image .overlay h1 {
+        font-size: 1.5rem; /* Manja veličina fonta za mobilne uređaje */
+    }
+}
+
+/* Stil za dugme unutar overlay div-a */
+.portfolio-grid .image .overlay {
+    display: flex;
+    flex-direction: column; /* Vertikalni raspored */
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    gap: 10px; /* Razmak između h1 i dugmeta */
+}
+
+.action-btn {
+    display: none; /* Dugme je skriveno po default-u */
+    padding: 10px 20px;
+    background-color: #264653;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.image.expanded .action-btn {
+    display: block; /* Pokaži dugme kada je slika expanded */
+    animation: fadeIn 0.5s ease forwards;
+}
+
+.action-btn:hover {
+    background-color: #e76f51;
+}
+
+
+        /* Stilovi za ikone društvenih mreža */
+.social-icons {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 1000;
+}
+
+.social-icons .icon {
+    width: 50px;
+    height: 50px;
+    background-color: #555;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    text-decoration: none;
+    font-size: 1.5rem;
+    opacity: 0;
+    transform: translate(-200%, 200%);
+    animation: slideIn 1s forwards;
+}
+
+.social-icons .icon.instagram {
+    background-color: #E1306C;
+    animation-delay: 0.2s;
+}
+
+.social-icons .icon.viber {
+    background-color: #7360F2;
+    animation-delay: 0.4s;
+}
+
+.social-icons .icon.facebook {
+    background-color: #1877F2;
+    animation-delay: 0.6s;
+}
+
+.social-icons .icon:hover {
+    transform: scale(1.1);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Animacija */
+@keyframes slideIn {
+    0% {
+        opacity: 0;
+        transform: translate(-200%, 200%);
+    }
+    100% {
+        opacity: 1;
+        transform: translate(0, 0);
+    }
+}
+
 
         /* Responsive Design for Mobile */
         @media (max-width: 768px) {
@@ -203,6 +328,19 @@
                 object-fit: cover;
             }
         }
+        /* Mobilni uređaji u landscape orijentaciji */
+@media (max-width: 768px) and (orientation: landscape) {
+    .portfolio-grid {
+        flex-direction: row; /* Raspored kao za desktop */
+        height: 100%; /* Pun ekran */
+    }
+
+    .portfolio-grid .image {
+        flex: 1;
+        height: 100vh; /* Uklanja fiksnu visinu */
+    }
+}
+
     </style>
 </head>
 <body>
@@ -229,60 +367,79 @@
             <div class="portfolio-grid">
                 <div class="image">
                     <img src="img/ak1.jpg" alt="Image 1">
-                    <div class="overlay">Image 1</div>
+                    <div class="overlay"><h1>Akvarei</h1>
+                        <button class="action-btn">Pogledaj više</button>
+                    </div>
+                    
                 </div>
                 <div class="image">
                     <img src="img/gr2.jpg" alt="Image 2">
-                    <div class="overlay">Image 2</div>
+                    <div class="overlay"><h1>Grafika</h1>
+                        <button class="action-btn">Pogledaj više</button>
+                    </div>
+                    
                 </div>
                 <div class="image">
                     <img src="img/mz1.jpg" alt="Image 3">
-                    <div class="overlay">Image 3</div>
+                    <div class="overlay"><h1>Mozaik</h1>
+                        <button class="action-btn">Pogledaj više</button>
+                    </div>
+                    
                 </div>
                 <div class="image">
                     <img src="img/up1.jpg" alt="Image 4">
-                    <div class="overlay">Image 4</div>
+                    <div class="overlay"><h1>Ulje na platnu</h1>
+                        <button class="action-btn">Pogledaj više</button>
+                    </div>
+                    
                 </div>
                 <div class="image">
                     <img src="img/up5.jpg" alt="Image 5">
-                    <div class="overlay">Image 5</div>
-                </div>
+                    <div class="overlay"><h1>Neka kategorija</h1>
+                        <button class="action-btn">Pogledaj više</button>
+                    </div>
+                    
                 <div class="image">
                     <img src="img/up4.jpg" alt="Image 6">
-                    <div class="overlay">Image 6</div>
-                </div>
+                    <div class="overlay"><h1>Nešto treće</h1>
+                        <button class="action-btn">Pogledaj više</button>
+                    </div>
+                    
             </div>
         </section>
     </div>
+    <div class="social-icons">
+        <a href="https://www.instagram.com" target="_blank" class="icon instagram">
+            <i class="fab fa-instagram"></i>
+        </a>
+        <a href="viber://add?number=123456789" target="_blank" class="icon viber">
+            <i class="fab fa-viber"></i>
+        </a>
+        <a href="https://www.facebook.com" target="_blank" class="icon facebook">
+            <i class="fab fa-facebook-f"></i>
+        </a>
+    </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const sidebar = document.querySelector('.sidebar');
-            const content = document.querySelector('.content');
-            const toggleButton = document.querySelector('.toggle-button');
-            const images = document.querySelectorAll('.portfolio-grid .image');
+       document.addEventListener('DOMContentLoaded', () => {
+    const sidebar = document.querySelector('.sidebar');
+    const content = document.querySelector('.content');
+    const toggleButton = document.querySelector('.toggle-button');
+    const images = document.querySelectorAll('.portfolio-grid .image');
 
-            // Sidebar Toggle
-            toggleButton.addEventListener('click', () => {
-                sidebar.classList.toggle('expanded');
-                content.classList.toggle('expanded');
-            });
+    // Sidebar Toggle
+    toggleButton.addEventListener('click', () => {
+        sidebar.classList.toggle('expanded');
+        content.classList.toggle('expanded');
+    });
 
-            // Portfolio Expand for Mobile
-            if (window.innerWidth <= 768) {
-                images.forEach(image => {
-                    image.addEventListener('touchstart', (e) => {
-                        e.preventDefault(); // Sprečava dvostruki događaj
-                        if (image.classList.contains('expanded')) {
-                            image.classList.remove('expanded');
-                        } else {
-                            images.forEach(img => img.classList.remove('expanded'));
-                            image.classList.add('expanded');
-                        }
-                    });
-                });
-            } else {
-                // Desktop hover behavior
+    const isLandscape = () => window.innerWidth > window.innerHeight;
+
+    // Portfolio Expand for Mobile
+    if (window.innerWidth <= 768) {
+        const applyDesktopBehavior = () => {
+            if (isLandscape()) {
+                // Desktop behavior for landscape mode
                 images.forEach(image => {
                     image.addEventListener('mouseover', () => {
                         images.forEach(img => img.style.flex = "1");
@@ -292,8 +449,126 @@
                         images.forEach(img => img.style.flex = "1");
                     });
                 });
+            } else {
+                // Mobile touch behavior for portrait mode
+                images.forEach(image => {
+                    image.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        if (image.classList.contains('expanded')) {
+                            image.classList.remove('expanded');
+                        } else {
+                            images.forEach(img => img.classList.remove('expanded'));
+                            image.classList.add('expanded');
+                        }
+                    });
+                });
             }
+        };
+
+        // Apply behavior on page load
+        applyDesktopBehavior();
+
+        // Update behavior on orientation change
+        window.addEventListener('resize', applyDesktopBehavior);
+    } else {
+        // Desktop hover behavior
+        images.forEach(image => {
+            image.addEventListener('mouseover', () => {
+                images.forEach(img => img.style.flex = "1");
+                image.style.flex = "3";
+            });
+            image.addEventListener('mouseout', () => {
+                images.forEach(img => img.style.flex = "1");
+            });
         });
+    }
+});
+document.addEventListener('DOMContentLoaded', () => {
+    const socialIcons = document.querySelectorAll('.social-icons .icon');
+
+    const revealIcons = () => {
+        socialIcons.forEach((icon, index) => {
+            setTimeout(() => {
+                icon.style.opacity = '1';
+                icon.style.transform = 'translate(0, 0)';
+            }, index * 200); // Efekat kašnjenja
+        });
+    };
+
+    // Pokretanje animacije pri skrolovanju
+    window.addEventListener('scroll', () => {
+        if (window.scrollY + window.innerHeight >= document.body.offsetHeight) {
+            revealIcons();
+        }
+    });
+});
+document.addEventListener('DOMContentLoaded', () => {
+    const images = document.querySelectorAll('.portfolio-grid .image');
+
+    if (window.innerWidth <= 768) {
+        // Mobile touch behavior
+        images.forEach(image => {
+            image.addEventListener('touchstart', (e) => {
+                e.preventDefault(); // Sprečava dvostruki događaj
+                if (image.classList.contains('expanded')) {
+                    image.classList.remove('expanded');
+                } else {
+                    images.forEach(img => img.classList.remove('expanded'));
+                    image.classList.add('expanded');
+                }
+            });
+        });
+    } else {
+        // Desktop hover behavior
+        images.forEach(image => {
+            image.addEventListener('mouseover', () => {
+                images.forEach(img => img.style.flex = "1");
+                image.style.flex = "3";
+                image.classList.add('expanded');
+            });
+            image.addEventListener('mouseout', () => {
+                images.forEach(img => {
+                    img.style.flex = "1";
+                    img.classList.remove('expanded');
+                });
+            });
+        });
+    }
+});
+document.addEventListener('DOMContentLoaded', () => {
+    const images = document.querySelectorAll('.portfolio-grid .image');
+
+    if (window.innerWidth <= 768) {
+        // Mobile touch behavior
+        images.forEach(image => {
+            image.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (image.classList.contains('expanded')) {
+                    image.classList.remove('expanded');
+                } else {
+                    images.forEach(img => img.classList.remove('expanded'));
+                    image.classList.add('expanded');
+                }
+            });
+        });
+    } else {
+        // Desktop hover behavior
+        images.forEach(image => {
+            image.addEventListener('mouseover', () => {
+                images.forEach(img => img.style.flex = "1");
+                image.style.flex = "3";
+                image.classList.add('expanded');
+            });
+            image.addEventListener('mouseout', () => {
+                images.forEach(img => {
+                    img.style.flex = "1";
+                    img.classList.remove('expanded');
+                });
+            });
+        });
+    }
+});
     </script>
 </body>
 </html>
+
