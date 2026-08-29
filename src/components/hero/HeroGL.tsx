@@ -255,6 +255,10 @@ export default function HeroGL({ artwork }: HeroGLProps) {
     gl.uniform1f(u.uProgress, progressObj.current.value)
     gl.uniform1f(u.uTime, t)
     gl.uniform1f(u.uAspect, gl.drawingBufferWidth / gl.drawingBufferHeight)
+    gl.uniform1f(
+      u.uArtworkAspect,
+      artwork.primaryImage.width / artwork.primaryImage.height
+    )
 
     gl.activeTexture(gl.TEXTURE0)
     gl.bindTexture(gl.TEXTURE_2D, tex)
@@ -346,6 +350,7 @@ export default function HeroGL({ artwork }: HeroGLProps) {
       uProgress: gl.getUniformLocation(prog, 'uProgress'),
       uTime: gl.getUniformLocation(prog, 'uTime'),
       uAspect: gl.getUniformLocation(prog, 'uAspect'),
+      uArtworkAspect: gl.getUniformLocation(prog, 'uArtworkAspect'),
     }
 
     startTimeRef.current = performance.now()

@@ -19,7 +19,11 @@ const dmSans = DM_Sans({
   display: 'swap',
 })
 
+/* Replace with production URL before deploy */
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://zlaticart.com'
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
     default: 'ZlaticArt — Painter · Educator · Artist',
     template: '%s — ZlaticArt',

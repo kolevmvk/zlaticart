@@ -14,7 +14,8 @@ precision mediump float;
 uniform sampler2D uArtwork;
 uniform float uProgress;
 uniform float uTime;
-uniform float uAspect; /* width / height */
+uniform float uAspect;        /* viewport width / height */
+uniform float uArtworkAspect; /* artwork width / height */
 
 varying vec2 vUv;
 
@@ -76,9 +77,22 @@ float strokeReveal(vec2 uv, float idx, float sp) {
   return clamp(scurve(t) * yEnv, 0.0, 1.0);
 }
 
+/* Cover-crop UV: maintain artwork aspect ratio, fill viewport (like object-fit: cover) */
+vec2 coverCrop(vec2 uv, float viewAspect, float artAspect) {
+  if (viewAspect > artAspect) {
+    /* Viewport wider — fit width, crop height symmetrically */
+    float scaleY = artAspect / viewAspect;
+    return vec2(uv.x, uv.y * scaleY + (1.0 - scaleY) * 0.5);
+  } else {
+    /* Viewport taller (or equal) — fit height, crop width symmetrically */
+    float scaleX = viewAspect / artAspect;
+    return vec2(uv.x * scaleX + (1.0 - scaleX) * 0.5, uv.y);
+  }
+}
+
 void main() {
-  /* Artwork UV — flip V: WebGL origin bottom-left, image origin top-left */
-  vec2 artUv = vec2(vUv.x, 1.0 - vUv.y);
+  /* Artwork UV — cover crop + flip V (WebGL origin bottom-left) */
+  vec2 artUv = coverCrop(vec2(vUv.x, 1.0 - vUv.y), uAspect, uArtworkAspect);
   vec4 art   = texture2D(uArtwork, artUv);
 
   /* Warm paper ground with slow-drifting grain */
