@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Navigation from '@/components/nav/Navigation'
 import SiteFooter from '@/components/nav/SiteFooter'
+import KineticHeading from '@/components/ui/KineticHeading'
 import { getAllEducationItems, getArtistProfile, getSiteSettings } from '@/lib/content/api'
 import type { EducationItem } from '@/lib/content/types'
 
@@ -33,12 +34,14 @@ export default async function EducationPage() {
           <p className="text-label text-ink/40 mb-4 tracking-widest text-xs uppercase">
             Art &amp; Education
           </p>
-          <h1
+          <KineticHeading
+            as="h1"
             className="font-serif font-light text-ink"
             style={{ fontSize: 'clamp(2.5rem, 6vw, 5rem)', letterSpacing: '0.03em', lineHeight: 1.1 }}
+            staggerMs={25}
           >
             Teaching as Practice
-          </h1>
+          </KineticHeading>
           <p
             className="mt-6 text-ink/60 font-sans font-light max-w-xl"
             style={{ fontSize: 'clamp(1rem, 1.5vw, 1.125rem)', lineHeight: 1.7 }}

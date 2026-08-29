@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Navigation from '@/components/nav/Navigation'
 import SiteFooter from '@/components/nav/SiteFooter'
+import KineticHeading from '@/components/ui/KineticHeading'
 import { getAllExhibitions, getSiteSettings } from '@/lib/content/api'
 import type { Exhibition } from '@/lib/content/types'
 
@@ -44,12 +45,14 @@ export default async function ExhibitionsPage() {
           <p className="text-label text-ink/40 mb-4 tracking-widest text-xs uppercase">
             Exhibitions
           </p>
-          <h1
+          <KineticHeading
+            as="h1"
             className="font-serif font-light text-ink"
             style={{ fontSize: 'clamp(2.5rem, 6vw, 5rem)', letterSpacing: '0.03em', lineHeight: 1.1 }}
+            staggerMs={25}
           >
             Exhibition History
-          </h1>
+          </KineticHeading>
         </header>
 
         <section className="section-gutter section-spacing" aria-label="Exhibitions list">
