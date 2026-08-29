@@ -1,5 +1,8 @@
+'use client'
+
 import Link from 'next/link'
 import KineticHeading from '@/components/ui/KineticHeading'
+import { useLanguage } from '@/context/LanguageContext'
 import type { Exhibition } from '@/lib/content/types'
 
 interface ExhibitionsPreviewProps {
@@ -11,6 +14,7 @@ function formatYear(dateStr: string): string {
 }
 
 export default function ExhibitionsPreview({ exhibitions }: ExhibitionsPreviewProps) {
+  const { t } = useLanguage()
   const visible = exhibitions.slice(0, 3)
   const hasContent = visible.length > 0
 
@@ -27,13 +31,13 @@ export default function ExhibitionsPreview({ exhibitions }: ExhibitionsPreviewPr
             className="font-serif font-light text-ink"
             style={{ fontSize: 'clamp(1.5rem, 3.5vw, 2.75rem)', letterSpacing: '0.05em' }}
           >
-            Exhibitions
+            {t.exhibitions.heading}
           </KineticHeading>
           <Link
             href="/exhibitions"
             className="text-label text-ink/40 hover:text-ink transition-colors duration-200 text-xs tracking-widest uppercase hidden md:block"
           >
-            Full history →
+            {t.exhibitions.viewAll}
           </Link>
         </div>
 
@@ -70,7 +74,11 @@ export default function ExhibitionsPreview({ exhibitions }: ExhibitionsPreviewPr
                         : 'text-ink/25'
                     }`}
                   >
-                    {ex.status === 'current' ? 'On View' : ex.status === 'upcoming' ? 'Upcoming' : 'Past'}
+                    {ex.status === 'current'
+                      ? t.exhibitions.current
+                      : ex.status === 'upcoming'
+                      ? t.exhibitions.upcoming
+                      : t.exhibitions.past}
                   </span>
                 </div>
               </li>
@@ -78,7 +86,7 @@ export default function ExhibitionsPreview({ exhibitions }: ExhibitionsPreviewPr
           </ul>
         ) : (
           <p className="text-ink/35 font-sans text-sm italic">
-            [Exhibition history coming soon — content to be confirmed with Zlatica.]
+            {t.exhibitions.comingSoon}
           </p>
         )}
 
@@ -87,7 +95,7 @@ export default function ExhibitionsPreview({ exhibitions }: ExhibitionsPreviewPr
             href="/exhibitions"
             className="text-label text-ink/40 hover:text-ink transition-colors duration-200 text-xs tracking-widest uppercase"
           >
-            Full history →
+            {t.exhibitions.viewAll}
           </Link>
         </div>
       </div>

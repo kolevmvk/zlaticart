@@ -1,5 +1,8 @@
+'use client'
+
 import Link from 'next/link'
 import KineticHeading from '@/components/ui/KineticHeading'
+import { useLanguage } from '@/context/LanguageContext'
 import type { ArtistProfile } from '@/lib/content/types'
 
 interface ArtEducationPreviewProps {
@@ -7,6 +10,8 @@ interface ArtEducationPreviewProps {
 }
 
 export default function ArtEducationPreview({ profile }: ArtEducationPreviewProps) {
+  const { t } = useLanguage()
+
   return (
     <section
       className="bg-canvas-warm section-spacing"
@@ -15,7 +20,7 @@ export default function ArtEducationPreview({ profile }: ArtEducationPreviewProp
       <div className="section-gutter">
         <div className="max-w-3xl">
           <p className="text-label text-ink/35 text-xs tracking-widest uppercase mb-5">
-            Art &amp; Education
+            {t.education.eyebrow}
           </p>
           <KineticHeading
             as="h2"
@@ -23,21 +28,19 @@ export default function ArtEducationPreview({ profile }: ArtEducationPreviewProp
             className="font-serif font-light text-ink mb-6"
             style={{ fontSize: 'clamp(1.75rem, 4vw, 3rem)', letterSpacing: '0.04em', lineHeight: 1.15 }}
           >
-            Teaching as a Form of Practice
+            {t.education.heading}
           </KineticHeading>
           <p
             className="font-sans font-light text-ink/60 mb-10"
             style={{ fontSize: 'clamp(1rem, 1.5vw, 1.125rem)', lineHeight: 1.75 }}
           >
-            {profile.educationStatement ?? (
-              '[Placeholder — a brief statement about Zlatica\'s teaching practice and philosophy will appear here.]'
-            )}
+            {profile.educationStatement ?? t.education.placeholder}
           </p>
           <Link
             href="/education"
             className="inline-block text-label text-ink/50 hover:text-ink transition-colors duration-200 text-xs tracking-widest uppercase"
           >
-            Art &amp; Education →
+            {t.education.cta}
           </Link>
         </div>
       </div>

@@ -3,6 +3,7 @@ import { Cormorant_Garamond, DM_Sans } from 'next/font/google'
 import SmoothScroll from '@/components/providers/SmoothScroll'
 import CustomCursor from '@/components/ui/CustomCursor'
 import GrainPauser from '@/components/providers/GrainPauser'
+import { LanguageProvider } from '@/context/LanguageContext'
 import './globals.css'
 
 const cormorant = Cormorant_Garamond({
@@ -50,11 +51,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="sr" className={`${cormorant.variable} ${dmSans.variable}`}>
       <body>
-        <SmoothScroll>
-          {children}
-        </SmoothScroll>
-        <CustomCursor />
-        <GrainPauser />
+        <LanguageProvider>
+          <SmoothScroll>
+            {children}
+          </SmoothScroll>
+          <CustomCursor />
+          <GrainPauser />
+        </LanguageProvider>
       </body>
     </html>
   )

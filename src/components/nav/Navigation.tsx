@@ -2,27 +2,29 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-
-const NAV_LINKS = [
-  { href: '/works', label: 'Works' },
-  { href: '/journal', label: 'Journal' },
-  { href: '/about', label: 'About' },
-  { href: '/education', label: 'Education' },
-  { href: '/exhibitions', label: 'Exhibitions' },
-  { href: '/contact', label: 'Contact' },
-]
+import LanguageToggle from '@/components/ui/LanguageToggle'
+import { useLanguage } from '@/context/LanguageContext'
 
 interface NavigationProps {
   theme?: 'light' | 'dark'
 }
 
 export default function Navigation({ theme = 'dark' }: NavigationProps) {
+  const { t } = useLanguage()
   const [menuOpen, setMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
-
   const headerRef = useRef<HTMLElement>(null)
+
+  const navLinks = [
+    { href: '/works', label: t.nav.works },
+    { href: '/journal', label: t.nav.journal },
+    { href: '/about', label: t.nav.about },
+    { href: '/education', label: t.nav.education },
+    { href: '/exhibitions', label: t.nav.exhibitions },
+    { href: '/contact', label: t.nav.contact },
+  ]
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60)
@@ -30,7 +32,6 @@ export default function Navigation({ theme = 'dark' }: NavigationProps) {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Entrance: fade + slide down on mount
   useEffect(() => {
     if (!headerRef.current) return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
@@ -41,7 +42,7 @@ export default function Navigation({ theme = 'dark' }: NavigationProps) {
       el.style.transition = 'opacity 0.8s ease, transform 0.8s ease'
       el.style.opacity = '1'
       el.style.transform = 'translateY(0)'
-    }, 600) // after hero starts
+    }, 600)
     return () => clearTimeout(t)
   }, [])
 
@@ -86,25 +87,34 @@ export default function Navigation({ theme = 'dark' }: NavigationProps) {
             className="hidden md:flex items-center gap-8 lg:gap-10"
             aria-label="Primary navigation"
           >
-            {NAV_LINKS.map((link) => (
+            {navLinks.map((link) => (
               <Link key={link.href} href={link.href} className={`nav-link ${textColor}`}>
                 {link.label}
               </Link>
             ))}
+            <LanguageToggle
+              className={isDark ? 'text-canvas/60 hover:text-canvas/90' : 'text-ink/50 hover:text-ink/90'}
+            />
           </nav>
 
-          {/* Mobile hamburger */}
-          <button
-            ref={buttonRef}
-            className={`md:hidden flex flex-col gap-[5px] p-2 -mr-2 ${textColor}`}
-            onClick={() => setMenuOpen(true)}
-            aria-label="Open navigation menu"
-            aria-expanded={menuOpen}
-            aria-controls="mobile-menu"
-          >
-            <span className="block w-5 h-px bg-current" />
-            <span className="block w-5 h-px bg-current" />
-          </button>
+          {/* Mobile: language toggle + hamburger */}
+          <div className="md:hidden flex items-center gap-4">
+            <LanguageToggle
+              className={isDark ? 'text-canvas/60' : 'text-ink/50'}
+            />
+
+            <button
+              ref={buttonRef}
+              className={`flex flex-col gap-[5px] p-2 -mr-2 ${textColor}`}
+              onClick={() => setMenuOpen(true)}
+              aria-label="Open navigation menu"
+              aria-expanded={menuOpen}
+              aria-controls="mobile-menu"
+            >
+              <span className="block w-5 h-px bg-current" />
+              <span className="block w-5 h-px bg-current" />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -139,7 +149,7 @@ export default function Navigation({ theme = 'dark' }: NavigationProps) {
           className="flex flex-col justify-center flex-1 section-gutter gap-6 pb-24"
           aria-label="Mobile navigation"
         >
-          {NAV_LINKS.map((link, i) => (
+          {navLinks.map((link, i) => (
             <Link
               key={link.href}
               href={link.href}
@@ -154,7 +164,7 @@ export default function Navigation({ theme = 'dark' }: NavigationProps) {
 
         <div className="section-gutter pb-8">
           <p className="text-gallery-meta text-canvas/40">
-            Painter · Educator · Artist
+            {t.hero.tagline}
           </p>
         </div>
       </div>

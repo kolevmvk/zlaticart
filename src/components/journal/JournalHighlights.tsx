@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import KineticHeading from '@/components/ui/KineticHeading'
+import { useLanguage } from '@/context/LanguageContext'
 import type { JournalPost } from '@/lib/content/types'
 
 interface JournalHighlightsProps {
@@ -19,6 +20,7 @@ function formatDate(iso: string): string {
 }
 
 export default function JournalHighlights({ posts }: JournalHighlightsProps) {
+  const { t } = useLanguage()
   const leadImgRef = useRef<HTMLDivElement>(null)
   const leadInnerRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
@@ -92,10 +94,10 @@ export default function JournalHighlights({ posts }: JournalHighlightsProps) {
             className="font-serif font-light text-ink"
             style={{ fontSize: 'clamp(1.5rem, 3.5vw, 2.75rem)', letterSpacing: '0.05em' }}
           >
-            Journal
+            {t.journal.heading}
           </KineticHeading>
           <Link href="/journal" className="text-label text-ink/50 hover:text-ink transition-colors duration-200 hidden md:block">
-            All entries →
+            {t.journal.readMore}
           </Link>
         </div>
 
@@ -180,7 +182,7 @@ export default function JournalHighlights({ posts }: JournalHighlightsProps) {
 
         <div className="mt-10 md:hidden">
           <Link href="/journal" className="text-label text-ink/60 hover:text-ink transition-colors duration-200">
-            All entries →
+            {t.journal.readMore}
           </Link>
         </div>
       </div>

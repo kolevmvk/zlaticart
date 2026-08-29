@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import KineticHeading from '@/components/ui/KineticHeading'
+import { useLanguage } from '@/context/LanguageContext'
 import type { ArtistProfile } from '@/lib/content/types'
 
 interface TheArtistProps {
@@ -11,6 +12,7 @@ interface TheArtistProps {
 }
 
 export default function TheArtist({ profile }: TheArtistProps) {
+  const { t } = useLanguage()
   const sectionRef = useRef<HTMLElement>(null)
   const portraitRef = useRef<HTMLDivElement>(null)
   const portraitInnerRef = useRef<HTMLDivElement>(null)
@@ -123,7 +125,7 @@ export default function TheArtist({ profile }: TheArtistProps) {
               className="text-canvas/40 text-label mb-6 md:mb-8"
               style={{ letterSpacing: '0.20em', opacity: 0 }}
             >
-              The Artist
+              {t.artist.eyebrow}
             </p>
 
             {/* Kinetic name reveal — standalone, not inside data-reveal to avoid double-animation */}
@@ -163,7 +165,7 @@ export default function TheArtist({ profile }: TheArtistProps) {
               className="text-label text-canvas/50 hover:text-canvas transition-colors duration-200"
               style={{ opacity: 0 }}
             >
-              Read more →
+              {t.artist.readMore}
             </Link>
           </div>
         </div>

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { VERT, FRAG } from '@/lib/gl/brushShader'
+import { useLanguage } from '@/context/LanguageContext'
 import type { Artwork } from '@/lib/content/types'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -62,7 +63,7 @@ function loadImageTexture(gl: WebGLRenderingContext, src: string): Promise<WebGL
 // ZlaticArt wordmark — character split component
 // ---------------------------------------------------------------------------
 
-function Wordmark({ visible }: { visible: boolean }) {
+function Wordmark({ visible, tagline, cta }: { visible: boolean; tagline: string; cta: string }) {
   const zlaticaRef = useRef<HTMLSpanElement>(null)
   const artRef = useRef<HTMLSpanElement>(null)
   const subtitleRef = useRef<HTMLParagraphElement>(null)
@@ -133,7 +134,7 @@ function Wordmark({ visible }: { visible: boolean }) {
           marginBottom: 'clamp(1rem, 2.5vw, 1.75rem)',
         }}
       >
-        Painter · Educator · Artist
+        {tagline}
       </p>
 
       {/* ZLATICA — character split */}
@@ -210,7 +211,7 @@ function Wordmark({ visible }: { visible: boolean }) {
           onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = 'rgba(240,237,230,0.9)')}
           onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'rgba(240,237,230,0.55)')}
         >
-          Explore works
+          {cta}
           <span style={{ display: 'inline-block', fontSize: '1.1rem' }}>↓</span>
         </Link>
       </div>
@@ -227,6 +228,7 @@ interface HeroGLProps {
 }
 
 export default function HeroGL({ artwork }: HeroGLProps) {
+  const { t } = useLanguage()
   const containerRef = useRef<HTMLDivElement>(null)
   const canvasWrapperRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -537,7 +539,7 @@ export default function HeroGL({ artwork }: HeroGLProps) {
           zIndex: 10,
         }}
       >
-        <Wordmark visible={wordmarkVisible} />
+        <Wordmark visible={wordmarkVisible} tagline={t.hero.tagline} cta={t.hero.cta} />
       </div>
 
       {/* Brush-reveal progress bar — 1px line at bottom edge */}

@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import KineticHeading from '@/components/ui/KineticHeading'
+import { useLanguage } from '@/context/LanguageContext'
 import type { Artwork } from '@/lib/content/types'
 
 interface MediaTransitionsProps {
@@ -12,6 +13,7 @@ interface MediaTransitionsProps {
 
 // One representative work per medium shown in a horizontal editorial strip
 export default function MediaTransitions({ artworks }: MediaTransitionsProps) {
+  const { t } = useLanguage()
   const sectionRef = useRef<HTMLElement>(null)
   const stripRef = useRef<HTMLDivElement>(null)
 
@@ -76,7 +78,7 @@ export default function MediaTransitions({ artworks }: MediaTransitionsProps) {
     >
       <div className="section-gutter mb-10 md:mb-14">
         <p className="text-label text-canvas/30 text-xs tracking-widest uppercase mb-3">
-          Practice
+          {t.media.eyebrow}
         </p>
         <KineticHeading
           as="h2"
@@ -84,7 +86,7 @@ export default function MediaTransitions({ artworks }: MediaTransitionsProps) {
           className="font-serif font-light text-canvas"
           style={{ fontSize: 'clamp(1.5rem, 3.5vw, 2.75rem)', letterSpacing: '0.05em' }}
         >
-          Across Media
+          {t.media.heading}
         </KineticHeading>
       </div>
 
@@ -158,7 +160,7 @@ export default function MediaTransitions({ artworks }: MediaTransitionsProps) {
           href="/works"
           className="text-label text-canvas/40 hover:text-canvas transition-colors duration-200"
         >
-          All works →
+          {t.media.viewAll}
         </Link>
       </div>
     </section>

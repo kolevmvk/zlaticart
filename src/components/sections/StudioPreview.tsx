@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import Image from 'next/image'
 import KineticHeading from '@/components/ui/KineticHeading'
+import { useLanguage } from '@/context/LanguageContext'
 
 interface StudioPreviewProps {
   instagramUrl: string | null
@@ -16,6 +17,7 @@ const ARCHIVE_IMAGES = [
 ]
 
 export default function StudioPreview({ instagramUrl }: StudioPreviewProps) {
+  const { t } = useLanguage()
   const sectionRef = useRef<HTMLElement>(null)
   const subtitleRef = useRef<HTMLParagraphElement>(null)
   const gridRef = useRef<HTMLDivElement>(null)
@@ -72,7 +74,7 @@ export default function StudioPreview({ instagramUrl }: StudioPreviewProps) {
               className="text-canvas/35 text-label mb-3"
               style={{ letterSpacing: '0.22em', opacity: 0 }}
             >
-              From the Studio
+              {t.studio.eyebrow}
             </p>
             <KineticHeading
               as="h2"
@@ -80,7 +82,7 @@ export default function StudioPreview({ instagramUrl }: StudioPreviewProps) {
               className="font-serif font-light text-canvas"
               style={{ fontSize: 'clamp(1.5rem, 3.5vw, 2.75rem)', letterSpacing: '0.05em' }}
             >
-              The Atelier
+              {t.studio.heading}
             </KineticHeading>
           </div>
           {instagramUrl && (
@@ -90,7 +92,7 @@ export default function StudioPreview({ instagramUrl }: StudioPreviewProps) {
               rel="noopener noreferrer"
               className="text-label text-canvas/50 hover:text-canvas transition-colors duration-200 hidden md:block"
             >
-              Follow on Instagram →
+              {t.studio.instagram}
             </a>
           )}
         </div>
@@ -133,7 +135,7 @@ export default function StudioPreview({ instagramUrl }: StudioPreviewProps) {
               rel="noopener noreferrer"
               className="text-label text-canvas/50 hover:text-canvas transition-colors duration-200"
             >
-              Follow on Instagram →
+              {t.studio.instagram}
             </a>
           </div>
         )}

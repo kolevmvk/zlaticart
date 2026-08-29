@@ -1,4 +1,7 @@
+'use client'
+
 import Link from 'next/link'
+import { useLanguage } from '@/context/LanguageContext'
 
 interface SiteFooterProps {
   instagramUrl: string | null
@@ -7,6 +10,7 @@ interface SiteFooterProps {
 }
 
 export default function SiteFooter({ instagramUrl, facebookUrl, email }: SiteFooterProps) {
+  const { t } = useLanguage()
   const year = new Date().getFullYear()
 
   return (
@@ -17,19 +21,19 @@ export default function SiteFooter({ instagramUrl, facebookUrl, email }: SiteFoo
             ZlaticArt
           </p>
           <p className="text-gallery-meta text-canvas/40">
-            Painter · Educator · Artist
+            {t.footer.tagline}
           </p>
         </div>
 
         <nav aria-label="Footer navigation" className="flex flex-col gap-3">
           {[
-            { href: '/works', label: 'Works' },
-            { href: '/journal', label: 'Journal' },
-            { href: '/about', label: 'About' },
-            { href: '/education', label: 'Education' },
-            { href: '/exhibitions', label: 'Exhibitions' },
-            { href: '/studio', label: 'Studio' },
-            { href: '/contact', label: 'Contact' },
+            { href: '/works', label: t.nav.works },
+            { href: '/journal', label: t.nav.journal },
+            { href: '/about', label: t.nav.about },
+            { href: '/education', label: t.nav.education },
+            { href: '/exhibitions', label: t.nav.exhibitions },
+            { href: '/studio', label: t.nav.studio },
+            { href: '/contact', label: t.nav.contact },
           ].map((l) => (
             <Link key={l.href} href={l.href} className="nav-link text-canvas/60 hover:text-canvas">
               {l.label}
@@ -61,7 +65,7 @@ export default function SiteFooter({ instagramUrl, facebookUrl, email }: SiteFoo
 
       <div className="border-t border-canvas/10 pt-6">
         <p className="text-gallery-meta text-canvas/25">
-          © {year} Zlatica. All rights reserved.
+          {t.footer.rights(year)}
         </p>
       </div>
     </footer>
