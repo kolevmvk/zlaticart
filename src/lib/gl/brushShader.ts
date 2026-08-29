@@ -91,8 +91,18 @@ vec2 coverCrop(vec2 uv, float viewAspect, float artAspect) {
 }
 
 void main() {
-  /* Artwork UV — cover crop + flip V (WebGL origin bottom-left) */
-  vec2 artUv = coverCrop(vec2(vUv.x, 1.0 - vUv.y), uAspect, uArtworkAspect);
+  /* Base artwork UV — cover crop + flip V (WebGL origin bottom-left) */
+  vec2 baseUv = vec2(vUv.x, 1.0 - vUv.y);
+
+  /* Living pigment micro-warp — active only once reveal is complete.
+     Very subtle sinusoidal displacement that makes the artwork feel alive,
+     as if you're watching paint breathe on a real canvas. */
+  float breathe = step(0.999, uProgress);
+  float warpX = sin(uTime * 0.31 + vUv.y * 2.1) * 0.0012 * breathe;
+  float warpY = cos(uTime * 0.27 + vUv.x * 1.7) * 0.0010 * breathe;
+  baseUv += vec2(warpX, warpY);
+
+  vec2 artUv = coverCrop(baseUv, uAspect, uArtworkAspect);
   vec4 art   = texture2D(uArtwork, artUv);
 
   /* Warm paper ground with slow-drifting grain */

@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import KineticHeading from '@/components/ui/KineticHeading'
 import type { JournalPost } from '@/lib/content/types'
 
 interface JournalHighlightsProps {
@@ -18,89 +19,81 @@ function formatDate(iso: string): string {
 }
 
 export default function JournalHighlights({ posts }: JournalHighlightsProps) {
-  const sectionRef = useRef<HTMLElement>(null)
-  const headingRef = useRef<HTMLDivElement>(null)
-  const leadRef = useRef<HTMLAnchorElement>(null)
+  const leadImgRef = useRef<HTMLDivElement>(null)
+  const leadInnerRef = useRef<HTMLDivElement>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
   const secondaryRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    if (!headingRef.current) return
-
-    let cleanup: (() => void) | undefined
 
     Promise.all([import('gsap'), import('gsap/ScrollTrigger')]).then(
       ([{ gsap }, { ScrollTrigger }]) => {
         gsap.registerPlugin(ScrollTrigger)
 
-        gsap.fromTo(
-          headingRef.current,
-          { opacity: 0, y: 18 },
-          {
-            opacity: 1, y: 0, duration: 0.9, ease: 'power3.out',
-            scrollTrigger: { trigger: headingRef.current, start: 'top 88%', once: true },
-          }
-        )
-
-        if (leadRef.current) {
-          const img = leadRef.current.querySelector('.lead-img')
-          const meta = leadRef.current.querySelector('.lead-meta')
-          const title = leadRef.current.querySelector('.lead-title')
-          const excerpt = leadRef.current.querySelector('.lead-excerpt')
+        // Parallax on lead image
+        if (leadImgRef.current && leadInnerRef.current) {
           gsap.fromTo(
-            img,
-            { opacity: 0, clipPath: 'inset(0 0 100% 0)' },
+            leadInnerRef.current,
+            { yPercent: 10 },
             {
-              opacity: 1, clipPath: 'inset(0 0 0% 0)', duration: 1.2, ease: 'power3.inOut',
-              scrollTrigger: { trigger: leadRef.current, start: 'top 82%', once: true },
-            }
-          )
-          gsap.fromTo(
-            [meta, title, excerpt],
-            { opacity: 0, y: 16 },
-            {
-              opacity: 1, y: 0, duration: 0.9, ease: 'power3.out', stagger: 0.1,
-              scrollTrigger: { trigger: leadRef.current, start: 'top 78%', once: true },
+              yPercent: -10,
+              ease: 'none',
+              scrollTrigger: {
+                trigger: leadImgRef.current,
+                start: 'top bottom',
+                end: 'bottom top',
+                scrub: 1.5,
+              },
             }
           )
         }
 
+        // Content fade-in
+        if (contentRef.current) {
+          gsap.fromTo(
+            contentRef.current,
+            { opacity: 0, y: 20 },
+            {
+              opacity: 1, y: 0, duration: 0.9, ease: 'power3.out',
+              scrollTrigger: { trigger: contentRef.current, start: 'top 84%', once: true },
+            }
+          )
+        }
+
+        // Secondary items stagger
         if (secondaryRef.current) {
-          const items = secondaryRef.current.querySelectorAll<HTMLElement>('[data-secondary]')
+          const items = secondaryRef.current.querySelectorAll('[data-secondary]')
           gsap.fromTo(
             Array.from(items),
-            { opacity: 0, x: 24 },
+            { opacity: 0, x: 20 },
             {
-              opacity: 1, x: 0, duration: 0.9, ease: 'power3.out', stagger: 0.15,
-              scrollTrigger: { trigger: secondaryRef.current, start: 'top 80%', once: true },
+              opacity: 1, x: 0, duration: 0.8, ease: 'power3.out', stagger: 0.12,
+              scrollTrigger: { trigger: secondaryRef.current, start: 'top 82%', once: true },
             }
           )
         }
-
-        cleanup = () => ScrollTrigger.getAll().forEach((t) => t.kill())
       }
     )
-
-    return () => cleanup?.()
   }, [])
 
   const [lead, ...secondary] = posts
 
   return (
     <section
-      ref={sectionRef}
       className="section-spacing bg-canvas-warm"
       aria-labelledby="journal-heading"
     >
       <div className="section-gutter">
-        <div ref={headingRef} className="flex items-baseline justify-between mb-12 md:mb-16" style={{ opacity: 0 }}>
-          <h2
+        <div className="flex items-baseline justify-between mb-12 md:mb-16">
+          <KineticHeading
+            as="h2"
             id="journal-heading"
             className="font-serif font-light text-ink"
             style={{ fontSize: 'clamp(1.5rem, 3.5vw, 2.75rem)', letterSpacing: '0.05em' }}
           >
             Journal
-          </h2>
+          </KineticHeading>
           <Link href="/journal" className="text-label text-ink/50 hover:text-ink transition-colors duration-200 hidden md:block">
             All entries →
           </Link>
@@ -110,32 +103,44 @@ export default function JournalHighlights({ posts }: JournalHighlightsProps) {
           {/* Lead post */}
           {lead && (
             <Link
-              ref={leadRef}
               href={`/journal/${lead.slug}`}
               className="group md:col-span-7 block"
             >
-              <div className="lead-img relative overflow-hidden bg-canvas aspect-[4/3] mb-5" style={{ opacity: 0 }}>
-                <Image
-                  src={lead.coverImage.src}
-                  alt={lead.coverImage.alt}
-                  fill
-                  quality={80}
-                  sizes="(max-width: 768px) 100vw, 58vw"
-                  className="object-cover transition-transform duration-700 group-hover:scale-[1.02]"
-                />
-              </div>
-              <p className="lead-meta text-label text-ink/40 mb-2" style={{ opacity: 0 }}>
-                {lead.category} · {formatDate(lead.publishedAt)}
-              </p>
-              <h3
-                className="lead-title font-serif font-light text-ink mb-3 group-hover:opacity-70 transition-opacity duration-200"
-                style={{ fontSize: 'clamp(1.25rem, 2.5vw, 1.875rem)', lineHeight: '1.2', letterSpacing: '0.02em', opacity: 0 }}
+              {/* Lead image with parallax */}
+              <div
+                ref={leadImgRef}
+                className="relative overflow-hidden bg-canvas aspect-[4/3] mb-5"
               >
-                {lead.title}
-              </h3>
-              <p className="lead-excerpt text-gallery-meta leading-relaxed line-clamp-3" style={{ opacity: 0 }}>
-                {lead.excerpt}
-              </p>
+                <div
+                  ref={leadInnerRef}
+                  className="absolute inset-0"
+                  style={{ top: '-10%', bottom: '-10%' }}
+                >
+                  <Image
+                    src={lead.coverImage.src}
+                    alt={lead.coverImage.alt}
+                    fill
+                    quality={80}
+                    sizes="(max-width: 768px) 100vw, 58vw"
+                    className="object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                  />
+                </div>
+              </div>
+
+              <div ref={contentRef}>
+                <p className="text-label text-ink/40 mb-2">
+                  {lead.category} · {formatDate(lead.publishedAt)}
+                </p>
+                <h3
+                  className="font-serif font-light text-ink mb-3 group-hover:opacity-70 transition-opacity duration-200"
+                  style={{ fontSize: 'clamp(1.25rem, 2.5vw, 1.875rem)', lineHeight: '1.2', letterSpacing: '0.02em' }}
+                >
+                  {lead.title}
+                </h3>
+                <p className="text-gallery-meta leading-relaxed line-clamp-3">
+                  {lead.excerpt}
+                </p>
+              </div>
             </Link>
           )}
 
@@ -147,7 +152,6 @@ export default function JournalHighlights({ posts }: JournalHighlightsProps) {
                 href={`/journal/${post.slug}`}
                 className="group flex gap-5"
                 data-secondary
-                style={{ opacity: 0 }}
               >
                 <div className="relative flex-shrink-0 overflow-hidden bg-canvas w-24 h-28 md:w-28 md:h-32">
                   <Image
@@ -156,7 +160,7 @@ export default function JournalHighlights({ posts }: JournalHighlightsProps) {
                     fill
                     quality={75}
                     sizes="120px"
-                    className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                    className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
                   />
                 </div>
                 <div className="flex flex-col justify-center">

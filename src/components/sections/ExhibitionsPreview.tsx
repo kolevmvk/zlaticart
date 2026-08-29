@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import KineticHeading from '@/components/ui/KineticHeading'
 import type { Exhibition } from '@/lib/content/types'
 
 interface ExhibitionsPreviewProps {
@@ -20,13 +21,14 @@ export default function ExhibitionsPreview({ exhibitions }: ExhibitionsPreviewPr
     >
       <div className="section-gutter">
         <div className="flex items-baseline justify-between mb-12 md:mb-16">
-          <h2
+          <KineticHeading
+            as="h2"
             id="exhibitions-preview-heading"
             className="font-serif font-light text-ink"
             style={{ fontSize: 'clamp(1.5rem, 3.5vw, 2.75rem)', letterSpacing: '0.05em' }}
           >
             Exhibitions
-          </h2>
+          </KineticHeading>
           <Link
             href="/exhibitions"
             className="text-label text-ink/40 hover:text-ink transition-colors duration-200 text-xs tracking-widest uppercase hidden md:block"

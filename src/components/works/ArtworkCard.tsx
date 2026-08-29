@@ -1,3 +1,5 @@
+'use client'
+
 import Image from 'next/image'
 import Link from 'next/link'
 import type { Artwork } from '@/lib/content/types'
@@ -41,13 +43,32 @@ export default function ArtworkCard({ artwork, priority = false, size = 'medium'
               ? '(max-width: 768px) 50vw, 25vw'
               : '(max-width: 768px) 100vw, 40vw'
           }
-          className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.025]"
+          className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
           style={{
             objectPosition: img.desktopFocalPoint
               ? `${img.desktopFocalPoint.x * 100}% ${img.desktopFocalPoint.y * 100}%`
               : 'center',
           }}
         />
+
+        {/* Medium overlay — slides up from bottom on hover, desktop only */}
+        <div
+          className="
+            absolute inset-x-0 bottom-0 px-4 py-4 md:px-5 md:py-5
+            hidden md:block
+            translate-y-full group-hover:translate-y-0
+            transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]
+          "
+          style={{
+            background: 'linear-gradient(to top, rgba(10,10,9,0.58) 0%, rgba(10,10,9,0.12) 70%, transparent 100%)',
+          }}
+          aria-hidden="true"
+        >
+          <p className="text-canvas font-sans text-xs tracking-widest uppercase">
+            {artwork.medium.title}
+            {artwork.year ? <span className="opacity-60"> · {artwork.year}</span> : null}
+          </p>
+        </div>
       </div>
 
       <div className="mt-3 md:mt-4">

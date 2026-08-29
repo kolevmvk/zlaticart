@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import KineticHeading from '@/components/ui/KineticHeading'
 import type { ArtistProfile } from '@/lib/content/types'
 
 interface TheArtistProps {
@@ -12,51 +13,76 @@ interface TheArtistProps {
 export default function TheArtist({ profile }: TheArtistProps) {
   const sectionRef = useRef<HTMLElement>(null)
   const portraitRef = useRef<HTMLDivElement>(null)
+  const portraitInnerRef = useRef<HTMLDivElement>(null)
   const textRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    if (!portraitRef.current || !textRef.current) return
-
-    let cleanup: (() => void) | undefined
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      // Ensure visible in reduced motion
+      if (portraitRef.current) portraitRef.current.style.opacity = '1'
+      if (textRef.current) {
+        textRef.current.querySelectorAll<HTMLElement>('[data-reveal]').forEach((el) => {
+          el.style.opacity = '1'
+        })
+      }
+      return
+    }
 
     Promise.all([import('gsap'), import('gsap/ScrollTrigger')]).then(
       ([{ gsap }, { ScrollTrigger }]) => {
         gsap.registerPlugin(ScrollTrigger)
 
-        const trigger = sectionRef.current
+        // Portrait: subtle scale reveal (no clip-path wipe)
+        if (portraitRef.current) {
+          gsap.fromTo(
+            portraitRef.current,
+            { opacity: 0, scale: 1.04 },
+            {
+              opacity: 1,
+              scale: 1,
+              duration: 1.4,
+              ease: 'power2.out',
+              scrollTrigger: { trigger: sectionRef.current, start: 'top 75%', once: true },
+            }
+          )
+        }
 
-        gsap.fromTo(
-          portraitRef.current,
-          { opacity: 0, clipPath: 'inset(0 0 100% 0)' },
-          {
-            opacity: 1,
-            clipPath: 'inset(0 0 0% 0)',
-            duration: 1.3,
-            ease: 'power3.inOut',
-            scrollTrigger: { trigger, start: 'top 78%', once: true },
-          }
-        )
+        // Parallax on portrait image
+        if (portraitRef.current && portraitInnerRef.current) {
+          gsap.fromTo(
+            portraitInnerRef.current,
+            { yPercent: 8 },
+            {
+              yPercent: -8,
+              ease: 'none',
+              scrollTrigger: {
+                trigger: portraitRef.current,
+                start: 'top bottom',
+                end: 'bottom top',
+                scrub: 2,
+              },
+            }
+          )
+        }
 
-        const textEls = textRef.current!.querySelectorAll<HTMLElement>('[data-reveal]')
-        gsap.fromTo(
-          Array.from(textEls),
-          { opacity: 0, y: 28 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 1.0,
-            ease: 'power3.out',
-            stagger: { each: 0.12 },
-            scrollTrigger: { trigger: textRef.current, start: 'top 82%', once: true },
-          }
-        )
-
-        cleanup = () => ScrollTrigger.getAll().forEach((t) => t.kill())
+        // Text elements: staggered slide in from left with opacity
+        if (textRef.current) {
+          const textEls = textRef.current.querySelectorAll<HTMLElement>('[data-reveal]')
+          gsap.fromTo(
+            Array.from(textEls),
+            { opacity: 0, x: -24 },
+            {
+              opacity: 1,
+              x: 0,
+              duration: 0.9,
+              ease: 'power3.out',
+              stagger: { each: 0.1 },
+              scrollTrigger: { trigger: textRef.current, start: 'top 80%', once: true },
+            }
+          )
+        }
       }
     )
-
-    return () => cleanup?.()
   }, [])
 
   return (
@@ -70,14 +96,20 @@ export default function TheArtist({ profile }: TheArtistProps) {
               className="relative overflow-hidden aspect-[3/4] max-w-sm mx-auto md:mx-0"
               style={{ opacity: 0 }}
             >
-              <Image
-                src={profile.portrait.src}
-                alt={profile.portrait.alt}
-                fill
-                quality={85}
-                sizes="(max-width: 768px) 80vw, 35vw"
-                className="object-cover grayscale"
-              />
+              <div
+                ref={portraitInnerRef}
+                className="absolute inset-0"
+                style={{ top: '-8%', bottom: '-8%' }}
+              >
+                <Image
+                  src={profile.portrait.src}
+                  alt={profile.portrait.alt}
+                  fill
+                  quality={85}
+                  sizes="(max-width: 768px) 80vw, 35vw"
+                  className="object-cover grayscale"
+                />
+              </div>
             </div>
           </div>
 
@@ -93,19 +125,24 @@ export default function TheArtist({ profile }: TheArtistProps) {
             >
               The Artist
             </p>
-            <h2
-              data-reveal
-              id="artist-heading"
-              className="font-serif text-canvas font-light mb-6 md:mb-8"
-              style={{
-                fontSize: 'clamp(2rem, 5vw, 4rem)',
-                letterSpacing: '0.06em',
-                lineHeight: '1.1',
-                opacity: 0,
-              }}
-            >
-              {profile.name}
-            </h2>
+
+            {/* Kinetic name reveal */}
+            <div data-reveal style={{ opacity: 0, marginBottom: 'clamp(1.5rem, 3vw, 2rem)' }}>
+              <KineticHeading
+                as="h2"
+                id="artist-heading"
+                className="font-serif text-canvas font-light"
+                style={{
+                  fontSize: 'clamp(2rem, 5vw, 4rem)',
+                  letterSpacing: '0.06em',
+                  lineHeight: '1.1',
+                }}
+                staggerMs={40}
+              >
+                {profile.name}
+              </KineticHeading>
+            </div>
+
             <p
               data-reveal
               className="font-serif text-canvas/60 font-light italic mb-8 md:mb-10"
