@@ -97,10 +97,10 @@ body::after {
   100% { transform: translate(2px, -1px); }
 }
 
-/* ---- Custom cursor: hide native on pointer-fine devices ---- */
-@media (pointer: fine) {
-  * { cursor: none !important; }
-}
+/* ---- Custom cursor: hide native only after JS mounts the cursor ---- */
+/* body[data-cursor] is set by CustomCursor after it mounts, preventing
+   the cursor from disappearing before the custom one is ready. */
+body[data-cursor] * { cursor: none !important; }
 
 @media (prefers-reduced-motion: reduce) {
   body::after { animation: none; }

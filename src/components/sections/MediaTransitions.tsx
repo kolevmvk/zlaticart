@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import KineticHeading from '@/components/ui/KineticHeading'
+import RevealHeading from '@/components/ui/RevealHeading'
 import { useLanguage } from '@/context/LanguageContext'
 import type { Artwork } from '@/lib/content/types'
 
@@ -80,14 +80,14 @@ export default function MediaTransitions({ artworks }: MediaTransitionsProps) {
         <p className="text-label text-canvas/30 text-xs tracking-widest uppercase mb-3">
           {t.media.eyebrow}
         </p>
-        <KineticHeading
+        <RevealHeading
           as="h2"
           id="media-heading"
           className="font-serif font-light text-canvas"
           style={{ fontSize: 'clamp(1.5rem, 3.5vw, 2.75rem)', letterSpacing: '0.05em' }}
         >
           {t.media.heading}
-        </KineticHeading>
+        </RevealHeading>
       </div>
 
       {/* Horizontal scroll strip */}
@@ -122,7 +122,7 @@ export default function MediaTransitions({ artworks }: MediaTransitionsProps) {
                   alt={artwork.primaryImage.alt}
                   fill
                   sizes="(max-width: 768px) 60vw, 28vw"
-                  className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+                  className="object-cover"
                   style={{
                     objectPosition: artwork.primaryImage.desktopFocalPoint
                       ? `${artwork.primaryImage.desktopFocalPoint.x * 100}% ${artwork.primaryImage.desktopFocalPoint.y * 100}%`

@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import KineticHeading from '@/components/ui/KineticHeading'
+import RevealHeading from '@/components/ui/RevealHeading'
 import { useLanguage } from '@/context/LanguageContext'
 import type { JournalPost } from '@/lib/content/types'
 
@@ -88,14 +88,14 @@ export default function JournalHighlights({ posts }: JournalHighlightsProps) {
     >
       <div className="section-gutter">
         <div className="flex items-baseline justify-between mb-12 md:mb-16">
-          <KineticHeading
+          <RevealHeading
             as="h2"
             id="journal-heading"
             className="font-serif font-light text-ink"
             style={{ fontSize: 'clamp(1.5rem, 3.5vw, 2.75rem)', letterSpacing: '0.05em' }}
           >
             {t.journal.heading}
-          </KineticHeading>
+          </RevealHeading>
           <Link href="/journal" className="text-label text-ink/50 hover:text-ink transition-colors duration-200 hidden md:block">
             {t.journal.readMore}
           </Link>

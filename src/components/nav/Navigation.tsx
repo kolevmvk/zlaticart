@@ -140,8 +140,12 @@ export default function Navigation({ theme = 'dark' }: NavigationProps) {
             onClick={() => setMenuOpen(false)}
             aria-label="Close navigation menu"
           >
-            <span className="block w-5 h-px bg-current rotate-45 translate-y-px" />
-            <span className="block w-5 h-px bg-current -rotate-45 -translate-y-px" />
+            <span className="relative block w-5 h-5" aria-hidden="true">
+              <span className="absolute top-1/2 left-0 block w-5 h-px bg-current"
+                style={{ transform: 'translateY(-50%) rotate(45deg)' }} />
+              <span className="absolute top-1/2 left-0 block w-5 h-px bg-current"
+                style={{ transform: 'translateY(-50%) rotate(-45deg)' }} />
+            </span>
           </button>
         </div>
 

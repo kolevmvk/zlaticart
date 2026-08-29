@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import Image from 'next/image'
-import KineticHeading from '@/components/ui/KineticHeading'
+import RevealHeading from '@/components/ui/RevealHeading'
 import { useLanguage } from '@/context/LanguageContext'
 
 interface StudioPreviewProps {
@@ -76,14 +76,14 @@ export default function StudioPreview({ instagramUrl }: StudioPreviewProps) {
             >
               {t.studio.eyebrow}
             </p>
-            <KineticHeading
+            <RevealHeading
               as="h2"
               id="studio-heading"
               className="font-serif font-light text-canvas"
               style={{ fontSize: 'clamp(1.5rem, 3.5vw, 2.75rem)', letterSpacing: '0.05em' }}
             >
               {t.studio.heading}
-            </KineticHeading>
+            </RevealHeading>
           </div>
           {instagramUrl && (
             <a

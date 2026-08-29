@@ -54,12 +54,12 @@ export default function ArtworkCard({ artwork, priority = false, size = 'medium'
           }}
         />
 
-        {/* Medium overlay — slides up from bottom on hover, desktop only */}
+        {/* Medium overlay — always visible on touch, slides up on hover on pointer devices */}
         <div
           className="
             absolute inset-x-0 bottom-0 px-4 py-4 md:px-5 md:py-5
-            hidden md:block
             translate-y-full group-hover:translate-y-0
+            [@media(hover:none)]:translate-y-0
             transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]
           "
           style={{

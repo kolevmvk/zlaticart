@@ -652,13 +652,13 @@ export default function HeroGL({ artwork }: HeroGLProps) {
               fontSize: '0.55rem',
               letterSpacing: '0.22em',
               textTransform: 'uppercase',
-              color: 'rgba(240,237,230,0.30)',
+              color: 'rgba(240,237,230,0.55)',
               writingMode: 'vertical-rl',
             }}
           >
             Scroll
           </span>
-          <div style={{ width: 1, height: 40, background: 'rgba(240,237,230,0.20)' }} />
+          <div style={{ width: 2, height: 44, background: 'rgba(240,237,230,0.55)' }} />
         </div>
       )}
 

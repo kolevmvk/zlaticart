@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Cormorant_Garamond, DM_Sans } from 'next/font/google'
 import SmoothScroll from '@/components/providers/SmoothScroll'
+import PageTransition from '@/components/providers/PageTransition'
 import CustomCursor from '@/components/ui/CustomCursor'
 import GrainPauser from '@/components/providers/GrainPauser'
 import { LanguageProvider } from '@/context/LanguageContext'
@@ -53,7 +54,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <LanguageProvider>
           <SmoothScroll>
-            {children}
+            <PageTransition>
+              {children}
+            </PageTransition>
           </SmoothScroll>
           <CustomCursor />
           <GrainPauser />

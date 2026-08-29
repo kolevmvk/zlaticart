@@ -67,19 +67,19 @@ export default function TheArtist({ profile }: TheArtistProps) {
           )
         }
 
-        // Text elements: staggered slide in from left with opacity
+        // Text elements: intimate vertical reveal — each line rises from below
         if (textRef.current) {
           const textEls = textRef.current.querySelectorAll<HTMLElement>('[data-reveal]')
           gsap.fromTo(
             Array.from(textEls),
-            { opacity: 0, x: -24 },
+            { opacity: 0, y: 20 },
             {
               opacity: 1,
-              x: 0,
-              duration: 0.9,
+              y: 0,
+              duration: 0.85,
               ease: 'power3.out',
-              stagger: { each: 0.1 },
-              scrollTrigger: { trigger: textRef.current, start: 'top 80%', once: true },
+              stagger: { each: 0.12 },
+              scrollTrigger: { trigger: textRef.current, start: 'top 82%', once: true },
             }
           )
         }
@@ -109,7 +109,8 @@ export default function TheArtist({ profile }: TheArtistProps) {
                   fill
                   quality={85}
                   sizes="(max-width: 768px) 80vw, 35vw"
-                  className="object-cover grayscale"
+                  className="object-cover"
+                  style={{ filter: 'saturate(0.35) contrast(1.05)' }}
                 />
               </div>
             </div>

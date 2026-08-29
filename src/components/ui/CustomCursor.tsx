@@ -15,6 +15,9 @@ export default function CustomCursor() {
     const ring = ringRef.current
     if (!dot || !ring) return
 
+    // Signal to CSS that custom cursor is mounted — hides native cursor
+    document.body.setAttribute('data-cursor', 'true')
+
     dot.style.opacity = '1'
     ring.style.opacity = '1'
 
@@ -61,6 +64,7 @@ export default function CustomCursor() {
     return () => {
       window.removeEventListener('mousemove', onMove)
       observer.disconnect()
+      document.body.removeAttribute('data-cursor')
     }
   }, [])
 

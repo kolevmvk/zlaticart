@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useLanguage } from '@/context/LanguageContext'
 import type { Artwork } from '@/lib/content/types'
 
 interface ArtworkDetailViewProps {
@@ -12,6 +13,7 @@ interface ArtworkDetailViewProps {
 }
 
 export default function ArtworkDetailView({ artwork, prev, next }: ArtworkDetailViewProps) {
+  const { t } = useLanguage()
   const imgWrapRef = useRef<HTMLDivElement>(null)
   const metaRef = useRef<HTMLDivElement>(null)
 
@@ -44,8 +46,12 @@ export default function ArtworkDetailView({ artwork, prev, next }: ArtworkDetail
         {/* LEFT — artwork column */}
         <div
           ref={imgWrapRef}
-          className="relative w-full md:w-7/12 bg-canvas-warm h-[clamp(60vh,80vh,90vh)] pt-[4.5rem] md:h-[calc(100vh-5rem)] md:pt-0"
-          style={{ opacity: 0 }}
+          className="relative w-full md:w-7/12 bg-canvas-warm md:h-[calc(100vh-5rem)]"
+          style={{
+            opacity: 0,
+            height: 'clamp(60vh,80vh,90vh)',
+            paddingTop: 'var(--nav-height, 4.5rem)',
+          }}
         >
           <Image
             src={img.src}
@@ -54,8 +60,8 @@ export default function ArtworkDetailView({ artwork, prev, next }: ArtworkDetail
             priority
             quality={95}
             sizes="(min-width: 768px) 58vw, 100vw"
-            className="object-contain p-4 md:p-8 lg:p-12"
-            style={{ objectPosition: 'center top' }}
+            className="object-contain md:object-contain p-4 md:p-8 lg:p-12"
+            style={{ objectPosition: 'center center' }}
           />
         </div>
 
@@ -84,9 +90,9 @@ export default function ArtworkDetailView({ artwork, prev, next }: ArtworkDetail
           <div data-meta style={{ opacity: 0 }} className="mt-6">
             <dl className="space-y-3">
               {[
-                { label: 'Medium', value: artwork.medium.title },
-                { label: 'Year', value: artwork.year?.toString() },
-                { label: 'Dimensions', value: artwork.dimensions },
+                { label: t.works.medium, value: artwork.medium.title },
+                { label: t.works.year, value: artwork.year?.toString() },
+                { label: t.works.dimensions, value: artwork.dimensions },
               ].map(({ label, value }) =>
                 value ? (
                   <div key={label} className="flex justify-between border-b border-canvas-deep pb-3">
@@ -112,7 +118,7 @@ export default function ArtworkDetailView({ artwork, prev, next }: ArtworkDetail
                 rel="noopener noreferrer"
                 className="text-label text-ink/50 hover:text-ink transition-colors duration-200"
               >
-                View on Instagram →
+                {t.works.viewInstagram}
               </a>
             </div>
           )}
@@ -127,7 +133,7 @@ export default function ArtworkDetailView({ artwork, prev, next }: ArtworkDetail
             className="group flex items-center gap-3 text-gallery-meta hover:text-ink transition-colors duration-200"
           >
             <span>←</span>
-            <span className="group-hover:opacity-100 opacity-60 transition-opacity">Previous</span>
+            <span className="group-hover:opacity-100 opacity-60 transition-opacity">{t.works.previous}</span>
           </Link>
         ) : (
           <span />
@@ -137,7 +143,7 @@ export default function ArtworkDetailView({ artwork, prev, next }: ArtworkDetail
             href={`/works/${next.slug}`}
             className="group flex items-center gap-3 text-gallery-meta hover:text-ink transition-colors duration-200"
           >
-            <span className="group-hover:opacity-100 opacity-60 transition-opacity">Next</span>
+            <span className="group-hover:opacity-100 opacity-60 transition-opacity">{t.works.next}</span>
             <span>→</span>
           </Link>
         )}

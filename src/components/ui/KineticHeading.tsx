@@ -30,8 +30,12 @@ export default function KineticHeading({
       return
     }
 
-    import('gsap').then(({ gsap }) => {
-      import('gsap/ScrollTrigger').then(({ ScrollTrigger }) => {
+    let killed = false
+    let killFn: (() => void) | null = null
+
+    Promise.all([import('gsap'), import('gsap/ScrollTrigger')]).then(
+      ([{ gsap }, { ScrollTrigger }]) => {
+        if (killed) return
         gsap.registerPlugin(ScrollTrigger)
 
         const tl = gsap.fromTo(
@@ -50,10 +54,14 @@ export default function KineticHeading({
             },
           }
         )
+        killFn = () => tl.kill()
+      }
+    )
 
-        return () => { tl.kill() }
-      })
-    })
+    return () => {
+      killed = true
+      killFn?.()
+    }
   }, [staggerMs])
 
   const words = children.split(' ')

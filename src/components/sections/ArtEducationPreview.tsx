@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import KineticHeading from '@/components/ui/KineticHeading'
+import RevealHeading from '@/components/ui/RevealHeading'
 import { useLanguage } from '@/context/LanguageContext'
 import type { ArtistProfile } from '@/lib/content/types'
 
@@ -22,14 +22,14 @@ export default function ArtEducationPreview({ profile }: ArtEducationPreviewProp
           <p className="text-label text-ink/35 text-xs tracking-widest uppercase mb-5">
             {t.education.eyebrow}
           </p>
-          <KineticHeading
+          <RevealHeading
             as="h2"
             id="education-preview-heading"
             className="font-serif font-light text-ink mb-6"
             style={{ fontSize: 'clamp(1.75rem, 4vw, 3rem)', letterSpacing: '0.04em', lineHeight: 1.15 }}
           >
             {t.education.heading}
-          </KineticHeading>
+          </RevealHeading>
           <p
             className="font-sans font-light text-ink/60 mb-10"
             style={{ fontSize: 'clamp(1rem, 1.5vw, 1.125rem)', lineHeight: 1.75 }}
