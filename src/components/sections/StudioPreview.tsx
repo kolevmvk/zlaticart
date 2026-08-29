@@ -8,10 +8,10 @@ interface StudioPreviewProps {
 }
 
 const ARCHIVE_IMAGES = [
-  { src: '/assets/artist-archive/zlatica-archive-01.webp', alt: 'Zlatica in the studio', w: 800, h: 1000 },
-  { src: '/assets/artist-archive/zlatica-archive-03-color.webp', alt: 'Zlatica at work', w: 800, h: 1000 },
-  { src: '/assets/artist-archive/zlatica-archive-02.webp', alt: 'Studio moment', w: 800, h: 1000 },
-  { src: '/assets/artist-archive/zlatica-archive-04.webp', alt: 'The atelier', w: 800, h: 1000 },
+  { src: '/assets/artist-archive/zlatica-archive-02.webp', alt: 'Zlatica in the studio', w: 700, h: 692 },
+  { src: '/assets/artist-archive/zlatica-archive-03-color.webp', alt: 'Zlatica at work', w: 566, h: 700 },
+  { src: '/assets/artist-archive/zlatica-archive-04.webp', alt: 'The atelier', w: 700, h: 651 },
+  { src: '/assets/artist-archive/zlatica-archive-03-color.webp', alt: 'Studio moment', w: 566, h: 700 },
 ]
 
 export default function StudioPreview({ instagramUrl }: StudioPreviewProps) {
