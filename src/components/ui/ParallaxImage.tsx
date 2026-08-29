@@ -54,10 +54,11 @@ export default function ParallaxImage({
       })
     })
 
+    const container = containerRef.current
     return () => {
       import('gsap/ScrollTrigger').then(({ ScrollTrigger }) => {
         ScrollTrigger.getAll()
-          .filter((t) => t.trigger === containerRef.current)
+          .filter((t) => t.trigger === container)
           .forEach((t) => t.kill())
       })
     }

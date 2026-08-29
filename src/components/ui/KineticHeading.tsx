@@ -11,10 +11,6 @@ interface KineticHeadingProps {
   staggerMs?: number
 }
 
-/**
- * Section heading that reveals each character from its own clip-path.
- * Falls back to static visibility for reduced-motion.
- */
 export default function KineticHeading({
   children,
   as: Tag = 'h2',
@@ -26,18 +22,20 @@ export default function KineticHeading({
   const containerRef = useRef<HTMLHeadingElement>(null)
 
   useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     if (!containerRef.current) return
+    const chars = containerRef.current.querySelectorAll<HTMLElement>('[data-char]')
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      chars.forEach((el) => { el.style.opacity = '1' })
+      return
+    }
 
     import('gsap').then(({ gsap }) => {
       import('gsap/ScrollTrigger').then(({ ScrollTrigger }) => {
         gsap.registerPlugin(ScrollTrigger)
 
-        const chars = containerRef.current!.querySelectorAll('[data-char]')
-        if (!chars.length) return
-
-        gsap.fromTo(
-          chars,
+        const tl = gsap.fromTo(
+          Array.from(chars),
           { y: '110%', opacity: 0 },
           {
             y: '0%',
@@ -52,6 +50,8 @@ export default function KineticHeading({
             },
           }
         )
+
+        return () => { tl.kill() }
       })
     })
   }, [staggerMs])
@@ -59,15 +59,26 @@ export default function KineticHeading({
   const words = children.split(' ')
 
   return (
-    <Tag ref={containerRef} id={id} className={`${className} overflow-hidden-words`} style={style}>
+    <Tag
+      ref={containerRef}
+      id={id}
+      className={`${className} overflow-hidden-words`}
+      style={style}
+      aria-label={children}
+    >
       {words.map((word, wi) => (
-        <span key={wi} className="inline-block mr-[0.3em] last:mr-0" style={{ overflow: 'hidden', verticalAlign: 'bottom' }}>
+        <span
+          key={wi}
+          className="inline-block mr-[0.3em] last:mr-0"
+          style={{ overflow: 'hidden', verticalAlign: 'bottom' }}
+          aria-hidden="true"
+        >
           {word.split('').map((char, ci) => (
             <span
               key={ci}
               data-char
               className="inline-block"
-              style={{ willChange: 'transform, opacity' }}
+              style={{ willChange: 'transform, opacity', opacity: 0 }}
             >
               {char}
             </span>

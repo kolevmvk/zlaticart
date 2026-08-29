@@ -126,8 +126,8 @@ export default function TheArtist({ profile }: TheArtistProps) {
               The Artist
             </p>
 
-            {/* Kinetic name reveal */}
-            <div data-reveal style={{ opacity: 0, marginBottom: 'clamp(1.5rem, 3vw, 2rem)' }}>
+            {/* Kinetic name reveal — standalone, not inside data-reveal to avoid double-animation */}
+            <div style={{ marginBottom: 'clamp(1.5rem, 3vw, 2rem)' }}>
               <KineticHeading
                 as="h2"
                 id="artist-heading"

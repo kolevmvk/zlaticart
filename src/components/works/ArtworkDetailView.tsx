@@ -22,14 +22,14 @@ export default function ArtworkDetailView({ artwork, prev, next }: ArtworkDetail
     import('gsap').then(({ gsap }) => {
       gsap.fromTo(
         imgWrapRef.current,
-        { opacity: 0, y: 40, clipPath: 'inset(0 0 60% 0)' },
-        { opacity: 1, y: 0, clipPath: 'inset(0 0 0% 0)', duration: 1.4, ease: 'power3.inOut', delay: 0.2 }
+        { opacity: 0, scale: 1.03 },
+        { opacity: 1, scale: 1, duration: 1.2, ease: 'power2.out', delay: 0.15 }
       )
       const metaEls = metaRef.current!.querySelectorAll<HTMLElement>('[data-meta]')
       gsap.fromTo(
         Array.from(metaEls),
-        { opacity: 0, y: 20 },
-        { opacity: 1, y: 0, duration: 0.9, ease: 'power3.out', stagger: 0.1, delay: 1.0 }
+        { opacity: 0, y: 16 },
+        { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out', stagger: 0.09, delay: 0.8 }
       )
     })
   }, [])

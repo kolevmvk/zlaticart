@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import KineticHeading from '@/components/ui/KineticHeading'
 import type { ArtistProfile } from '@/lib/content/types'
 
 interface ArtEducationPreviewProps {
@@ -16,13 +17,14 @@ export default function ArtEducationPreview({ profile }: ArtEducationPreviewProp
           <p className="text-label text-ink/35 text-xs tracking-widest uppercase mb-5">
             Art &amp; Education
           </p>
-          <h2
+          <KineticHeading
+            as="h2"
             id="education-preview-heading"
             className="font-serif font-light text-ink mb-6"
             style={{ fontSize: 'clamp(1.75rem, 4vw, 3rem)', letterSpacing: '0.04em', lineHeight: 1.15 }}
           >
             Teaching as a Form of Practice
-          </h2>
+          </KineticHeading>
           <p
             className="font-sans font-light text-ink/60 mb-10"
             style={{ fontSize: 'clamp(1rem, 1.5vw, 1.125rem)', lineHeight: 1.75 }}

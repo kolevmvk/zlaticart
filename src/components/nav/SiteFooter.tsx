@@ -26,6 +26,8 @@ export default function SiteFooter({ instagramUrl, facebookUrl, email }: SiteFoo
             { href: '/works', label: 'Works' },
             { href: '/journal', label: 'Journal' },
             { href: '/about', label: 'About' },
+            { href: '/education', label: 'Education' },
+            { href: '/exhibitions', label: 'Exhibitions' },
             { href: '/studio', label: 'Studio' },
             { href: '/contact', label: 'Contact' },
           ].map((l) => (

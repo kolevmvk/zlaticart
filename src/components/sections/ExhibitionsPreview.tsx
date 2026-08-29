@@ -16,7 +16,7 @@ export default function ExhibitionsPreview({ exhibitions }: ExhibitionsPreviewPr
 
   return (
     <section
-      className="bg-canvas section-spacing border-t border-ink/8"
+      className="bg-canvas section-spacing border-t border-ink/[0.08]"
       aria-labelledby="exhibitions-preview-heading"
     >
       <div className="section-gutter">

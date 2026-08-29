@@ -272,7 +272,7 @@ export default function HeroGL({ artwork }: HeroGLProps) {
       progressBarRef.current.style.transform = `scaleX(${p})`
       progressBarRef.current.style.opacity = p >= 1 ? '0' : '0.35'
     }
-  }, [])
+  }, [artwork.primaryImage.width, artwork.primaryImage.height])
 
   // rAF loop
   const loop = useCallback(() => {
