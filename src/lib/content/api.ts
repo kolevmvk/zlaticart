@@ -15,10 +15,15 @@ async function loadSanityQueries() {
 
 // ---------- Artworks ----------
 
+// Seed artworks use real photography of Zlatica's paintings (only titles/dates
+// are placeholder), so — unlike bio/exhibitions — they're safe to show as a
+// fallback while the Sanity artwork library is still empty.
+
 export async function getAllArtworks(): Promise<Artwork[]> {
   if (hasSanity) {
     const { sanityGetAllArtworks } = await loadSanityQueries()
-    return sanityGetAllArtworks()
+    const remote = await sanityGetAllArtworks()
+    if (remote.length > 0) return remote
   }
   const { getAllArtworks: seedFn } = await import('./seed')
   return seedFn()
@@ -27,7 +32,8 @@ export async function getAllArtworks(): Promise<Artwork[]> {
 export async function getArtworkBySlug(slug: string): Promise<Artwork | undefined> {
   if (hasSanity) {
     const { sanityGetArtworkBySlug } = await loadSanityQueries()
-    return (await sanityGetArtworkBySlug(slug)) ?? undefined
+    const remote = await sanityGetArtworkBySlug(slug)
+    if (remote) return remote
   }
   const { getArtworkBySlug: seedFn } = await import('./seed')
   return seedFn(slug)
@@ -36,19 +42,20 @@ export async function getArtworkBySlug(slug: string): Promise<Artwork | undefine
 export async function getFeaturedArtworks(): Promise<Artwork[]> {
   if (hasSanity) {
     const { sanityGetFeaturedArtworks } = await loadSanityQueries()
-    return sanityGetFeaturedArtworks()
+    const remote = await sanityGetFeaturedArtworks()
+    if (remote.length > 0) return remote
   }
   const { getFeaturedArtworks: seedFn } = await import('./seed')
   return seedFn()
 }
 
-export async function getHeroArtwork(): Promise<Artwork> {
+export async function getHeroArtwork(): Promise<Artwork | undefined> {
   if (hasSanity) {
     const { sanityGetHeroArtwork, sanityGetAllArtworks } = await loadSanityQueries()
     const hero = await sanityGetHeroArtwork()
     if (hero) return hero
     const all = await sanityGetAllArtworks()
-    return all[0]
+    if (all.length > 0) return all[0]
   }
   const { getHeroArtwork: seedFn } = await import('./seed')
   return seedFn()

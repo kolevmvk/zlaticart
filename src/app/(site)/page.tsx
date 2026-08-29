@@ -1,4 +1,5 @@
 import HeroGL from '@/components/hero/HeroGL'
+import GalleryPreparing from '@/components/hero/GalleryPreparing'
 import Navigation from '@/components/nav/Navigation'
 import SelectedWorks from '@/components/works/SelectedWorks'
 import MediaTransitions from '@/components/sections/MediaTransitions'
@@ -33,10 +34,10 @@ export default async function HomePage() {
   return (
     <main>
       {/* 1. Fixed navigation */}
-      <Navigation theme="dark" />
+      <Navigation theme={heroArtwork ? 'dark' : 'light'} />
 
       {/* 2. Living Canvas hero */}
-      <HeroGL artwork={heroArtwork} />
+      {heroArtwork ? <HeroGL artwork={heroArtwork} /> : <GalleryPreparing />}
 
       {/* 3. Selected Works */}
       <SelectedWorks artworks={featuredWorks} />

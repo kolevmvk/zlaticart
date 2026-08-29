@@ -81,7 +81,7 @@ export default function ArtworkDetailView({ artwork, prev, next }: ArtworkDetail
             }}
           >
             {artwork.title === '[Title to be confirmed]' ? (
-              <span className="italic text-ink/40">Untitled</span>
+              <span className="italic text-ink/40">{t.works.untitled}</span>
             ) : (
               artwork.title
             )}
