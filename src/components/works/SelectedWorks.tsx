@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 import ArtworkCard from './ArtworkCard'
 import KineticHeading from '@/components/ui/KineticHeading'
@@ -11,6 +12,40 @@ interface SelectedWorksProps {
 
 export default function SelectedWorks({ artworks }: SelectedWorksProps) {
   const [hero, ...rest] = artworks.slice(0, 6)
+  const eyebrowRef = useRef<HTMLParagraphElement>(null)
+
+  // Eyebrow label entrance — opacity 0→1 as section scrolls into view.
+  // Reduced-motion: show immediately without animation.
+  useEffect(() => {
+    const el = eyebrowRef.current
+    if (!el) return
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      el.style.opacity = '1'
+      return
+    }
+
+    Promise.all([import('gsap'), import('gsap/ScrollTrigger')]).then(
+      ([{ gsap }, { ScrollTrigger }]) => {
+        gsap.registerPlugin(ScrollTrigger)
+        if (!eyebrowRef.current) return
+        gsap.fromTo(
+          eyebrowRef.current,
+          { opacity: 0 },
+          {
+            opacity: 1,
+            duration: 0.9,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: eyebrowRef.current,
+              start: 'top 88%',
+              once: true,
+            },
+          }
+        )
+      }
+    )
+  }, [])
 
   return (
     <section
@@ -18,6 +53,25 @@ export default function SelectedWorks({ artworks }: SelectedWorksProps) {
       aria-labelledby="selected-works-heading"
     >
       <div className="section-gutter">
+        {/* Eyebrow — contextual bridge from the hero into the works grid.
+            Appears above the main heading as a quiet editorial label. */}
+        <p
+          ref={eyebrowRef}
+          aria-hidden="true"
+          style={{
+            opacity: 0,
+            fontFamily: 'var(--font-sans)',
+            fontWeight: 300,
+            fontSize: '0.6875rem',
+            letterSpacing: '0.28em',
+            textTransform: 'uppercase',
+            color: 'color-mix(in srgb, var(--color-ink, #1a1a18) 35%, transparent)',
+            marginBottom: '0.875rem',
+          }}
+        >
+          Works, 2024
+        </p>
+
         {/* Section header */}
         <div className="flex items-baseline justify-between mb-12 md:mb-16">
           <KineticHeading

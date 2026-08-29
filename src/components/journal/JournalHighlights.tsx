@@ -66,9 +66,9 @@ export default function JournalHighlights({ posts }: JournalHighlightsProps) {
           const items = secondaryRef.current.querySelectorAll('[data-secondary]')
           gsap.fromTo(
             Array.from(items),
-            { opacity: 0, x: 20 },
+            { opacity: 0, y: 20 },
             {
-              opacity: 1, x: 0, duration: 0.8, ease: 'power3.out', stagger: 0.12,
+              opacity: 1, y: 0, duration: 0.8, ease: 'power3.out', stagger: 0.12,
               scrollTrigger: { trigger: secondaryRef.current, start: 'top 82%', once: true },
             }
           )

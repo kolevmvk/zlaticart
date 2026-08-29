@@ -3,8 +3,11 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import Link from 'next/link'
 import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { VERT, FRAG } from '@/lib/gl/brushShader'
 import type { Artwork } from '@/lib/content/types'
+
+gsap.registerPlugin(ScrollTrigger)
 
 // ---------------------------------------------------------------------------
 // Raw WebGL helpers
@@ -225,6 +228,7 @@ interface HeroGLProps {
 
 export default function HeroGL({ artwork }: HeroGLProps) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const canvasWrapperRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const progressBarRef = useRef<HTMLDivElement>(null)
   const glRef = useRef<WebGLRenderingContext | null>(null)
@@ -432,6 +436,37 @@ export default function HeroGL({ artwork }: HeroGLProps) {
     }
   }, [])
 
+  // Scroll handoff — as hero exits, canvas wrapper gently scales/fades to
+  // suggest the artwork is being "framed" into the works grid below.
+  // Targets canvasWrapperRef (not the canvas element) to avoid interfering
+  // with the WebGL resize logic on containerRef.
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const container = containerRef.current
+    const wrapper = canvasWrapperRef.current
+    if (!container || !wrapper) return
+
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        wrapper,
+        { scale: 1, opacity: 1 },
+        {
+          scale: 0.96,
+          opacity: 0.92,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: container,
+            start: 'top top',
+            end: '30% top',
+            scrub: true,
+          },
+        }
+      )
+    })
+
+    return () => ctx.revert()
+  }, [])
+
   return (
     <section
       ref={containerRef}
@@ -439,39 +474,48 @@ export default function HeroGL({ artwork }: HeroGLProps) {
       style={{ height: '100svh', minHeight: '100svh' }}
       aria-label="ZlaticArt — hero"
     >
-      {/* WebGL canvas — full cover */}
-      {!glFailed && (
-        <canvas
-          ref={canvasRef}
-          aria-hidden="true"
-          style={{
-            position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            display: 'block',
-          }}
-        />
-      )}
+      {/* Canvas visual wrapper — scroll handoff transform is applied here.
+          Keeping this separate from containerRef so the WebGL resize observer
+          (which reads container.clientWidth/Height) is unaffected by transforms. */}
+      <div
+        ref={canvasWrapperRef}
+        style={{ position: 'absolute', inset: 0, transformOrigin: 'center center' }}
+      >
+        {/* WebGL canvas — full cover */}
+        {!glFailed && (
+          <canvas
+            ref={canvasRef}
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              display: 'block',
+            }}
+          />
+        )}
 
-      {/* Fallback for no WebGL: plain artwork image */}
-      {glFailed && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={artwork.primaryImage.src}
-          alt={artwork.primaryImage.alt}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            objectPosition: 'center',
-          }}
-        />
-      )}
+        {/* Fallback for no WebGL: plain artwork image */}
+        {glFailed && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={artwork.primaryImage.src}
+            alt={artwork.primaryImage.alt}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              objectPosition: 'center',
+            }}
+          />
+        )}
+      </div>
 
-      {/* Bottom gradient for text legibility */}
+      {/* Bottom gradient for text legibility — outside the wrapper so it
+          always covers the full section regardless of canvas scale. */}
       <div
         aria-hidden="true"
         style={{
