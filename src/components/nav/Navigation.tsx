@@ -7,7 +7,8 @@ const NAV_LINKS = [
   { href: '/works', label: 'Works' },
   { href: '/journal', label: 'Journal' },
   { href: '/about', label: 'About' },
-  { href: '/studio', label: 'Studio' },
+  { href: '/education', label: 'Education' },
+  { href: '/exhibitions', label: 'Exhibitions' },
   { href: '/contact', label: 'Contact' },
 ]
 

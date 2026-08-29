@@ -81,6 +81,16 @@ export interface Exhibition {
   externalUrl?: string
 }
 
+export interface EducationItem {
+  id: string
+  title: string
+  type: 'teaching' | 'workshop' | 'student-project' | 'project'
+  date?: string
+  description?: string
+  images?: Array<{ src: string; alt: string; width: number; height: number }>
+  featured: boolean
+}
+
 export interface SiteSettings {
   siteTitle: string
   siteDescription: string

@@ -1,4 +1,4 @@
-import type { Artwork, JournalPost, ArtistProfile, Exhibition, SiteSettings, Medium } from './types'
+import type { Artwork, JournalPost, ArtistProfile, Exhibition, SiteSettings, Medium, EducationItem } from './types'
 
 // SEED DATA — provisional content until Sanity CMS is connected.
 // Artwork titles, biography, and exhibition details are PLACEHOLDER only.
@@ -265,7 +265,55 @@ export const ARTIST_PROFILE: ArtistProfile = {
 }
 
 export const EXHIBITIONS: Exhibition[] = [
-  // Placeholder — verified exhibition history to be supplied
+  // PLACEHOLDER — verified exhibition history to be supplied by Zlatica
+  {
+    id: 'ex-01',
+    title: '[Exhibition title to be confirmed]',
+    venue: '[Venue to be confirmed]',
+    city: '[City]',
+    startDate: '2026-01-01',
+    endDate: '2026-02-28',
+    status: 'past',
+    description: '[Description placeholder — awaiting details from Zlatica]',
+  },
+  {
+    id: 'ex-02',
+    title: '[Exhibition title to be confirmed]',
+    venue: '[Venue to be confirmed]',
+    city: '[City]',
+    startDate: '2025-09-01',
+    endDate: '2025-10-31',
+    status: 'past',
+    description: '[Description placeholder — awaiting details from Zlatica]',
+  },
+]
+
+export const EDUCATION_ITEMS: EducationItem[] = [
+  // PLACEHOLDER — content to be supplied by Zlatica
+  {
+    id: 'edu-01',
+    title: '[Teaching context to be confirmed]',
+    type: 'teaching',
+    date: '2026',
+    description: '[Placeholder — awaiting description of teaching practice from Zlatica]',
+    featured: true,
+  },
+  {
+    id: 'edu-02',
+    title: '[Workshop title to be confirmed]',
+    type: 'workshop',
+    date: '2025',
+    description: '[Placeholder — awaiting workshop details from Zlatica]',
+    featured: true,
+  },
+  {
+    id: 'edu-03',
+    title: '[Project title to be confirmed]',
+    type: 'student-project',
+    date: '2025',
+    description: '[Placeholder — awaiting student project details from Zlatica]',
+    featured: false,
+  },
 ]
 
 export const SITE_SETTINGS: SiteSettings = {
@@ -315,4 +363,16 @@ export function getFeaturedJournalPosts(): JournalPost[] {
 
 export function getHeroArtwork(): Artwork {
   return getArtworkBySlug(SITE_SETTINGS.heroArtworkSlug) ?? ARTWORKS[0]
+}
+
+export function getAllExhibitions(): Exhibition[] {
+  return EXHIBITIONS.sort((a, b) => b.startDate.localeCompare(a.startDate))
+}
+
+export function getAllEducationItems(): EducationItem[] {
+  return EDUCATION_ITEMS.sort((a, b) => (a.featured === b.featured ? 0 : a.featured ? -1 : 1))
+}
+
+export function getAllArtworks(): Artwork[] {
+  return ARTWORKS.filter((a) => a.status === 'published')
 }
