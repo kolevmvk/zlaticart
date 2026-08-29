@@ -226,6 +226,7 @@ interface HeroGLProps {
 export default function HeroGL({ artwork }: HeroGLProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const progressBarRef = useRef<HTMLDivElement>(null)
   const glRef = useRef<WebGLRenderingContext | null>(null)
   const programRef = useRef<WebGLProgram | null>(null)
   const uniformsRef = useRef<Record<string, WebGLUniformLocation | null>>({})
@@ -260,6 +261,13 @@ export default function HeroGL({ artwork }: HeroGLProps) {
     gl.uniform1i(u.uArtwork, 0)
 
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
+
+    // Update progress bar — direct DOM, no React state
+    if (progressBarRef.current) {
+      const p = progressObj.current.value
+      progressBarRef.current.style.transform = `scaleX(${p})`
+      progressBarRef.current.style.opacity = p >= 1 ? '0' : '0.35'
+    }
   }, [])
 
   // rAF loop
@@ -482,6 +490,26 @@ export default function HeroGL({ artwork }: HeroGLProps) {
       >
         <Wordmark visible={wordmarkVisible} />
       </div>
+
+      {/* Brush-reveal progress bar — 1px line at bottom edge */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          width: '100%',
+          height: 1,
+          background: 'rgba(240,237,230,0.9)',
+          transformOrigin: 'left center',
+          transform: 'scaleX(0)',
+          opacity: 0,
+          transition: 'opacity 0.8s ease',
+          pointerEvents: 'none',
+          zIndex: 5,
+        }}
+        ref={progressBarRef}
+      />
 
       {/* Scroll indicator */}
       {wordmarkVisible && (

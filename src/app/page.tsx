@@ -1,5 +1,6 @@
 import HeroGL from '@/components/hero/HeroGL'
 import Navigation from '@/components/nav/Navigation'
+import MarqueeTicker from '@/components/ui/MarqueeTicker'
 import SelectedWorks from '@/components/works/SelectedWorks'
 import JournalHighlights from '@/components/journal/JournalHighlights'
 import TheArtist from '@/components/sections/TheArtist'
@@ -22,6 +23,7 @@ export default function HomePage() {
     <main>
       <Navigation theme="dark" />
       <HeroGL artwork={heroArtwork} />
+      <MarqueeTicker />
       <SelectedWorks artworks={featuredWorks} />
       <JournalHighlights posts={journalPosts} />
       <TheArtist profile={ARTIST_PROFILE} />
