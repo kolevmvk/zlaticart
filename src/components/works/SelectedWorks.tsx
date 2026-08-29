@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 import ArtworkCard from './ArtworkCard'
 import KineticHeading from '@/components/ui/KineticHeading'
+import { useLanguage } from '@/context/LanguageContext'
 import type { Artwork } from '@/lib/content/types'
 
 interface SelectedWorksProps {
@@ -11,8 +12,12 @@ interface SelectedWorksProps {
 }
 
 export default function SelectedWorks({ artworks }: SelectedWorksProps) {
+  const { t } = useLanguage()
   const [hero, ...rest] = artworks.slice(0, 6)
   const eyebrowRef = useRef<HTMLParagraphElement>(null)
+  const sectionRef = useRef<HTMLElement>(null)
+  // Holds the GSAP context so it can be reverted on unmount
+  const ctxRef = useRef<{ revert: () => void } | null>(null)
 
   // Eyebrow label entrance — opacity 0→1 as section scrolls into view.
   // Reduced-motion: show immediately without animation.
@@ -47,8 +52,51 @@ export default function SelectedWorks({ artworks }: SelectedWorksProps) {
     )
   }, [])
 
+  // Gallery-rise parallax — the section lifts from 60 px below its natural
+  // position as it enters the viewport, giving the impression of a gallery
+  // wall rising to present the paintings. Scrubbed so it responds linearly
+  // to scroll speed; animation completes before the section top reaches
+  // 60 % of the screen, leaving the rest of scroll for content discovery.
+  // Skipped entirely when the user has requested reduced motion.
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+    let cancelled = false
+
+    Promise.all([import('gsap'), import('gsap/ScrollTrigger')]).then(
+      ([{ gsap }, { ScrollTrigger }]) => {
+        if (cancelled || !sectionRef.current) return
+        gsap.registerPlugin(ScrollTrigger)
+
+        ctxRef.current = gsap.context(() => {
+          gsap.fromTo(
+            sectionRef.current!,
+            { y: 60 },
+            {
+              y: 0,
+              ease: 'none',
+              scrollTrigger: {
+                trigger: sectionRef.current!,
+                start: 'top bottom',
+                end: 'top 60%',
+                scrub: 1,
+              },
+            }
+          )
+        })
+      }
+    )
+
+    return () => {
+      cancelled = true
+      ctxRef.current?.revert()
+      ctxRef.current = null
+    }
+  }, [])
+
   return (
     <section
+      ref={sectionRef}
       className="section-spacing bg-canvas"
       aria-labelledby="selected-works-heading"
     >
@@ -69,7 +117,7 @@ export default function SelectedWorks({ artworks }: SelectedWorksProps) {
             marginBottom: '0.875rem',
           }}
         >
-          Works, 2024
+          {t.works.eyebrow}
         </p>
 
         {/* Section header */}
@@ -80,13 +128,13 @@ export default function SelectedWorks({ artworks }: SelectedWorksProps) {
             className="font-serif font-light text-ink"
             style={{ fontSize: 'clamp(1.5rem, 3.5vw, 2.75rem)', letterSpacing: '0.05em' }}
           >
-            Selected Works
+            {t.works.heading}
           </KineticHeading>
           <Link
             href="/works"
             className="text-label text-ink/50 hover:text-ink transition-colors duration-200 hidden md:block"
           >
-            View all works →
+            {t.works.viewAll}
           </Link>
         </div>
 
@@ -127,7 +175,7 @@ export default function SelectedWorks({ artworks }: SelectedWorksProps) {
             href="/works"
             className="text-label text-ink/60 hover:text-ink transition-colors duration-200"
           >
-            View all works →
+            {t.works.viewAll}
           </Link>
         </div>
       </div>

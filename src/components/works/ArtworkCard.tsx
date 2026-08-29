@@ -19,8 +19,11 @@ export default function ArtworkCard({ artwork, priority = false, size = 'medium'
       className="group block"
       aria-label={`View ${artwork.title}`}
     >
+      {/* Shadow is on this element rather than a child so it is not clipped
+          by overflow:hidden. box-shadow renders outside the border box and
+          is unaffected by the overflow property. */}
       <div
-        className="relative overflow-hidden bg-canvas-warm"
+        className="relative overflow-hidden bg-canvas-warm transition-shadow duration-[250ms] ease-out group-hover:shadow-[0_32px_64px_rgba(10,10,9,0.15)]"
         style={{
           aspectRatio:
             size === 'large'
