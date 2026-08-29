@@ -21,6 +21,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: artwork.title === '[Title to be confirmed]' ? 'Untitled work' : artwork.title,
     description: artwork.shortDescription ?? `${artwork.medium.title} by Zlatica`,
+    openGraph: {
+      images: [{ url: artwork.primaryImage.src, width: artwork.primaryImage.width, height: artwork.primaryImage.height }],
+    },
   }
 }
 

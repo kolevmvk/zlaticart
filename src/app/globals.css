@@ -106,6 +106,8 @@ body::after {
   body::after { animation: none; }
 }
 
+body.grain-paused::after { animation-play-state: paused; }
+
 @layer components {
   .text-display {
     font-family: var(--font-serif);

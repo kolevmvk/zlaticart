@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Cormorant_Garamond, DM_Sans } from 'next/font/google'
 import SmoothScroll from '@/components/providers/SmoothScroll'
 import CustomCursor from '@/components/ui/CustomCursor'
+import GrainPauser from '@/components/providers/GrainPauser'
 import './globals.css'
 
 const cormorant = Cormorant_Garamond({
@@ -53,6 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {children}
         </SmoothScroll>
         <CustomCursor />
+        <GrainPauser />
       </body>
     </html>
   )
