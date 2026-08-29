@@ -235,6 +235,7 @@ export default function HeroGL({ artwork }: HeroGLProps) {
   const tweenRef = useRef<gsap.core.Tween | null>(null)
   const startTimeRef = useRef<number>(0)
   const [wordmarkVisible, setWordmarkVisible] = useState(false)
+  const wordmarkShownRef = useRef(false)
   const [glFailed, setGlFailed] = useState(false)
   const reducedMotion = useRef(false)
 
@@ -350,8 +351,8 @@ export default function HeroGL({ artwork }: HeroGLProps) {
         rafRef.current = requestAnimationFrame(loop)
 
         if (reducedMotion.current) {
-          // Skip animation — jump to full reveal
           progressObj.current.value = 1
+          wordmarkShownRef.current = true
           setWordmarkVisible(true)
           return
         }
@@ -363,8 +364,8 @@ export default function HeroGL({ artwork }: HeroGLProps) {
             duration: 3.2,
             ease: 'power3.inOut',
             onUpdate: () => {
-              // Reveal wordmark when ~55% done
-              if (!wordmarkVisible && progressObj.current.value > 0.55) {
+              if (!wordmarkShownRef.current && progressObj.current.value > 0.55) {
+                wordmarkShownRef.current = true
                 setWordmarkVisible(true)
               }
             },
