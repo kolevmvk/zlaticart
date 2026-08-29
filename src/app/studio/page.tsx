@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Navigation from '@/components/nav/Navigation'
 import SiteFooter from '@/components/nav/SiteFooter'
 import { getSocialFeed } from '@/lib/social/provider'
-import { SITE_SETTINGS } from '@/lib/content/seed'
+import { getSiteSettings } from '@/lib/content/api'
 import Image from 'next/image'
 
 export const metadata: Metadata = {
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 }
 
 export default async function StudioPage() {
-  const feed = await getSocialFeed()
+  const [feed, settings] = await Promise.all([getSocialFeed(), getSiteSettings()])
 
   return (
     <>
@@ -87,9 +87,9 @@ export default async function StudioPage() {
         </div>
 
         <SiteFooter
-          instagramUrl={SITE_SETTINGS.instagramProfileUrl}
-          facebookUrl={SITE_SETTINGS.facebookProfileUrl}
-          email={SITE_SETTINGS.contactEmail}
+          instagramUrl={settings.instagramProfileUrl ?? null}
+          facebookUrl={settings.facebookProfileUrl ?? null}
+          email={settings.contactEmail ?? null}
         />
       </main>
     </>

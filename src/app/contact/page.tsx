@@ -1,15 +1,16 @@
 import type { Metadata } from 'next'
 import Navigation from '@/components/nav/Navigation'
 import SiteFooter from '@/components/nav/SiteFooter'
-import { SITE_SETTINGS } from '@/lib/content/seed'
+import { getSiteSettings } from '@/lib/content/api'
 
 export const metadata: Metadata = {
   title: 'Contact',
   description: 'Get in touch with Zlatica.',
 }
 
-export default function ContactPage() {
-  const { instagramProfileUrl, facebookProfileUrl, contactEmail } = SITE_SETTINGS
+export default async function ContactPage() {
+  const settings = await getSiteSettings()
+  const { instagramProfileUrl, facebookProfileUrl, contactEmail } = settings
 
   return (
     <>
@@ -81,9 +82,9 @@ export default function ContactPage() {
         </div>
 
         <SiteFooter
-          instagramUrl={instagramProfileUrl}
-          facebookUrl={facebookProfileUrl}
-          email={contactEmail}
+          instagramUrl={instagramProfileUrl ?? null}
+          facebookUrl={facebookProfileUrl ?? null}
+          email={contactEmail ?? null}
         />
       </main>
     </>

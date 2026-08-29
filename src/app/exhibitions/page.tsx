@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import Navigation from '@/components/nav/Navigation'
 import SiteFooter from '@/components/nav/SiteFooter'
-import { getAllExhibitions, SITE_SETTINGS } from '@/lib/content/seed'
+import { getAllExhibitions, getSiteSettings } from '@/lib/content/api'
+import type { Exhibition } from '@/lib/content/types'
 
 export const metadata: Metadata = {
   title: 'Exhibitions — Zlatica',
@@ -26,8 +27,8 @@ function formatDateRange(start: string, end?: string): string {
   return `${startMonth} ${year} – ${endMonth} ${endYear}`
 }
 
-export default function ExhibitionsPage() {
-  const exhibitions = getAllExhibitions()
+export default async function ExhibitionsPage() {
+  const [exhibitions, settings] = await Promise.all([getAllExhibitions(), getSiteSettings()])
 
   const upcoming = exhibitions.filter((e) => e.status === 'upcoming')
   const current = exhibitions.filter((e) => e.status === 'current')
@@ -99,16 +100,16 @@ export default function ExhibitionsPage() {
         </section>
 
         <SiteFooter
-          instagramUrl={SITE_SETTINGS.instagramProfileUrl}
-          facebookUrl={SITE_SETTINGS.facebookProfileUrl}
-          email={SITE_SETTINGS.contactEmail}
+          instagramUrl={settings.instagramProfileUrl ?? null}
+          facebookUrl={settings.facebookProfileUrl ?? null}
+          email={settings.contactEmail ?? null}
         />
       </main>
     </>
   )
 }
 
-function ExhibitionList({ exhibitions }: { exhibitions: ReturnType<typeof getAllExhibitions> }) {
+function ExhibitionList({ exhibitions }: { exhibitions: Exhibition[] }) {
   return (
     <ul className="space-y-12">
       {exhibitions.map((ex) => (

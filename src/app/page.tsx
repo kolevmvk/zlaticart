@@ -14,16 +14,21 @@ import {
   getFeaturedJournalPosts,
   getAllExhibitions,
   getAllArtworks,
-  ARTIST_PROFILE,
-  SITE_SETTINGS,
-} from '@/lib/content/seed'
+  getArtistProfile,
+  getSiteSettings,
+} from '@/lib/content/api'
 
-export default function HomePage() {
-  const heroArtwork = getHeroArtwork()
-  const featuredWorks = getFeaturedArtworks()
-  const journalPosts = getFeaturedJournalPosts()
-  const exhibitions = getAllExhibitions()
-  const allArtworks = getAllArtworks()
+export default async function HomePage() {
+  const [heroArtwork, featuredWorks, journalPosts, exhibitions, allArtworks, profile, settings] =
+    await Promise.all([
+      getHeroArtwork(),
+      getFeaturedArtworks(),
+      getFeaturedJournalPosts(),
+      getAllExhibitions(),
+      getAllArtworks(),
+      getArtistProfile(),
+      getSiteSettings(),
+    ])
 
   return (
     <main>
@@ -40,10 +45,10 @@ export default function HomePage() {
       <MediaTransitions artworks={allArtworks} />
 
       {/* 5. Artist statement / About preview */}
-      <TheArtist profile={ARTIST_PROFILE} />
+      <TheArtist profile={profile} />
 
       {/* 6. Art & Education preview */}
-      <ArtEducationPreview profile={ARTIST_PROFILE} />
+      <ArtEducationPreview profile={profile} />
 
       {/* 7. Journal highlights */}
       <JournalHighlights posts={journalPosts} />
@@ -52,13 +57,13 @@ export default function HomePage() {
       <ExhibitionsPreview exhibitions={exhibitions} />
 
       {/* 9. From the Studio / Instagram */}
-      <StudioPreview instagramUrl={SITE_SETTINGS.instagramProfileUrl} />
+      <StudioPreview instagramUrl={settings.instagramProfileUrl ?? null} />
 
       {/* 10. Contact / footer */}
       <SiteFooter
-        instagramUrl={SITE_SETTINGS.instagramProfileUrl}
-        facebookUrl={SITE_SETTINGS.facebookProfileUrl}
-        email={SITE_SETTINGS.contactEmail}
+        instagramUrl={settings.instagramProfileUrl ?? null}
+        facebookUrl={settings.facebookProfileUrl ?? null}
+        email={settings.contactEmail ?? null}
       />
     </main>
   )

@@ -3,7 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import Navigation from '@/components/nav/Navigation'
 import SiteFooter from '@/components/nav/SiteFooter'
-import { ARTWORKS, SITE_SETTINGS } from '@/lib/content/seed'
+import { getAllArtworks, getSiteSettings } from '@/lib/content/api'
 import type { MediumSlug } from '@/lib/content/types'
 
 export const metadata: Metadata = {
@@ -25,12 +25,17 @@ export default async function WorksPage({
 }: {
   searchParams: Promise<{ medium?: string }>
 }) {
-  const { medium } = await searchParams
+  const [{ medium }, artworks, settings] = await Promise.all([
+    searchParams,
+    getAllArtworks(),
+    getSiteSettings(),
+  ])
+
   const activeMedium = (medium ?? 'all') as MediumSlug | 'all'
   const works =
     activeMedium === 'all'
-      ? ARTWORKS.filter((a) => a.status === 'published')
-      : ARTWORKS.filter((a) => a.status === 'published' && a.medium.slug === activeMedium)
+      ? artworks
+      : artworks.filter((a) => a.medium.slug === activeMedium)
 
   return (
     <>
@@ -61,7 +66,7 @@ export default async function WorksPage({
               {label}
               {slug !== 'all' && (
                 <span className="ml-2 text-ink/25">
-                  ({ARTWORKS.filter((a) => a.medium.slug === slug).length})
+                  ({artworks.filter((a) => a.medium.slug === slug).length})
                 </span>
               )}
             </Link>
@@ -113,9 +118,9 @@ export default async function WorksPage({
         </div>
 
         <SiteFooter
-          instagramUrl={SITE_SETTINGS.instagramProfileUrl}
-          facebookUrl={SITE_SETTINGS.facebookProfileUrl}
-          email={SITE_SETTINGS.contactEmail}
+          instagramUrl={settings.instagramProfileUrl ?? null}
+          facebookUrl={settings.facebookProfileUrl ?? null}
+          email={settings.contactEmail ?? null}
         />
       </main>
     </>

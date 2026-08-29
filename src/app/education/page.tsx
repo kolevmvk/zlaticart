@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Navigation from '@/components/nav/Navigation'
 import SiteFooter from '@/components/nav/SiteFooter'
-import { getAllEducationItems, ARTIST_PROFILE, SITE_SETTINGS } from '@/lib/content/seed'
+import { getAllEducationItems, getArtistProfile, getSiteSettings } from '@/lib/content/api'
 import type { EducationItem } from '@/lib/content/types'
 
 export const metadata: Metadata = {
@@ -16,8 +16,12 @@ const TYPE_LABELS: Record<EducationItem['type'], string> = {
   project: 'Project',
 }
 
-export default function EducationPage() {
-  const items = getAllEducationItems()
+export default async function EducationPage() {
+  const [items, profile, settings] = await Promise.all([
+    getAllEducationItems(),
+    getArtistProfile(),
+    getSiteSettings(),
+  ])
 
   return (
     <>
@@ -39,7 +43,7 @@ export default function EducationPage() {
             className="mt-6 text-ink/60 font-sans font-light max-w-xl"
             style={{ fontSize: 'clamp(1rem, 1.5vw, 1.125rem)', lineHeight: 1.7 }}
           >
-            {ARTIST_PROFILE.educationStatement ?? (
+            {profile.educationStatement ?? (
               '[Placeholder — teaching philosophy statement from Zlatica to be added here.]'
             )}
           </p>
@@ -102,9 +106,9 @@ export default function EducationPage() {
         </section>
 
         <SiteFooter
-          instagramUrl={SITE_SETTINGS.instagramProfileUrl}
-          facebookUrl={SITE_SETTINGS.facebookProfileUrl}
-          email={SITE_SETTINGS.contactEmail}
+          instagramUrl={settings.instagramProfileUrl ?? null}
+          facebookUrl={settings.facebookProfileUrl ?? null}
+          email={settings.contactEmail ?? null}
         />
       </main>
     </>

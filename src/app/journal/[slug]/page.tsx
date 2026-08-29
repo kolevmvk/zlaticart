@@ -4,19 +4,20 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import Navigation from '@/components/nav/Navigation'
 import SiteFooter from '@/components/nav/SiteFooter'
-import { getJournalPostBySlug, getArtworkBySlug, JOURNAL_POSTS, SITE_SETTINGS } from '@/lib/content/seed'
+import { getJournalPostBySlug, getAllJournalPosts, getArtworkBySlug, getSiteSettings } from '@/lib/content/api'
 
 interface Props {
   params: Promise<{ slug: string }>
 }
 
 export async function generateStaticParams() {
-  return JOURNAL_POSTS.map((p) => ({ slug: p.slug }))
+  const posts = await getAllJournalPosts()
+  return posts.map((p) => ({ slug: p.slug }))
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const post = getJournalPostBySlug(slug)
+  const post = await getJournalPostBySlug(slug)
   if (!post) return { title: 'Entry not found' }
   return {
     title: post.title,
@@ -39,12 +40,16 @@ function formatDate(iso: string) {
 
 export default async function JournalArticlePage({ params }: Props) {
   const { slug } = await params
-  const post = getJournalPostBySlug(slug)
+  const [post, settings] = await Promise.all([
+    getJournalPostBySlug(slug),
+    getSiteSettings(),
+  ])
+
   if (!post) notFound()
 
-  const relatedArtworks = (post.relatedArtworkSlugs ?? [])
-    .map((s) => getArtworkBySlug(s))
-    .filter(Boolean)
+  const relatedArtworks = await Promise.all(
+    (post.relatedArtworkSlugs ?? []).map((s) => getArtworkBySlug(s))
+  ).then((results) => results.filter(Boolean))
 
   return (
     <>
@@ -147,9 +152,9 @@ export default async function JournalArticlePage({ params }: Props) {
         </div>
 
         <SiteFooter
-          instagramUrl={SITE_SETTINGS.instagramProfileUrl}
-          facebookUrl={SITE_SETTINGS.facebookProfileUrl}
-          email={SITE_SETTINGS.contactEmail}
+          instagramUrl={settings.instagramProfileUrl ?? null}
+          facebookUrl={settings.facebookProfileUrl ?? null}
+          email={settings.contactEmail ?? null}
         />
       </main>
     </>

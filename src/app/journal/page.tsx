@@ -3,7 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import Navigation from '@/components/nav/Navigation'
 import SiteFooter from '@/components/nav/SiteFooter'
-import { JOURNAL_POSTS, SITE_SETTINGS } from '@/lib/content/seed'
+import { getAllJournalPosts, getSiteSettings } from '@/lib/content/api'
 
 export const metadata: Metadata = {
   title: 'Journal',
@@ -25,12 +25,17 @@ export default async function JournalPage({
 }: {
   searchParams: Promise<{ category?: string }>
 }) {
-  const { category } = await searchParams
+  const [{ category }, allPosts, settings] = await Promise.all([
+    searchParams,
+    getAllJournalPosts(),
+    getSiteSettings(),
+  ])
+
   const activeCategory = category ?? 'All'
   const posts =
     activeCategory === 'All'
-      ? JOURNAL_POSTS
-      : JOURNAL_POSTS.filter((p) => p.category === activeCategory)
+      ? allPosts
+      : allPosts.filter((p) => p.category === activeCategory)
 
   return (
     <>
@@ -116,9 +121,9 @@ export default async function JournalPage({
         </div>
 
         <SiteFooter
-          instagramUrl={SITE_SETTINGS.instagramProfileUrl}
-          facebookUrl={SITE_SETTINGS.facebookProfileUrl}
-          email={SITE_SETTINGS.contactEmail}
+          instagramUrl={settings.instagramProfileUrl ?? null}
+          facebookUrl={settings.facebookProfileUrl ?? null}
+          email={settings.contactEmail ?? null}
         />
       </main>
     </>

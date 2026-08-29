@@ -2,15 +2,15 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Navigation from '@/components/nav/Navigation'
 import SiteFooter from '@/components/nav/SiteFooter'
-import { ARTIST_PROFILE, SITE_SETTINGS } from '@/lib/content/seed'
+import { getArtistProfile, getSiteSettings } from '@/lib/content/api'
 
 export const metadata: Metadata = {
   title: 'About',
   description: 'About Zlatica — painter, abstract artist, and art-school educator.',
 }
 
-export default function AboutPage() {
-  const profile = ARTIST_PROFILE
+export default async function AboutPage() {
+  const [profile, settings] = await Promise.all([getArtistProfile(), getSiteSettings()])
 
   return (
     <>
@@ -127,9 +127,9 @@ export default function AboutPage() {
         )}
 
         <SiteFooter
-          instagramUrl={SITE_SETTINGS.instagramProfileUrl}
-          facebookUrl={SITE_SETTINGS.facebookProfileUrl}
-          email={SITE_SETTINGS.contactEmail}
+          instagramUrl={settings.instagramProfileUrl ?? null}
+          facebookUrl={settings.facebookProfileUrl ?? null}
+          email={settings.contactEmail ?? null}
         />
       </main>
     </>
