@@ -1,10 +1,5 @@
 import type { Metadata, Viewport } from 'next'
 import { Cormorant_Garamond, DM_Sans } from 'next/font/google'
-import SmoothScroll from '@/components/providers/SmoothScroll'
-import PageTransition from '@/components/providers/PageTransition'
-import CustomCursor from '@/components/ui/CustomCursor'
-import GrainPauser from '@/components/providers/GrainPauser'
-import { LanguageProvider } from '@/context/LanguageContext'
 import './globals.css'
 
 const cormorant = Cormorant_Garamond({
@@ -51,17 +46,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="sr" className={`${cormorant.variable} ${dmSans.variable}`}>
-      <body>
-        <LanguageProvider>
-          <SmoothScroll>
-            <PageTransition>
-              {children}
-            </PageTransition>
-          </SmoothScroll>
-          <CustomCursor />
-          <GrainPauser />
-        </LanguageProvider>
-      </body>
+      <body>{children}</body>
     </html>
   )
 }

@@ -73,7 +73,9 @@
 }
 
 /* ---- Animated film grain overlay ---- */
-body::after {
+/* body[data-grain] is set by GrainPauser, which only mounts in the (site)
+   route group — keeps this off the embedded Sanity Studio at /admin. */
+body[data-grain]::after {
   content: '';
   position: fixed;
   inset: -50%;
@@ -103,10 +105,10 @@ body::after {
 body[data-cursor] * { cursor: none !important; }
 
 @media (prefers-reduced-motion: reduce) {
-  body::after { animation: none; }
+  body[data-grain]::after { animation: none; }
 }
 
-body.grain-paused::after { animation-play-state: paused; }
+body[data-grain].grain-paused::after { animation-play-state: paused; }
 
 @layer components {
   .text-display {

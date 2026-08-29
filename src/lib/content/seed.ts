@@ -45,7 +45,7 @@ export const MEDIA: Record<string, Medium> = {
 export const ARTWORKS: Artwork[] = [
   {
     id: 'work-01',
-    title: '[Title to be confirmed]',
+    title: 'Untitled',
     slug: 'untitled-oil-01',
     status: 'published',
     year: undefined,
@@ -66,7 +66,7 @@ export const ARTWORKS: Artwork[] = [
   },
   {
     id: 'work-02',
-    title: '[Title to be confirmed]',
+    title: 'Untitled',
     slug: 'untitled-oil-02',
     status: 'published',
     year: undefined,
@@ -86,7 +86,7 @@ export const ARTWORKS: Artwork[] = [
   },
   {
     id: 'work-03',
-    title: '[Title to be confirmed]',
+    title: 'Untitled',
     slug: 'untitled-oil-03',
     status: 'published',
     year: undefined,
@@ -104,7 +104,7 @@ export const ARTWORKS: Artwork[] = [
   },
   {
     id: 'work-04',
-    title: '[Title to be confirmed]',
+    title: 'Untitled',
     slug: 'untitled-acrylic-01',
     status: 'published',
     year: undefined,
@@ -122,7 +122,7 @@ export const ARTWORKS: Artwork[] = [
   },
   {
     id: 'work-05',
-    title: '[Title to be confirmed]',
+    title: 'Untitled',
     slug: 'untitled-acrylic-02',
     status: 'published',
     year: undefined,
@@ -139,7 +139,7 @@ export const ARTWORKS: Artwork[] = [
   },
   {
     id: 'work-06',
-    title: '[Title to be confirmed]',
+    title: 'Untitled',
     slug: 'untitled-watercolor-01',
     status: 'published',
     year: undefined,
@@ -157,7 +157,7 @@ export const ARTWORKS: Artwork[] = [
   },
   {
     id: 'work-07',
-    title: '[Title to be confirmed]',
+    title: 'Untitled',
     slug: 'untitled-graphics-01',
     status: 'published',
     year: undefined,
@@ -175,7 +175,7 @@ export const ARTWORKS: Artwork[] = [
   },
   {
     id: 'work-08',
-    title: '[Title to be confirmed]',
+    title: 'Untitled',
     slug: 'untitled-mosaic-01',
     status: 'published',
     year: undefined,
@@ -257,7 +257,7 @@ export const ARTIST_PROFILE: ArtistProfile = {
     { src: '/assets/artist-archive/zlatica-archive-03-color.webp', alt: 'Zlatica at work', width: 566, height: 700 },
     { src: '/assets/artist-archive/zlatica-archive-04.webp', alt: 'Studio moment', width: 700, height: 651 },
   ],
-  shortBio: '[Awaiting final biography from Zlatica] — Painter working in oil, acrylic, watercolor, and mixed media. Art-school educator.',
+  shortBio: undefined,
   biography: undefined,
   artistStatement: undefined,
   educationStatement: undefined,
@@ -331,7 +331,9 @@ export const SITE_SETTINGS: SiteSettings = {
   ],
   featuredJournalSlugs: ['on-returning-to-the-canvas', 'teaching-as-practice', 'watercolor-and-resistance'],
   instagramProfileUrl: null, // PLACEHOLDER — supply verified URL
+  instagramConnectionStatus: 'manual',
   facebookProfileUrl: null, // PLACEHOLDER — supply verified URL
+  facebookConnectionStatus: 'manual',
   contactEmail: null, // PLACEHOLDER — supply email
   contactEnabled: false,
 }

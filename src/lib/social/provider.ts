@@ -24,10 +24,14 @@ async function getCMSFeed(): Promise<SocialFeedResult> {
 // async function getMetaFeed(): Promise<SocialFeedResult> { ... }
 
 export async function getSocialFeed(): Promise<SocialFeedResult> {
-  // When Meta credentials are available, try the API provider first:
-  // const metaCredentials = process.env.META_ACCESS_TOKEN
-  // if (metaCredentials) {
-  //   try { return await getMetaFeed() } catch { /* fall through */ }
+  // Zlatica reports her Instagram/Facebook connection status from the CMS
+  // (Podešavanja → Instagram i Facebook). When she has moved a platform to
+  // "connected", the developer wires META_ACCESS_TOKEN here and implements
+  // getMetaFeed() — nothing else in the UI needs to change, it already reads
+  // from this single function.
+  // const { SITE_SETTINGS } = await import('../content/seed')
+  // if (SITE_SETTINGS.instagramConnectionStatus === 'connected' && process.env.META_ACCESS_TOKEN) {
+  //   try { return await getMetaFeed() } catch { /* fall through to CMS fallback */ }
   // }
   return getCMSFeed()
 }

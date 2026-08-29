@@ -92,9 +92,10 @@ export async function sanityGetJournalPostBySlug(slug: string): Promise<JournalP
 }
 
 export async function sanityGetFeaturedJournalPosts(): Promise<JournalPost[]> {
-  return sanityClient.fetch(`
+  const result: JournalPost[] | null = await sanityClient.fetch(`
     *[_type == "siteSettings"][0].featuredJournalPosts[]->{${JOURNAL_FIELDS}}
   `)
+  return result ?? []
 }
 
 export async function sanityGetArtistProfile(): Promise<ArtistProfile | null> {
@@ -152,7 +153,9 @@ export async function sanityGetSiteSettings(): Promise<Partial<SiteSettings> | n
       "featuredArtworkSlugs": featuredArtworks[]->slug.current,
       "featuredJournalSlugs": featuredJournalPosts[]->slug.current,
       instagramProfileUrl,
+      "instagramConnectionStatus": coalesce(instagramConnectionStatus, "manual"),
       facebookProfileUrl,
+      "facebookConnectionStatus": coalesce(facebookConnectionStatus, "manual"),
       contactEmail,
       contactEnabled
     }

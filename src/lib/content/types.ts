@@ -62,7 +62,7 @@ export interface ArtistProfile {
   roleLine: string
   portrait: { src: string; alt: string; width: number; height: number }
   atelierImages?: Array<{ src: string; alt: string; width: number; height: number }>
-  shortBio: string
+  shortBio?: string
   biography?: string
   artistStatement?: string
   educationStatement?: string
@@ -91,6 +91,8 @@ export interface EducationItem {
   featured: boolean
 }
 
+export type SocialConnectionStatus = 'manual' | 'pending' | 'connected'
+
 export interface SiteSettings {
   siteTitle: string
   siteDescription: string
@@ -98,7 +100,9 @@ export interface SiteSettings {
   featuredArtworkSlugs: string[]
   featuredJournalSlugs: string[]
   instagramProfileUrl: string | null
+  instagramConnectionStatus: SocialConnectionStatus
   facebookProfileUrl: string | null
+  facebookConnectionStatus: SocialConnectionStatus
   contactEmail: string | null
   contactEnabled: boolean
 }

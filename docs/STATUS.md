@@ -60,6 +60,17 @@
 ### Cinematic motion skill
 - Created at `~/.claude/commands/cinematic-motion.md` — reusable, not project-specific
 
+### Instagram/Facebook self-service connection
+- `sanity/schemas/siteSettings.ts` — grouped "Instagram i Facebook" fields: profile URLs (unchanged) + `instagramConnectionStatus` / `facebookConnectionStatus` (manual / pending / connected)
+- `sanity/components/SocialConnectionGuide.tsx` — read-only in-Studio guide (Serbian, no dev jargon) walking Zlatica through switching to an Instagram Professional/Business account and linking a Facebook Page
+- `docs/ADMIN_GUIDE_SR.md` — matching plain-language section: what to do, when to loop in the developer, when nothing breaks in the meantime
+- `src/lib/social/provider.ts` — feed function unchanged in shape; commented hook shows exactly where to wire `META_ACCESS_TOKEN` once she reports "connected" — no other code needs to change when that day comes
+
+### Admin panel isolation from site chrome
+- Site pages moved into `src/app/(site)/` route group with their own layout carrying CustomCursor, SmoothScroll, PageTransition, GrainPauser — `/admin` (Sanity Studio) sits outside it, on the slimmed-down root layout
+- Fixes: Studio previously inherited `cursor: none` on every element (from the site's custom cursor) and an animated film-grain overlay across the whole viewport, making the CMS hard to use
+- Verified in a real headless browser: `/` still has custom cursor + grain active, `/admin` has native cursor and no grain
+
 ### Build health
 - `npm run build` PASSES — 22 static/SSG pages, zero TypeScript errors, zero ESLint errors
 - All aria fixes applied, SSR flash fixed, scoped GSAP cleanup
