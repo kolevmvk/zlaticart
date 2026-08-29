@@ -64,7 +64,7 @@ function loadImageTexture(gl: WebGLRenderingContext, src: string): Promise<WebGL
 // ---------------------------------------------------------------------------
 
 function Wordmark({ visible, tagline, cta }: { visible: boolean; tagline: string; cta: string }) {
-  const zlaticaRef = useRef<HTMLSpanElement>(null)
+  const zlaticaRef = useRef<HTMLHeadingElement>(null)
   const artRef = useRef<HTMLSpanElement>(null)
   const subtitleRef = useRef<HTMLParagraphElement>(null)
   const ctaRef = useRef<HTMLDivElement>(null)
@@ -130,9 +130,10 @@ function Wordmark({ visible, tagline, cta }: { visible: boolean; tagline: string
     <div className="select-none">
       {/* ZLATICA — massive serif, full emotional weight */}
       <div style={{ display: 'flex', alignItems: 'flex-end', lineHeight: 1 }}>
-        <span
+        <h1
           ref={zlaticaRef}
           style={{
+            margin: 0,
             fontFamily: 'var(--font-serif)',
             fontStyle: 'italic',
             fontWeight: 300,
@@ -156,7 +157,7 @@ function Wordmark({ visible, tagline, cta }: { visible: boolean; tagline: string
               </span>
             </span>
           ))}
-        </span>
+        </h1>
 
         {/* ART — small, faint, kerned wide, sits at baseline */}
         <span

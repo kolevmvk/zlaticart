@@ -17,8 +17,10 @@ const dmSans = DM_Sans({
   display: 'swap',
 })
 
-/* Replace with production URL before deploy */
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://zlaticart.com'
+// `||` (not `??`) deliberately: the production env var has been observed set to an
+// empty string rather than unset, which `??` would not fall back on. Canonical
+// production domain is `www` — the apex 308-redirects to it.
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.zlaticart.com'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

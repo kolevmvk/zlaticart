@@ -19,11 +19,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const artwork = await getArtworkBySlug(slug)
   if (!artwork) return { title: 'Work not found' }
   return {
-    title: artwork.title === '[Title to be confirmed]' ? 'Untitled work' : artwork.title,
+    title: `${artwork.title} — Zlatica`,
     description: artwork.shortDescription ?? `${artwork.medium.title} by Zlatica`,
     openGraph: {
       images: [{ url: artwork.primaryImage.src, width: artwork.primaryImage.width, height: artwork.primaryImage.height }],
     },
+    alternates: { canonical: `/works/${artwork.slug}` },
   }
 }
 
@@ -41,8 +42,23 @@ export default async function ArtworkDetailPage({ params }: Props) {
   const prev = currentIdx > 0 ? allArtworks[currentIdx - 1] : null
   const next = currentIdx < allArtworks.length - 1 ? allArtworks[currentIdx + 1] : null
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'VisualArtwork',
+    name: artwork.title,
+    image: artwork.primaryImage.src,
+    artform: artwork.medium.title,
+    ...(artwork.year ? { dateCreated: String(artwork.year) } : {}),
+    ...(artwork.dimensions ? { artworkSurface: artwork.dimensions } : {}),
+    creator: { '@type': 'Person', name: 'Zlatica' },
+  }
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Navigation />
       <main className="min-h-svh bg-canvas">
         <ArtworkDetailView artwork={artwork} prev={prev} next={next} />
