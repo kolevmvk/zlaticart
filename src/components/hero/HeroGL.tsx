@@ -79,38 +79,46 @@ function Wordmark({ visible, tagline, cta }: { visible: boolean; tagline: string
     const cta = ctaRef.current
 
     const tl = gsap.timeline()
-    tl.fromTo(
-      Array.from(chars),
-      { yPercent: 115, rotateZ: 0.5 },
-      {
-        yPercent: 0,
-        rotateZ: 0,
-        duration: 1.35,
-        ease: 'power4.out',
-        stagger: { each: 0.042, from: 'start' },
-      }
-    )
-    if (art) {
-      tl.fromTo(
-        art,
-        { opacity: 0, x: -14 },
-        { opacity: 1, x: 0, duration: 0.9, ease: 'power3.out' },
-        '-=0.6'
-      )
-    }
+
+    // Subtitle breathes in first — sets emotional context
     if (subtitle) {
       tl.fromTo(
         subtitle,
-        { opacity: 0, y: 10 },
-        { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' },
-        '-=0.55'
+        { opacity: 0, y: 6, filter: 'blur(6px)' },
+        { opacity: 1, y: 0, filter: 'blur(0px)', duration: 1.1, ease: 'power3.out' }
       )
     }
+
+    // ZLATICA: chars rise from below with heavy weight — oil painting reveal
+    tl.fromTo(
+      Array.from(chars),
+      { yPercent: 108, opacity: 0 },
+      {
+        yPercent: 0,
+        opacity: 1,
+        duration: 1.6,
+        ease: 'power4.out',
+        stagger: { each: 0.055, from: 'start' },
+      },
+      '-=0.4'
+    )
+
+    // ART suffix — slides in from slight left with ease
+    if (art) {
+      tl.fromTo(
+        art,
+        { opacity: 0, x: -20, filter: 'blur(4px)' },
+        { opacity: 1, x: 0, filter: 'blur(0px)', duration: 1.0, ease: 'power3.out' },
+        '-=1.0'
+      )
+    }
+
+    // CTA — quiet fade
     if (cta) {
       tl.fromTo(
         cta,
-        { opacity: 0 },
-        { opacity: 1, duration: 0.6, ease: 'none' },
+        { opacity: 0, y: 8 },
+        { opacity: 1, y: 0, duration: 0.9, ease: 'power2.out' },
         '-=0.3'
       )
     }
@@ -120,24 +128,7 @@ function Wordmark({ visible, tagline, cta }: { visible: boolean; tagline: string
 
   return (
     <div className="select-none">
-      {/* Subtitle above */}
-      <p
-        ref={subtitleRef}
-        style={{
-          opacity: 0,
-          fontFamily: 'var(--font-sans)',
-          fontWeight: 300,
-          fontSize: 'clamp(0.6rem, 1.2vw, 0.8125rem)',
-          letterSpacing: '0.28em',
-          textTransform: 'uppercase',
-          color: 'rgba(240,237,230,0.55)',
-          marginBottom: 'clamp(1rem, 2.5vw, 1.75rem)',
-        }}
-      >
-        {tagline}
-      </p>
-
-      {/* ZLATICA — character split */}
+      {/* ZLATICA — massive serif, full emotional weight */}
       <div style={{ display: 'flex', alignItems: 'flex-end', lineHeight: 1 }}>
         <span
           ref={zlaticaRef}
@@ -145,8 +136,8 @@ function Wordmark({ visible, tagline, cta }: { visible: boolean; tagline: string
             fontFamily: 'var(--font-serif)',
             fontStyle: 'italic',
             fontWeight: 300,
-            fontSize: 'clamp(4.5rem, 14.5vw, 14rem)',
-            letterSpacing: '-0.01em',
+            fontSize: 'clamp(5rem, 16.5vw, 16rem)',
+            letterSpacing: '-0.02em',
             color: '#F0EDE6',
             display: 'inline-flex',
           }}
@@ -159,7 +150,7 @@ function Wordmark({ visible, tagline, cta }: { visible: boolean; tagline: string
             >
               <span
                 className="hc-inner"
-                style={{ display: 'inline-block', willChange: 'transform' }}
+                style={{ display: 'inline-block', willChange: 'transform', opacity: 0 }}
               >
                 {ch}
               </span>
@@ -167,32 +158,51 @@ function Wordmark({ visible, tagline, cta }: { visible: boolean; tagline: string
           ))}
         </span>
 
-        {/* ART suffix */}
+        {/* ART — small, faint, kerned wide, sits at baseline */}
         <span
           ref={artRef}
           style={{
             opacity: 0,
             fontFamily: 'var(--font-sans)',
-            fontWeight: 300,
-            fontSize: 'clamp(1.25rem, 3.8vw, 3.75rem)',
-            letterSpacing: '0.5em',
+            fontWeight: 200,
+            fontSize: 'clamp(1rem, 2.8vw, 2.8rem)',
+            letterSpacing: '0.6em',
             textTransform: 'uppercase',
-            color: 'rgba(240,237,230,0.65)',
-            paddingBottom: '0.18em',
-            marginLeft: '0.25em',
-            willChange: 'opacity, transform',
+            color: 'rgba(240,237,230,0.5)',
+            paddingBottom: '0.15em',
+            marginLeft: '0.3em',
+            willChange: 'opacity, transform, filter',
           }}
         >
           Art
         </span>
       </div>
 
-      {/* CTA */}
+      {/* Tagline below name — discipline markers, barely visible */}
+      <p
+        ref={subtitleRef}
+        style={{
+          opacity: 0,
+          fontFamily: 'var(--font-sans)',
+          fontWeight: 300,
+          fontSize: 'clamp(0.55rem, 1.05vw, 0.75rem)',
+          letterSpacing: '0.32em',
+          textTransform: 'uppercase',
+          color: 'rgba(240,237,230,0.38)',
+          marginTop: 'clamp(0.75rem, 1.5vw, 1.25rem)',
+          willChange: 'opacity, transform, filter',
+        }}
+      >
+        {tagline}
+      </p>
+
+      {/* CTA — absolute minimal */}
       <div
         ref={ctaRef}
         style={{
           opacity: 0,
-          marginTop: 'clamp(1.5rem, 3vw, 2.5rem)',
+          marginTop: 'clamp(2rem, 4vw, 3.5rem)',
+          willChange: 'opacity, transform',
         }}
       >
         <Link
@@ -200,19 +210,27 @@ function Wordmark({ visible, tagline, cta }: { visible: boolean; tagline: string
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '0.75rem',
+            gap: '1rem',
             fontFamily: 'var(--font-sans)',
-            fontSize: 'clamp(0.6rem, 1.1vw, 0.75rem)',
-            letterSpacing: '0.20em',
+            fontSize: 'clamp(0.55rem, 1vw, 0.7rem)',
+            letterSpacing: '0.26em',
             textTransform: 'uppercase',
-            color: 'rgba(240,237,230,0.55)',
-            transition: 'color 0.25s',
+            color: 'rgba(240,237,230,0.45)',
+            transition: 'color 0.4s ease, gap 0.4s ease',
           }}
-          onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = 'rgba(240,237,230,0.9)')}
-          onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'rgba(240,237,230,0.55)')}
+          onMouseEnter={(e) => {
+            const el = e.currentTarget as HTMLElement
+            el.style.color = 'rgba(240,237,230,0.9)'
+            el.style.gap = '1.4rem'
+          }}
+          onMouseLeave={(e) => {
+            const el = e.currentTarget as HTMLElement
+            el.style.color = 'rgba(240,237,230,0.45)'
+            el.style.gap = '1rem'
+          }}
         >
           {cta}
-          <span style={{ display: 'inline-block', fontSize: '1.1rem' }}>↓</span>
+          <span style={{ display: 'inline-block', width: 28, height: 1, background: 'rgba(240,237,230,0.4)', flexShrink: 0 }} />
         </Link>
       </div>
     </div>
@@ -231,6 +249,7 @@ export default function HeroGL({ artwork }: HeroGLProps) {
   const { t } = useLanguage()
   const containerRef = useRef<HTMLDivElement>(null)
   const canvasWrapperRef = useRef<HTMLDivElement>(null)
+  const mouseTiltRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const progressBarRef = useRef<HTMLDivElement>(null)
   const glRef = useRef<WebGLRenderingContext | null>(null)
@@ -377,13 +396,14 @@ export default function HeroGL({ artwork }: HeroGLProps) {
         }
 
         // Delay, then tween progress 0→1
+        // Oil paint timing: slow, weighted start — like loading a brush and dragging
         const timer = setTimeout(() => {
           tweenRef.current = gsap.to(progressObj.current, {
             value: 1,
-            duration: 3.2,
-            ease: 'power3.inOut',
+            duration: 4.2,
+            ease: 'power2.inOut',
             onUpdate: () => {
-              if (!wordmarkShownRef.current && progressObj.current.value > 0.55) {
+              if (!wordmarkShownRef.current && progressObj.current.value > 0.62) {
                 wordmarkShownRef.current = true
                 setWordmarkVisible(true)
               }
@@ -392,7 +412,7 @@ export default function HeroGL({ artwork }: HeroGLProps) {
               setWordmarkVisible(true)
             },
           })
-        }, 400)
+        }, 280)
 
         return () => clearTimeout(timer)
       })
@@ -435,6 +455,41 @@ export default function HeroGL({ artwork }: HeroGLProps) {
     return () => {
       window.removeEventListener('wheel', boost)
       window.removeEventListener('touchstart', boost)
+    }
+  }, [])
+
+  // Mouse parallax — gentle canvas tilt that responds to pointer position.
+  // Uses rAF lerp for smoothness. Skipped on touch and reduced-motion.
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    if (window.matchMedia('(pointer: coarse)').matches) return
+    const tilt = mouseTiltRef.current
+    if (!tilt) return
+
+    let targetX = 0, targetY = 0
+    let currentX = 0, currentY = 0
+    let raf = 0
+
+    const onMove = (e: MouseEvent) => {
+      const nx = (e.clientX / window.innerWidth - 0.5) * 2
+      const ny = (e.clientY / window.innerHeight - 0.5) * 2
+      targetX = ny * -5   // rotateX: positive up = tilt back
+      targetY = nx * 6    // rotateY: positive right = tilt right
+    }
+
+    const tick = () => {
+      currentX += (targetX - currentX) * 0.05
+      currentY += (targetY - currentY) * 0.05
+      tilt.style.transform = `perspective(1100px) rotateX(${currentX.toFixed(3)}deg) rotateY(${currentY.toFixed(3)}deg)`
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+
+    window.addEventListener('mousemove', onMove, { passive: true })
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      cancelAnimationFrame(raf)
+      tilt.style.transform = ''
     }
   }, [])
 
@@ -483,37 +538,51 @@ export default function HeroGL({ artwork }: HeroGLProps) {
         ref={canvasWrapperRef}
         style={{ position: 'absolute', inset: 0, transformOrigin: 'center center' }}
       >
-        {/* WebGL canvas — full cover */}
-        {!glFailed && (
-          <canvas
-            ref={canvasRef}
-            aria-hidden="true"
-            style={{
-              position: 'absolute',
-              inset: 0,
-              width: '100%',
-              height: '100%',
-              display: 'block',
-            }}
-          />
-        )}
+        {/* Inner tilt div — receives mouse parallax transform.
+            GSAP scroll scale lives on canvasWrapperRef above; this layer
+            handles only pointer-driven perspective tilt so the two transforms
+            never conflict. */}
+        <div
+          ref={mouseTiltRef}
+          style={{
+            position: 'absolute',
+            inset: '-4%',
+            transformOrigin: 'center center',
+            willChange: 'transform',
+          }}
+        >
+          {/* WebGL canvas — full cover */}
+          {!glFailed && (
+            <canvas
+              ref={canvasRef}
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                display: 'block',
+              }}
+            />
+          )}
 
-        {/* Fallback for no WebGL: plain artwork image */}
-        {glFailed && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={artwork.primaryImage.src}
-            alt={artwork.primaryImage.alt}
-            style={{
-              position: 'absolute',
-              inset: 0,
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              objectPosition: 'center',
-            }}
-          />
-        )}
+          {/* Fallback for no WebGL: plain artwork image */}
+          {glFailed && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={artwork.primaryImage.src}
+              alt={artwork.primaryImage.alt}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                objectPosition: 'center',
+              }}
+            />
+          )}
+        </div>
       </div>
 
       {/* Bottom gradient for text legibility — outside the wrapper so it
@@ -524,7 +593,7 @@ export default function HeroGL({ artwork }: HeroGLProps) {
           position: 'absolute',
           inset: 0,
           background:
-            'linear-gradient(to top, rgba(10,10,9,0.70) 0%, rgba(10,10,9,0.20) 35%, rgba(10,10,9,0) 60%)',
+            'linear-gradient(to top, rgba(10,10,9,0.85) 0%, rgba(10,10,9,0.55) 22%, rgba(10,10,9,0.15) 45%, rgba(10,10,9,0) 65%)',
           pointerEvents: 'none',
         }}
       />

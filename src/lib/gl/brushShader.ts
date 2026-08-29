@@ -9,128 +9,209 @@ void main() {
 `
 
 export const FRAG = /* glsl */`
-precision mediump float;
+precision highp float;
 
 uniform sampler2D uArtwork;
 uniform float uProgress;
 uniform float uTime;
-uniform float uAspect;        /* viewport width / height */
-uniform float uArtworkAspect; /* artwork width / height */
+uniform float uAspect;
+uniform float uArtworkAspect;
 
 varying vec2 vUv;
 
-/* ---- noise ---- */
+/* ─── noise primitives ─────────────────────────────────────────────────── */
 float hash(vec2 p) {
   return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 }
+float hash1(float n) { return fract(sin(n) * 43758.5453); }
+
 float vnoise(vec2 p) {
   vec2 i = floor(p), f = fract(p);
   vec2 u = f * f * (3.0 - 2.0 * f);
-  return mix(
-    mix(hash(i),             hash(i + vec2(1,0)), u.x),
-    mix(hash(i + vec2(0,1)), hash(i + vec2(1,1)), u.x), u.y);
+  return mix(mix(hash(i), hash(i+vec2(1,0)), u.x),
+             mix(hash(i+vec2(0,1)), hash(i+vec2(1,1)), u.x), u.y);
 }
+
 float fbm(vec2 p) {
   float v = 0.0, a = 0.5;
-  for (int k = 0; k < 5; k++) { v += a * vnoise(p); p = p * 2.3 + vec2(1.7, 9.2); a *= 0.5; }
+  mat2 rot = mat2(0.8, 0.6, -0.6, 0.8);
+  for (int k = 0; k < 6; k++) {
+    v += a * vnoise(p);
+    p = rot * p * 2.1 + vec2(1.7, 9.2);
+    a *= 0.5;
+  }
   return v;
 }
-/* Sharper S-curve for crisper brush edge */
-float scurve(float x) {
+
+/* ─── cover-crop UV ────────────────────────────────────────────────────── */
+vec2 coverCrop(vec2 uv, float va, float aa) {
+  if (va > aa) {
+    float s = aa / va;
+    return vec2(uv.x, uv.y * s + (1.0 - s) * 0.5);
+  } else {
+    float s = va / aa;
+    return vec2(uv.x * s + (1.0 - s) * 0.5, uv.y);
+  }
+}
+
+/* ─── linen canvas weave (before paint) ───────────────────────────────── */
+float canvasWeave(vec2 uv) {
+  float freqH = 160.0, freqV = 158.0;
+  float nH = vnoise(uv * vec2(1.0, 8.0) + vec2(0.0, 3.3)) * 0.5;
+  float nV = vnoise(uv * vec2(8.0, 1.0) + vec2(7.1, 0.0)) * 0.5;
+  float wH = sin((uv.x + nH * 0.04) * freqH * 6.2832) * 0.5 + 0.5;
+  float wV = sin((uv.y + nV * 0.04) * freqV * 6.2832) * 0.5 + 0.5;
+  float check = step(0.5, fract(uv.x * freqH * 0.5));
+  return mix(wH, wV, check) * 0.018 + 0.004;
+}
+
+/* ─── impasto surface normal (faked from FBM) ─────────────────────────── */
+/* Returns a pseudo-height representing paint thickness variation */
+float paintRelief(vec2 uv, float rev) {
+  float coarse = fbm(uv * 4.5 + vec2(3.1, 7.7));
+  float fine   = fbm(uv * 22.0 + vec2(8.3, 1.2)) * 0.35;
+  return (coarse + fine) * rev * rev;
+}
+
+/* ─── smooth step curve ────────────────────────────────────────────────── */
+float scurve5(float x) {
   x = clamp(x, 0.0, 1.0);
   return x * x * x * (x * (x * 6.0 - 15.0) + 10.0);
 }
 
-/* Organic y-center: slightly irregular band positions */
+/* ─── brush stroke mask ────────────────────────────────────────────────── */
+/* Each stroke is a bristle-fan sweep: wide gaussian band in Y,
+   noisy advancing front in X (or reversed for alternating direction). */
 float strokeYc(float idx) {
-  float t = (idx + 0.5) / 7.0;
-  return t + (hash(vec2(idx * 3.71, 1.31)) - 0.5) * 0.05;
+  return (idx + 0.5) / 7.0 + (hash(vec2(idx * 3.71, 1.31)) - 0.5) * 0.045;
 }
 
-/* Single brush stroke mask */
-float strokeReveal(vec2 uv, float idx, float sp) {
-  float yc  = strokeYc(idx);
-  /* Per-stroke sigma: slight variation for organic banding */
-  float yw  = 0.155 + hash(vec2(idx * 5.13, 2.77)) * 0.055;
+float bristleMask(vec2 uv, float idx) {
+  float yc = strokeYc(idx);
+  /* Band width varies per stroke — oil brush loads more paint on center strokes */
+  float yw = 0.13 + hash(vec2(idx * 5.13, 2.77)) * 0.06;
   float yEnv = exp(-pow((uv.y - yc) / yw, 2.0));
 
-  /* Bristle: coarse FBM edge + fine-grained fibers + wavy wobble */
-  float slow  = (fbm(vec2(uv.y * 9.6 + idx * 5.3, uv.x * 0.38 + uTime * 0.007 * (1.0 - sp))) * 2.0 - 1.0) * 0.11;
-  float fiber = (vnoise(uv * vec2(30.0, 5.0) + vec2(idx * 23.9)) * 2.0 - 1.0) * 0.022;
-  float wave  = sin(uv.y * 14.0 + idx * 3.1) * 0.006; /* gentle wavy leading edge */
-  float n     = slow + fiber + wave;
+  /* Individual bristles: multiple thin sinusoids offset by fibrous noise */
+  float bristle = 0.0;
+  for (int b = 0; b < 4; b++) {
+    float bf = float(b);
+    float offset = (hash1(idx * 13.7 + bf * 5.3) - 0.5) * yw * 1.8;
+    float bw = 0.018 + hash1(idx * 9.1 + bf * 3.7) * 0.012;
+    bristle = max(bristle, exp(-pow((uv.y - yc - offset) / bw, 2.0)));
+  }
+  yEnv = mix(yEnv, bristle, 0.45);
 
-  /* Per-stroke edge softness */
-  float ew = 0.016 + hash(vec2(idx * 7.3, 4.1)) * 0.010;
+  return yEnv;
+}
+
+float strokeReveal(vec2 uv, float idx, float sp) {
+  float yEnv = bristleMask(uv, idx);
+
+  /* Noisy sweep front: FBM gives organic drags; vnoise gives bristle shred */
+  float n_slow = (fbm(vec2(uv.y * 6.3 + idx * 5.3, uv.x * 0.4 + uTime * 0.008)) * 2.0 - 1.0) * 0.13;
+  float n_shred = (vnoise(uv * vec2(45.0, 3.0) + vec2(idx * 17.3)) * 2.0 - 1.0) * 0.025;
+  float n = n_slow + n_shred;
+
+  float ew = 0.014 + hash(vec2(idx * 7.3, 4.1)) * 0.009;
+
   float t;
-
   if (mod(idx, 2.0) < 1.0) {
-    /* L → R */
-    float sweepPos = sp + n;
-    t = clamp((sweepPos - uv.x) / ew, 0.0, 1.0);
+    t = clamp((sp + n - uv.x) / ew, 0.0, 1.0);
   } else {
-    /* R → L */
-    float sweepPos = 1.0 - sp + n;
-    t = clamp((uv.x - sweepPos) / ew, 0.0, 1.0);
+    t = clamp((uv.x - (1.0 - sp) + n) / ew, 0.0, 1.0);
   }
 
-  return clamp(scurve(t) * yEnv, 0.0, 1.0);
+  return clamp(scurve5(t) * yEnv, 0.0, 1.0);
 }
 
-/* Cover-crop UV: maintain artwork aspect ratio, fill viewport (like object-fit: cover) */
-vec2 coverCrop(vec2 uv, float viewAspect, float artAspect) {
-  if (viewAspect > artAspect) {
-    /* Viewport wider — fit width, crop height symmetrically */
-    float scaleY = artAspect / viewAspect;
-    return vec2(uv.x, uv.y * scaleY + (1.0 - scaleY) * 0.5);
-  } else {
-    /* Viewport taller (or equal) — fit height, crop width symmetrically */
-    float scaleX = viewAspect / artAspect;
-    return vec2(uv.x * scaleX + (1.0 - scaleX) * 0.5, uv.y);
-  }
-}
-
+/* ─── main ─────────────────────────────────────────────────────────────── */
 void main() {
-  /* Base artwork UV — cover crop + flip V (WebGL origin bottom-left) */
+  /* ── artwork UV with cover crop and living micro-warp ── */
   vec2 baseUv = vec2(vUv.x, 1.0 - vUv.y);
-
-  /* Living pigment micro-warp — active only once reveal is complete.
-     Very subtle sinusoidal displacement that makes the artwork feel alive,
-     as if you're watching paint breathe on a real canvas. */
   float breathe = step(0.999, uProgress);
-  float warpX = sin(uTime * 0.31 + vUv.y * 2.1) * 0.0012 * breathe;
-  float warpY = cos(uTime * 0.27 + vUv.x * 1.7) * 0.0010 * breathe;
+  /* Subtle organic breathing — paint shifts infinitesimally on canvas */
+  float warpX = (fbm(vUv * 3.1 + vec2(uTime * 0.11, 1.7)) - 0.5) * 0.0022 * breathe;
+  float warpY = (fbm(vUv * 3.1 + vec2(2.3, uTime * 0.09)) - 0.5) * 0.0018 * breathe;
   baseUv += vec2(warpX, warpY);
 
   vec2 artUv = coverCrop(baseUv, uAspect, uArtworkAspect);
   vec4 art   = texture2D(uArtwork, artUv);
 
-  /* Warm paper ground with slow-drifting grain */
-  float g    = fbm(vUv * 92.0 + uTime * 0.18) * 0.013;
-  vec3 paper = vec3(0.941 + g, 0.929 + g * 0.84, 0.902 + g * 0.62);
+  /* ── raw linen ground ── */
+  float grain  = fbm(vUv * 88.0 + uTime * 0.14) * 0.014;
+  float weave  = canvasWeave(vUv);
+  /* Warm primed linen: cream-white with fine variation */
+  vec3 linen = vec3(
+    0.944 + grain * 1.1 - weave * 0.9,
+    0.932 + grain * 0.9 - weave * 0.75,
+    0.908 + grain * 0.7 - weave * 0.55
+  );
 
-  /* Aggregate 7 strokes — more strokes = denser, more uniform reveal */
+  /* ── aggregate stroke reveals ── */
   float rev   = 0.0;
-  float leadE = 0.0; /* leading-edge accumulator */
+  float leadE = 0.0;
+  float edgeAcc = 0.0;
+
   for (int i = 0; i < 7; i++) {
     float fi = float(i);
-    float sp = clamp(uProgress * 7.0 - fi, 0.0, 1.0);
-    float s  = strokeReveal(vUv, fi, sp);
+    float sp  = clamp(uProgress * 7.0 - fi, 0.0, 1.0);
+    float s   = strokeReveal(vUv, fi, sp);
+
     rev = max(rev, s);
 
-    /* Glow: peak near the active sweep front of each in-progress stroke */
-    float atFront = exp(-pow((1.0 - sp) * 5.5, 2.0)); /* 1 when sp≈1, fades as stroke completes */
-    float edgeAmt = exp(-pow((s - 0.10) * 20.0, 2.0)) * atFront;
+    /* Leading-edge glow: peaks at the active front of each in-progress stroke */
+    float atFront = exp(-pow((1.0 - sp) * 5.0, 2.0)) * step(0.001, sp) * (1.0 - step(0.999, sp));
+    float edgeAmt = exp(-pow((s - 0.08) * 18.0, 2.0)) * atFront;
     leadE = max(leadE, edgeAmt);
-  }
-  rev   = clamp(rev, 0.0, 1.0);
-  leadE = clamp(leadE, 0.0, 1.0);
 
-  /* Warm amber wet-paint glow at the leading brush edge */
-  vec3 glowTint = vec3(0.09, 0.04, -0.04); /* warm toward red/amber, slightly away from blue */
-  vec3 col = mix(paper, art.rgb, rev);
-  col += glowTint * leadE * 0.22;
-  col += leadE * 0.06; /* subtle brightness pop */
+    /* Impasto ridge: paint piles up at the transition boundary */
+    float ridge = exp(-pow((s - 0.5) * 9.0, 2.0)) * step(0.01, sp);
+    edgeAcc = max(edgeAcc, ridge);
+  }
+  rev     = clamp(rev, 0.0, 1.0);
+  leadE   = clamp(leadE, 0.0, 1.0);
+  edgeAcc = clamp(edgeAcc, 0.0, 1.0);
+
+  /* ── impasto relief shading ── */
+  /* Fake directional light from top-left reveals paint texture thickness */
+  float relief = paintRelief(vUv, rev);
+  /* Light direction: top-left = (-1, -1) normalized */
+  vec2 eps = vec2(0.004, 0.004);
+  float dX = paintRelief(vUv + vec2(eps.x, 0.0), rev) - paintRelief(vUv - vec2(eps.x, 0.0), rev);
+  float dY = paintRelief(vUv + vec2(0.0, eps.y), rev) - paintRelief(vUv - vec2(0.0, eps.y), rev);
+  vec3 normal = normalize(vec3(-dX, -dY, 0.08));
+  vec3 lightDir = normalize(vec3(-0.6, -0.55, 1.0));
+  float diffuse = max(dot(normal, lightDir), 0.0);
+  float specPaint = pow(max(dot(reflect(-lightDir, normal), vec3(0,0,1)), 0.0), 18.0);
+
+  /* ── base colour mix: linen → oil painting ── */
+  vec3 col = mix(linen, art.rgb, rev);
+
+  /* Impasto thickness: slightly brightens peaks, darkens valleys */
+  col += vec3(0.06, 0.05, 0.03) * (diffuse - 0.5) * rev * 0.55;
+
+  /* Specular sheen — oil paint is semi-glossy */
+  col += vec3(1.0, 0.98, 0.92) * specPaint * rev * 0.12;
+
+  /* Canvas weave shows through thin paint areas */
+  float paintThick = rev * (0.8 + relief * 0.2);
+  col -= weave * (1.0 - paintThick) * 0.55;
+
+  /* Impasto ridge at stroke boundary — dark resin accumulation */
+  col -= vec3(0.07, 0.04, 0.01) * edgeAcc * (1.0 - rev * 0.6);
+
+  /* ── wet paint leading edge ── */
+  /* Amber glow: fresh oil paint has warm luminosity */
+  col += vec3(0.12, 0.06, -0.02) * leadE * 0.28;
+  /* Gloss highlight: wet paint catches studio light */
+  float wetGloss = pow(leadE, 1.8) * 0.32;
+  col += vec3(1.0, 0.97, 0.88) * wetGloss;
+
+  /* ── vignette — activates after reveal ─── */
+  float vd = length((vUv - 0.5) * vec2(1.1, 1.25));
+  float vign = 1.0 - smoothstep(0.28, 0.82, vd) * 0.22 * breathe;
+  col *= vign;
 
   gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
 }
