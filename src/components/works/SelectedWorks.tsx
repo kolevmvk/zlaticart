@@ -47,13 +47,14 @@ export default function SelectedWorks({ artworks }: SelectedWorksProps) {
 
         gsap.fromTo(
           Array.from(cards),
-          { opacity: 0, y: 40 },
+          { opacity: 0, y: 50, clipPath: 'inset(0 0 100% 0)' },
           {
             opacity: 1,
             y: 0,
-            duration: 1.1,
+            clipPath: 'inset(0 0 0% 0)',
+            duration: 1.2,
             ease: 'power3.out',
-            stagger: 0.12,
+            stagger: { each: 0.10, from: 'start' },
             scrollTrigger: {
               trigger: gridRef.current,
               start: 'top 85%',

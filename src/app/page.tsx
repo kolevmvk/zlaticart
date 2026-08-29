@@ -1,11 +1,17 @@
-import LivingCanvas from '@/components/hero/LivingCanvas'
+import HeroGL from '@/components/hero/HeroGL'
 import Navigation from '@/components/nav/Navigation'
 import SelectedWorks from '@/components/works/SelectedWorks'
 import JournalHighlights from '@/components/journal/JournalHighlights'
 import TheArtist from '@/components/sections/TheArtist'
 import StudioPreview from '@/components/sections/StudioPreview'
 import SiteFooter from '@/components/nav/SiteFooter'
-import { getHeroArtwork, getFeaturedArtworks, getFeaturedJournalPosts, ARTIST_PROFILE, SITE_SETTINGS } from '@/lib/content/seed'
+import {
+  getHeroArtwork,
+  getFeaturedArtworks,
+  getFeaturedJournalPosts,
+  ARTIST_PROFILE,
+  SITE_SETTINGS,
+} from '@/lib/content/seed'
 
 export default function HomePage() {
   const heroArtwork = getHeroArtwork()
@@ -15,7 +21,7 @@ export default function HomePage() {
   return (
     <main>
       <Navigation theme="dark" />
-      <LivingCanvas artwork={heroArtwork} />
+      <HeroGL artwork={heroArtwork} />
       <SelectedWorks artworks={featuredWorks} />
       <JournalHighlights posts={journalPosts} />
       <TheArtist profile={ARTIST_PROFILE} />

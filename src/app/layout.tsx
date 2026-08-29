@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Cormorant_Garamond, DM_Sans } from 'next/font/google'
+import SmoothScroll from '@/components/providers/SmoothScroll'
+import CustomCursor from '@/components/ui/CustomCursor'
 import './globals.css'
 
 const cormorant = Cormorant_Garamond({
@@ -19,20 +21,17 @@ const dmSans = DM_Sans({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Zlatica — Painter · Educator · Artist',
-    template: '%s — Zlatica',
+    default: 'ZlaticArt — Painter · Educator · Artist',
+    template: '%s — ZlaticArt',
   },
   description:
-    'The digital home of Zlatica\'s artistic practice: abstract painter, watercolorist, and art-school educator.',
+    'The digital home of ZlaticArt: abstract painter, watercolorist, and art-school educator.',
   openGraph: {
     type: 'website',
     siteName: 'ZlaticArt',
     locale: 'sr_RS',
   },
-  robots: {
-    index: true,
-    follow: true,
-  },
+  robots: { index: true, follow: true },
 }
 
 export const viewport: Viewport = {
@@ -42,17 +41,15 @@ export const viewport: Viewport = {
   themeColor: '#F0EDE6',
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="sr"
-      className={`${cormorant.variable} ${dmSans.variable}`}
-    >
-      <body>{children}</body>
+    <html lang="sr" className={`${cormorant.variable} ${dmSans.variable}`}>
+      <body>
+        <SmoothScroll>
+          {children}
+        </SmoothScroll>
+        <CustomCursor />
+      </body>
     </html>
   )
 }

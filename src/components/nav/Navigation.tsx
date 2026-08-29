@@ -56,10 +56,10 @@ export default function Navigation({ theme = 'dark' }: NavigationProps) {
         <div className="section-gutter flex items-center justify-between py-5 md:py-6">
           <Link
             href="/"
-            className={`text-label text-xs tracking-brand font-light ${textColor} hover:opacity-60 transition-opacity duration-200`}
-            aria-label="Zlatica — home"
+            className={`font-serif italic font-light text-sm tracking-wide ${textColor} hover:opacity-60 transition-opacity duration-200`}
+            aria-label="ZlaticArt — home"
           >
-            ZLATICA
+            ZlaticArt
           </Link>
 
           {/* Desktop nav */}
@@ -104,7 +104,7 @@ export default function Navigation({ theme = 'dark' }: NavigationProps) {
             className="text-label text-xs tracking-brand font-light text-canvas"
             onClick={() => setMenuOpen(false)}
           >
-            ZLATICA
+            ZlaticArt
           </Link>
           <button
             className="text-canvas p-2 -mr-2"

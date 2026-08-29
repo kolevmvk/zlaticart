@@ -13,8 +13,8 @@ export default function SiteFooter({ instagramUrl, facebookUrl, email }: SiteFoo
     <footer className="bg-ink section-gutter py-12 md:py-16" role="contentinfo">
       <div className="grid md:grid-cols-3 gap-10 md:gap-6 mb-12 md:mb-16">
         <div>
-          <p className="font-serif text-canvas font-light text-2xl tracking-widest mb-2">
-            ZLATICA
+          <p className="font-serif text-canvas font-light italic text-2xl tracking-wide mb-2">
+            ZlaticArt
           </p>
           <p className="text-gallery-meta text-canvas/40">
             Painter · Educator · Artist
