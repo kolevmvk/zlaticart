@@ -38,57 +38,50 @@ export default function ArtworkDetailView({ artwork, prev, next }: ArtworkDetail
 
   return (
     <>
-      {/* Full-width artwork display */}
-      <div
-        ref={imgWrapRef}
-        className="relative w-full bg-canvas-warm"
-        style={{
-          height: 'clamp(60vh, 80vh, 90vh)',
-          paddingTop: '4.5rem',
-          opacity: 0,
-        }}
-      >
-        <Image
-          src={img.src}
-          alt={img.alt}
-          fill
-          priority
-          quality={95}
-          sizes="100vw"
-          className="object-contain p-4 md:p-8 lg:p-12"
-          style={{ objectPosition: 'center top' }}
-        />
-      </div>
+      {/* Desktop: editorial two-column | Mobile: stacked */}
+      <div className="md:flex md:mt-[5rem]">
 
-      {/* Metadata block */}
-      <div ref={metaRef} className="section-gutter py-12 md:py-16">
-        <div className="grid md:grid-cols-12 gap-8 md:gap-12">
-          <div className="md:col-span-7">
-            <h1
-              data-meta
-              className="font-serif font-light text-ink mb-4"
-              style={{
-                fontSize: 'clamp(1.75rem, 4vw, 3rem)',
-                letterSpacing: '0.04em',
-                lineHeight: '1.15',
-                opacity: 0,
-              }}
-            >
-              {artwork.title === '[Title to be confirmed]' ? (
-                <span className="italic text-ink/40">Untitled</span>
-              ) : (
-                artwork.title
-              )}
-            </h1>
+        {/* LEFT — artwork column */}
+        <div
+          ref={imgWrapRef}
+          className="relative w-full md:w-7/12 bg-canvas-warm h-[clamp(60vh,80vh,90vh)] pt-[4.5rem] md:h-[calc(100vh-5rem)] md:pt-0"
+          style={{ opacity: 0 }}
+        >
+          <Image
+            src={img.src}
+            alt={img.alt}
+            fill
+            priority
+            quality={95}
+            sizes="(min-width: 768px) 58vw, 100vw"
+            className="object-contain p-4 md:p-8 lg:p-12"
+            style={{ objectPosition: 'center top' }}
+          />
+        </div>
 
-            {artwork.story && (
-              <div data-meta style={{ opacity: 0 }} className="mt-6">
-                <p className="font-sans text-ink/70 leading-relaxed text-base">{artwork.story}</p>
-              </div>
+        {/* RIGHT — metadata column: vertically centered on desktop, full-width below on mobile */}
+        <div
+          ref={metaRef}
+          className="section-gutter py-12 md:w-5/12 md:flex md:flex-col md:justify-center md:py-16 md:px-8 md:h-[calc(100vh-5rem)] md:overflow-y-auto"
+        >
+          <h1
+            data-meta
+            className="font-serif font-light text-ink mb-4"
+            style={{
+              fontSize: 'clamp(2rem, 3.5vw, 3.5rem)',
+              letterSpacing: '0.04em',
+              lineHeight: '1.15',
+              opacity: 0,
+            }}
+          >
+            {artwork.title === '[Title to be confirmed]' ? (
+              <span className="italic text-ink/40">Untitled</span>
+            ) : (
+              artwork.title
             )}
-          </div>
+          </h1>
 
-          <aside className="md:col-span-5 md:col-start-9" data-meta style={{ opacity: 0 }}>
+          <div data-meta style={{ opacity: 0 }} className="mt-6">
             <dl className="space-y-3">
               {[
                 { label: 'Medium', value: artwork.medium.title },
@@ -103,24 +96,30 @@ export default function ArtworkDetailView({ artwork, prev, next }: ArtworkDetail
                 ) : null
               )}
             </dl>
+          </div>
 
-            {artwork.instagramUrl && (
-              <div className="mt-8">
-                <a
-                  href={artwork.instagramUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-label text-ink/50 hover:text-ink transition-colors duration-200"
-                >
-                  View on Instagram →
-                </a>
-              </div>
-            )}
-          </aside>
+          {artwork.story && (
+            <div data-meta style={{ opacity: 0 }} className="mt-8">
+              <p className="font-sans text-ink/70 leading-relaxed text-base">{artwork.story}</p>
+            </div>
+          )}
+
+          {artwork.instagramUrl && (
+            <div data-meta style={{ opacity: 0 }} className="mt-8">
+              <a
+                href={artwork.instagramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-label text-ink/50 hover:text-ink transition-colors duration-200"
+              >
+                View on Instagram →
+              </a>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Prev/Next */}
+      {/* Prev/Next — unchanged */}
       <div className="section-gutter py-10 border-t border-canvas-deep flex justify-between gap-4">
         {prev ? (
           <Link
