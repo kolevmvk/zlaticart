@@ -21,10 +21,27 @@ export default function Navigation({ theme = 'dark' }: NavigationProps) {
   const menuRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
 
+  const headerRef = useRef<HTMLElement>(null)
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60)
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  // Entrance: fade + slide down on mount
+  useEffect(() => {
+    if (!headerRef.current) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const el = headerRef.current
+    el.style.opacity = '0'
+    el.style.transform = 'translateY(-12px)'
+    const t = setTimeout(() => {
+      el.style.transition = 'opacity 0.8s ease, transform 0.8s ease'
+      el.style.opacity = '1'
+      el.style.transform = 'translateY(0)'
+    }, 600) // after hero starts
+    return () => clearTimeout(t)
   }, [])
 
   useEffect(() => {
@@ -50,6 +67,7 @@ export default function Navigation({ theme = 'dark' }: NavigationProps) {
   return (
     <>
       <header
+        ref={headerRef}
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${bgColor}`}
         role="banner"
       >
