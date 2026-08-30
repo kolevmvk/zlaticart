@@ -13,7 +13,7 @@ const ARCHIVE_IMAGES = [
   { src: '/assets/artist-archive/zlatica-archive-02.webp', alt: 'Zlatica in the studio', w: 700, h: 692 },
   { src: '/assets/artist-archive/zlatica-archive-03-color.webp', alt: 'Zlatica at work', w: 566, h: 700 },
   { src: '/assets/artist-archive/zlatica-archive-04.webp', alt: 'The atelier', w: 700, h: 651 },
-  { src: '/assets/artist-archive/zlatica-portrait.webp', alt: 'Studio moment', w: 566, h: 700 },
+  { src: '/assets/artist-archive/zlatica-archive-05.webp', alt: 'Zlatica', w: 700, h: 1052 },
 ]
 
 export default function StudioPreview({ instagramUrl }: StudioPreviewProps) {
