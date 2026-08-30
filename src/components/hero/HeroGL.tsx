@@ -239,17 +239,27 @@ function Wordmark({ visible, tagline, cta }: { visible: boolean; tagline: string
 }
 
 // ---------------------------------------------------------------------------
-// Scroll-driven pigment-pull stage envelope
-// ---------------------------------------------------------------------------
-// Maps raw scroll progress (0 = pin start, 1 = pin end) to the pigment
-// pull's intensity. Position of the traveling band in the shader is driven
-// directly by the raw progress instead (always advances, never reverses);
-// this envelope only controls how strong it looks at that position. The
-// hero is now briefly pinned while this plays out (see the scroll-effect
-// useEffect below), so the effect stays on screen for its full arc instead
-// of racing past as the hero scrolls away. See docs/HERO_SPEC.md
-// scroll-handoff + the living-canvas skill.
-function pigmentEnvelope(t: number): number {
+// Two independent hero effects — do not conflate:
+//
+// 1) Initial brush reveal (initialRevealRef.value, → uInitialRevealProgress)
+//    One-shot, tweened 0→1 on hero mount over ~4.2s, boostable by an early
+//    scroll/touch (see the "Scroll/wheel boost" effect below), skipped
+//    entirely under reduced motion (jumps straight to 1, static hero).
+//    Drives the shader's 7-stroke brush reveal that uncovers the artwork
+//    from bare linen. Nothing below this effect touches that tween.
+//
+// 2) Scroll oil-smear (scrollSmearProgressRef, → uScrollSmearProgress /
+//    uPigmentPullStrength) Only starts once the user scrolls the hero
+//    (a separate ScrollTrigger, briefly pinning the section — see the
+//    pigment-pull-scroll useEffect further down). Drags/smears paint that
+//    effect (1) has already revealed; it can never touch bare linen. Also
+//    skipped entirely under reduced motion.
+//
+// pigmentPullEnvelope() below belongs to effect (2) only — it maps that
+// ScrollTrigger's raw progress (0 = pin start, 1 = pin end) to how strong
+// the smear looks at that position. See docs/HERO_SPEC.md scroll-handoff +
+// the living-canvas skill.
+function pigmentPullEnvelope(t: number): number {
   const smootherstep = (x: number) => {
     const c = Math.min(Math.max(x, 0), 1)
     return c * c * c * (c * (c * 6 - 15) + 10)
@@ -279,18 +289,20 @@ export default function HeroGL({ artwork }: HeroGLProps) {
   const uniformsRef = useRef<Record<string, WebGLUniformLocation | null>>({})
   const textureRef = useRef<WebGLTexture | null>(null)
   const rafRef = useRef<number>(0)
-  const progressObj = useRef({ value: 0 })
+  const initialRevealRef = useRef({ value: 0 })
   const tweenRef = useRef<gsap.core.Tween | null>(null)
   const startTimeRef = useRef<number>(0)
   const [wordmarkVisible, setWordmarkVisible] = useState(false)
   const wordmarkShownRef = useRef(false)
   const [glFailed, setGlFailed] = useState(false)
   const reducedMotion = useRef(false)
-  // Raw scroll progress (0→1) driving the pigment-pull effect, and a
-  // one-time device scale factor (1 desktop / 0.5 mobile-or-touch). Refs,
-  // not state — read every rAF frame, never trigger a re-render.
-  const pigmentScrollRef = useRef(0)
-  const pigmentDeviceScaleRef = useRef(1)
+  // Effect (2) only — scroll oil-smear. Raw scroll progress (0→1, position
+  // of the traveling band) and a one-time device scale factor (0.85
+  // mobile-or-touch / 1 desktop). Refs, not state — read every rAF frame,
+  // never trigger a re-render. initialRevealRef above is effect (1) and is
+  // entirely separate.
+  const scrollSmearProgressRef = useRef(0)
+  const pigmentPullDeviceScaleRef = useRef(1)
 
   // Render one WebGL frame
   const render = useCallback(() => {
@@ -304,17 +316,17 @@ export default function HeroGL({ artwork }: HeroGLProps) {
 
     const u = uniformsRef.current
     const t = (performance.now() - startTimeRef.current) * 0.001
-    gl.uniform1f(u.uProgress, progressObj.current.value)
+    gl.uniform1f(u.uInitialRevealProgress, initialRevealRef.current.value)
     gl.uniform1f(u.uTime, t)
     gl.uniform1f(u.uAspect, gl.drawingBufferWidth / gl.drawingBufferHeight)
     gl.uniform1f(
       u.uArtworkAspect,
       artwork.primaryImage.width / artwork.primaryImage.height
     )
-    gl.uniform1f(u.uScrollT, pigmentScrollRef.current)
+    gl.uniform1f(u.uScrollSmearProgress, scrollSmearProgressRef.current)
     gl.uniform1f(
-      u.uPigmentPull,
-      pigmentEnvelope(pigmentScrollRef.current) * pigmentDeviceScaleRef.current
+      u.uPigmentPullStrength,
+      pigmentPullEnvelope(scrollSmearProgressRef.current) * pigmentPullDeviceScaleRef.current
     )
 
     gl.activeTexture(gl.TEXTURE0)
@@ -325,7 +337,7 @@ export default function HeroGL({ artwork }: HeroGLProps) {
 
     // Update progress bar — direct DOM, no React state
     if (progressBarRef.current) {
-      const p = progressObj.current.value
+      const p = initialRevealRef.current.value
       progressBarRef.current.style.transform = `scaleX(${p})`
       progressBarRef.current.style.opacity = p >= 1 ? '0' : '0.35'
     }
@@ -404,12 +416,12 @@ export default function HeroGL({ artwork }: HeroGLProps) {
     // Cache uniform locations
     uniformsRef.current = {
       uArtwork: gl.getUniformLocation(prog, 'uArtwork'),
-      uProgress: gl.getUniformLocation(prog, 'uProgress'),
+      uInitialRevealProgress: gl.getUniformLocation(prog, 'uInitialRevealProgress'),
       uTime: gl.getUniformLocation(prog, 'uTime'),
       uAspect: gl.getUniformLocation(prog, 'uAspect'),
       uArtworkAspect: gl.getUniformLocation(prog, 'uArtworkAspect'),
-      uScrollT: gl.getUniformLocation(prog, 'uScrollT'),
-      uPigmentPull: gl.getUniformLocation(prog, 'uPigmentPull'),
+      uScrollSmearProgress: gl.getUniformLocation(prog, 'uScrollSmearProgress'),
+      uPigmentPullStrength: gl.getUniformLocation(prog, 'uPigmentPullStrength'),
     }
 
     startTimeRef.current = performance.now()
@@ -423,7 +435,7 @@ export default function HeroGL({ artwork }: HeroGLProps) {
         rafRef.current = requestAnimationFrame(loop)
 
         if (reducedMotion.current) {
-          progressObj.current.value = 1
+          initialRevealRef.current.value = 1
           wordmarkShownRef.current = true
           setWordmarkVisible(true)
           return
@@ -432,12 +444,12 @@ export default function HeroGL({ artwork }: HeroGLProps) {
         // Delay, then tween progress 0→1
         // Oil paint timing: slow, weighted start — like loading a brush and dragging
         const timer = setTimeout(() => {
-          tweenRef.current = gsap.to(progressObj.current, {
+          tweenRef.current = gsap.to(initialRevealRef.current, {
             value: 1,
             duration: 4.2,
             ease: 'power2.inOut',
             onUpdate: () => {
-              if (!wordmarkShownRef.current && progressObj.current.value > 0.62) {
+              if (!wordmarkShownRef.current && initialRevealRef.current.value > 0.62) {
                 wordmarkShownRef.current = true
                 setWordmarkVisible(true)
               }
@@ -476,7 +488,9 @@ export default function HeroGL({ artwork }: HeroGLProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Scroll/wheel boost
+  // Effect (1) only — lets an early scroll/touch accelerate the initial
+  // brush reveal tween so it doesn't feel like a forced wait. Unrelated to
+  // effect (2)'s ScrollTrigger further down.
   useEffect(() => {
     const boost = () => {
       if (!tweenRef.current || tweenRef.current.progress() >= 1) return
@@ -527,8 +541,10 @@ export default function HeroGL({ artwork }: HeroGLProps) {
     }
   }, [])
 
-  // Pigment-pull scroll effect — the hero is pinned for a short, controlled
-  // distance so the pull plays out fully on screen instead of racing past
+  // Effect (2) — scroll oil-smear. Independent of the initial brush reveal
+  // above (effect 1): this only starts once the user scrolls. The hero is
+  // pinned for a short, controlled distance so the smear plays out fully
+  // on screen instead of racing past
   // while the hero scrolls away (the old failure mode: by the time the
   // effect peaked at progress 0.55–0.85, the hero was already mostly off
   // screen because it was never pinned). The pin distance is a fraction of
@@ -536,14 +552,14 @@ export default function HeroGL({ artwork }: HeroGLProps) {
   // scroll, or the wheel/touch boost above, clears it quickly.
   //
   // Everything is driven off one ScrollTrigger's progress (0→1 across the
-  // pin): pigmentScrollRef feeds the shader's traveling pigment band, and
+  // pin): scrollSmearProgressRef feeds the shader's traveling pigment band, and
   // the same progress drives the canvas-wrapper scale/opacity "framing"
   // handoff toward the works grid below — but only in the pin's final
   // stretch (see `handoff` below), so the frame doesn't shrink while the
   // pigment pull is still peaking.
   //
   // Skipped entirely under reduced motion, which leaves the hero unpinned
-  // and pigmentScrollRef at 0 forever — the shader then applies zero
+  // and scrollSmearProgressRef at 0 forever — the shader then applies zero
   // displacement and the hero stays permanently sharp, matching this
   // file's other reduced-motion fallbacks.
   useEffect(() => {
@@ -556,7 +572,7 @@ export default function HeroGL({ artwork }: HeroGLProps) {
     // Mobile gets its own tuning, not just a weaker version: a shorter pin
     // (less scroll commitment on a small screen) but a strength close to
     // desktop so the pigment pull still reads clearly.
-    pigmentDeviceScaleRef.current = isSmallOrTouch ? 0.85 : 1
+    pigmentPullDeviceScaleRef.current = isSmallOrTouch ? 0.85 : 1
     const pinFraction = isSmallOrTouch ? 0.42 : 0.62
 
     const ctx = gsap.context(() => {
@@ -569,7 +585,7 @@ export default function HeroGL({ artwork }: HeroGLProps) {
         scrub: 0.35,
         anticipatePin: 1,
         onUpdate: (self) => {
-          pigmentScrollRef.current = self.progress
+          scrollSmearProgressRef.current = self.progress
           const handoff = Math.max(0, (self.progress - 0.72) / 0.28)
           wrapper.style.transform = `scale(${1 - handoff * 0.04})`
           wrapper.style.opacity = `${1 - handoff * 0.08}`

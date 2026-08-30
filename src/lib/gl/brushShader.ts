@@ -12,12 +12,26 @@ export const FRAG = /* glsl */`
 precision highp float;
 
 uniform sampler2D uArtwork;
-uniform float uProgress;
+/* ─── two independent effects — do not conflate ──────────────────────────
+   1) uInitialRevealProgress: the one-shot brush reveal that plays on hero
+      load (0→1 once, tweened in JS, boostable by scroll/touch, skipped
+      entirely under reduced motion). Drives the 7-stroke reveal loop below
+      that uncovers the artwork from bare linen.
+   2) uScrollSmearProgress + uPigmentPullStrength: the scroll-driven wet-oil
+      smear that drags already-revealed paint once the user scrolls past
+      the hero. uScrollSmearProgress is the raw, monotonic scroll position
+      (position of the traveling band); uPigmentPullStrength is a separate
+      JS-computed stage envelope (how strong the smear looks at that
+      position — ramps in, holds, fades out). This effect only ever
+      modifies artFinal, which is blended in via the *initial* reveal's
+      rev mask — so it can only smear paint that reveal #1 has already
+      uncovered, never bare linen. */
+uniform float uInitialRevealProgress;
 uniform float uTime;
 uniform float uAspect;
 uniform float uArtworkAspect;
-uniform float uScrollT;
-uniform float uPigmentPull;
+uniform float uScrollSmearProgress;
+uniform float uPigmentPullStrength;
 
 varying vec2 vUv;
 
@@ -131,7 +145,7 @@ float strokeReveal(vec2 uv, float idx, float sp) {
 void main() {
   /* ── artwork UV with cover crop and living micro-warp ── */
   vec2 baseUv = vec2(vUv.x, 1.0 - vUv.y);
-  float breathe = step(0.999, uProgress);
+  float breathe = step(0.999, uInitialRevealProgress);
   /* Subtle organic breathing — paint shifts infinitesimally on canvas */
   float warpX = (fbm(vUv * 3.1 + vec2(uTime * 0.11, 1.7)) - 0.5) * 0.0022 * breathe;
   float warpY = (fbm(vUv * 3.1 + vec2(2.3, uTime * 0.09)) - 0.5) * 0.0018 * breathe;
@@ -144,17 +158,17 @@ void main() {
      A loaded band of wet oil pigment is dragged left→right across the
      canvas as the user scrolls past the hero — pressure, drag, chromatic
      bleed and bristle breakup, not a glass/refraction pane. Its position
-     is tied directly to raw scroll progress (uScrollT) so it always slides
-     forward, never back; its intensity (uPigmentPull) is a stage envelope
+     is tied directly to raw scroll progress (uScrollSmearProgress) so it always slides
+     forward, never back; its intensity (uPigmentPullStrength) is a stage envelope
      computed in JS — see docs/HERO_SPEC.md scroll-handoff notes. */
   vec3 artFinal = art.rgb;
-  float boundaryX = mix(-0.3, 1.3, uScrollT);
+  float boundaryX = mix(-0.3, 1.3, uScrollSmearProgress);
   /* Bristle breakup: fray the band's leading/trailing edge per scanline so
      the boundary reads as pigment dragged unevenly by bristles rather than
      a clean gradient. */
-  float rowBreak = (vnoise(vec2(vUv.y * 24.0, uScrollT * 5.0 + 4.1)) - 0.5) * 0.3;
+  float rowBreak = (vnoise(vec2(vUv.y * 24.0, uScrollSmearProgress * 5.0 + 4.1)) - 0.5) * 0.3;
   float bandDist  = (vUv.x - boundaryX) / 0.34;
-  float pigmentBand = exp(-pow(bandDist + rowBreak, 2.0)) * uPigmentPull;
+  float pigmentBand = exp(-pow(bandDist + rowBreak, 2.0)) * uPigmentPullStrength;
   {
     float band = pigmentBand;
     if (band > 0.001) {
@@ -213,7 +227,7 @@ void main() {
 
   for (int i = 0; i < 7; i++) {
     float fi = float(i);
-    float sp  = clamp(uProgress * 7.0 - fi, 0.0, 1.0);
+    float sp  = clamp(uInitialRevealProgress * 7.0 - fi, 0.0, 1.0);
     float s   = strokeReveal(vUv, fi, sp);
 
     rev = max(rev, s);
@@ -268,7 +282,7 @@ void main() {
 
   /* ── wet edge — raised, glistening rim at the leading edge of the pulled
      pigment, where paint is thickest and catches the most light ── */
-  float wetEdge = exp(-bandDist * bandDist * 4.5) * uPigmentPull;
+  float wetEdge = exp(-bandDist * bandDist * 4.5) * uPigmentPullStrength;
   col += vec3(1.0, 0.98, 0.9) * wetEdge * 0.22 * rev;
 
   /* ── vignette — activates after reveal ─── */
