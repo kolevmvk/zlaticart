@@ -73,14 +73,33 @@ export default function Navigation({ theme = 'dark' }: NavigationProps) {
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${bgColor}`}
         role="banner"
       >
+        {/* Top scrim — guarantees the wordmark/hamburger read against any
+            hero content behind them (the hero image varies wildly in
+            brightness), without resorting to a glass/blur card. Same idiom
+            as the hero's own bottom gradient (HeroGL.tsx), just inverted.
+            Invisible on theme="light" pages (isDark stays false there) and
+            fades out once the solid scrolled background takes over. */}
         <div
-          className="section-gutter flex items-center justify-between py-5 md:py-6"
+          aria-hidden="true"
+          className="absolute inset-x-0 top-0 h-28 md:h-36 pointer-events-none transition-opacity duration-500"
+          style={{
+            background:
+              'linear-gradient(to bottom, rgba(10,10,9,0.5) 0%, rgba(10,10,9,0.22) 55%, rgba(10,10,9,0) 100%)',
+            opacity: isDark ? 1 : 0,
+          }}
+        />
+
+        <div
+          className="relative section-gutter flex items-center justify-between py-5 md:py-6"
           style={{ paddingTop: 'max(1.25rem, calc(env(safe-area-inset-top) + 0.5rem))' }}
         >
           <Link
             href="/"
             className={`brand-mark font-serif italic font-light tracking-wide ${textColor} hover:opacity-60 transition-opacity duration-200`}
-            style={{ fontSize: 'clamp(1rem, 1.7vw, 1.5rem)' }}
+            style={{
+              fontSize: 'clamp(1.2rem, 2.6vw, 2rem)',
+              filter: isDark ? 'drop-shadow(0 1px 10px rgba(0,0,0,0.4))' : 'none',
+            }}
             aria-label="ZlaticArt — home"
           >
             ZlaticArt
@@ -107,16 +126,22 @@ export default function Navigation({ theme = 'dark' }: NavigationProps) {
               className={isDark ? 'text-canvas/60' : 'text-ink/50'}
             />
 
+            {/* Asymmetric three-bar mark (long/short/long) rather than two
+                identical thin lines — reads as a deliberate mark rather
+                than a default icon, and bars converge to equal width on
+                hover/focus for a small, modern interaction cue. */}
             <button
               ref={buttonRef}
-              className={`flex flex-col items-center justify-center gap-[5px] min-w-[44px] min-h-[44px] -mr-2.5 ${textColor}`}
+              className={`group flex flex-col items-center justify-center gap-[6px] min-w-[44px] min-h-[44px] -mr-2.5 ${textColor}`}
+              style={{ filter: isDark ? 'drop-shadow(0 1px 6px rgba(0,0,0,0.4))' : 'none' }}
               onClick={() => setMenuOpen(true)}
               aria-label="Open navigation menu"
               aria-expanded={menuOpen}
               aria-controls="mobile-menu"
             >
-              <span className="block w-5 h-px bg-current" />
-              <span className="block w-5 h-px bg-current" />
+              <span className="block h-[1.5px] w-7 bg-current transition-all duration-300 group-hover:w-8" />
+              <span className="block h-[1.5px] w-5 bg-current transition-all duration-300 group-hover:w-8" />
+              <span className="block h-[1.5px] w-7 bg-current transition-all duration-300 group-hover:w-8" />
             </button>
           </div>
         </div>
