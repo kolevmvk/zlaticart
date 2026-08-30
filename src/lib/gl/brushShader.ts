@@ -183,20 +183,27 @@ void main() {
     /* Mostly straight down, with a slow, wide per-column wobble so the
        drag reads as viscous fluid streaking rather than a mechanically
        uniform blur — some columns lag or lead very slightly. */
-    float wobble = (fbm(vec2(vUv.x * 4.0, uTime * 0.05 + 11.0)) - 0.5) * 0.12;
+    float wobble = (fbm(vec2(vUv.x * 4.0, uTime * 0.05 + 11.0)) - 0.5) * 0.16;
     vec2 dragDir = normalize(vec2(wobble, 1.0));
-    float dragAmt = 0.1 * smearStrength;
+    /* Per-pixel drag-distance variation — thicker/wetter-looking passages
+       (a coarse noise field, independent of the impasto relief pass which
+       runs later) drag further than thin ones, so the smear reads as real
+       paint of uneven thickness moving, not a flat uniform filter. */
+    float dragVariation = 0.7 + fbm(vUv * 3.6 + vec2(4.2, 9.1)) * 0.6;
+    float dragAmt = 0.26 * smearStrength * dragVariation;
 
     /* Multi-tap trailing streak: each tap samples further "upstream"
        (against the drag direction) with falling weight, so the result
        reads as pigment trailing down from where it used to be rather than
-       a symmetric blur. Fixed tap count, no dynamic loop bounds. */
+       a symmetric blur. Tap count scales with the (now much longer) drag
+       distance so the streak stays smooth instead of banding. Fixed tap
+       count, no dynamic loop bounds. */
     vec3 smeared = vec3(0.0);
     float wsum = 0.0;
-    const int SMEAR_TAPS = 6;
+    const int SMEAR_TAPS = 12;
     for (int t = 0; t < SMEAR_TAPS; t++) {
       float ft = float(t) / float(SMEAR_TAPS - 1);
-      float w  = 1.0 - ft * 0.72;
+      float w  = 1.0 - ft * 0.8;
       vec2 tapUv = coverCrop(baseUv - dragDir * dragAmt * ft, uAspect, uArtworkAspect);
       smeared += texture2D(uArtwork, clamp(tapUv, 0.001, 0.999)).rgb * w;
       wsum += w;
