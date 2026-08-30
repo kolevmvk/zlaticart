@@ -144,6 +144,91 @@ export default function MediaTransitions({ artworks }: MediaTransitionsProps) {
     }
     strip.addEventListener('wheel', onWheel, { passive: false })
 
+    // Click-and-drag panning (desktop only — touch already drags natively
+    // via the browser's own scroll). Without this, mousedown+move on an
+    // <Image> inside a <Link> triggers the browser's native "drag the
+    // image out" ghost-image behaviour instead of panning the gallery,
+    // which is exactly the "grabs the image" problem being fixed here
+    // (draggable={false} on the images, below, is the other half of that).
+    //
+    // Same scroll-snap complication as the wheel handler: a live drag
+    // needs continuous free scrollLeft updates, but `scroll-snap-type: x
+    // mandatory` re-snaps any JS-driven scrollLeft assignment straight
+    // back to the nearest snap point. So snapping is switched off for the
+    // duration of the drag and explicitly restored (scrollTo the nearest
+    // card) on release, instead of just toggling the CSS property back.
+    //
+    // Deliberately NOT using setPointerCapture: capturing the pointer on
+    // `strip` changes which element the browser considers the click
+    // target on release, which broke plain (non-drag) clicks on the
+    // artwork <Link>s entirely during testing. Instead, move/up listeners
+    // are attached to `window` only while a drag is active — the standard
+    // pattern for drag-to-scroll — so the strip's own children keep
+    // perfectly normal click behaviour when the pointer never moves.
+    if (!window.matchMedia('(pointer: coarse)').matches) {
+      let isDown = false
+      let dragged = false
+      let startX = 0
+      let startScrollLeft = 0
+
+      const stepWidth = () => (strip.querySelector('[data-media-card]')?.getBoundingClientRect().width ?? 360) + 1
+
+      const onWindowPointerMove = (e: PointerEvent) => {
+        if (!isDown) return
+        const dx = e.clientX - startX
+        if (Math.abs(dx) > 4) dragged = true
+        strip.scrollLeft = startScrollLeft - dx
+      }
+
+      const suppressNextClick = (e: MouseEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+        window.removeEventListener('click', suppressNextClick, true)
+      }
+
+      const onWindowPointerUp = () => {
+        if (!isDown) return
+        isDown = false
+        strip.style.cursor = 'grab'
+        strip.style.scrollSnapType = 'x mandatory'
+        window.removeEventListener('pointermove', onWindowPointerMove)
+        window.removeEventListener('pointerup', onWindowPointerUp)
+        if (dragged) {
+          // A real drag happened — swallow the click that would otherwise
+          // fire on release and navigate the Link underneath the cursor.
+          window.addEventListener('click', suppressNextClick, true)
+          const step = stepWidth()
+          const max = strip.scrollWidth - strip.clientWidth
+          const nearest = Math.max(0, Math.min(Math.round(strip.scrollLeft / step) * step, max))
+          strip.scrollTo({ left: nearest, behavior: 'smooth' })
+        }
+      }
+
+      const onPointerDown = (e: PointerEvent) => {
+        if (e.button !== 0) return
+        isDown = true
+        dragged = false
+        startX = e.clientX
+        startScrollLeft = strip.scrollLeft
+        strip.style.scrollSnapType = 'none'
+        strip.style.cursor = 'grabbing'
+        window.addEventListener('pointermove', onWindowPointerMove)
+        window.addEventListener('pointerup', onWindowPointerUp)
+      }
+
+      strip.style.cursor = 'grab'
+      strip.addEventListener('pointerdown', onPointerDown)
+
+      return () => {
+        strip.removeEventListener('scroll', updateProgress)
+        strip.removeEventListener('wheel', onWheel)
+        strip.removeEventListener('pointerdown', onPointerDown)
+        window.removeEventListener('pointermove', onWindowPointerMove)
+        window.removeEventListener('pointerup', onWindowPointerUp)
+        strip.style.cursor = ''
+      }
+    }
+
     return () => {
       strip.removeEventListener('scroll', updateProgress)
       strip.removeEventListener('wheel', onWheel)
@@ -216,7 +301,7 @@ export default function MediaTransitions({ artworks }: MediaTransitionsProps) {
         // is what lets our own wheel handler below (and native scroll
         // generally) actually control this element instead of the page.
         data-lenis-prevent
-        className="no-scrollbar flex gap-px overflow-x-auto pb-0"
+        className="no-scrollbar select-none flex gap-px overflow-x-auto pb-0"
         style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}
         role="list"
         aria-label="Artwork media"
@@ -245,13 +330,15 @@ export default function MediaTransitions({ artworks }: MediaTransitionsProps) {
                   src={artwork.primaryImage.src}
                   alt={artwork.primaryImage.alt}
                   fill
+                  draggable={false}
                   sizes="(max-width: 768px) 60vw, 28vw"
                   className="object-cover"
                   style={{
                     objectPosition: artwork.primaryImage.desktopFocalPoint
                       ? `${artwork.primaryImage.desktopFocalPoint.x * 100}% ${artwork.primaryImage.desktopFocalPoint.y * 100}%`
                       : 'center',
-                  }}
+                    WebkitUserDrag: 'none',
+                  } as React.CSSProperties}
                 />
               </div>
 
