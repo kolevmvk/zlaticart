@@ -100,6 +100,78 @@ export const translations = {
     footer: {
       tagline: 'Slikarka · Pedagog · Umetnica',
       rights: (year: number) => `© ${year} Zlatica. Sva prava zadržana.`,
+      privacy: 'Privatnost',
+      legalInfo: 'Autorska prava i uslovi korišćenja',
+    },
+    commission: {
+      navLabel: 'Naruči rad',
+      heading: 'Naruči custom rad',
+      intro:
+        'Zainteresovani ste za sliku rađenu po meri? Opišite šta zamišljate — format, tehniku, okvirni budžet — i javićemo se sa predlogom i rokom izrade.',
+      form: {
+        name: 'Ime i prezime',
+        email: 'Email',
+        format: 'Format / dimenzije',
+        formatPlaceholder: 'npr. 60×80 cm, portret, pejzaž…',
+        technique: 'Tehnika',
+        techniquePlaceholder: 'npr. ulje na platnu, akril, akvarel…',
+        budget: 'Okvirni cenovni raspon',
+        budgetPlaceholder: 'npr. 100–200 €',
+        description: 'Opis onoga što zamišljate',
+        descriptionPlaceholder: 'Motiv, boje, inspiracija, prostor u kom će slika stajati…',
+        sending: 'Slanje…',
+        send: 'Pošalji upit',
+        success: 'Hvala — vaš upit je poslat. Javićemo se uskoro na navedeni email.',
+      },
+    },
+    legal: {
+      privacy: {
+        title: 'Privatnost',
+        updated: 'Poslednje ažurirano: avgust 2026.',
+        intro:
+          'Ova stranica objašnjava koji se podaci prikupljaju na zlaticart.com sajtu, zašto, i koje tehnologije sajt koristi. Cilj je da bude jasno i bez pravnog žargona.',
+        sections: [
+          {
+            heading: 'Šta ovaj sajt ne radi',
+            body: 'Sajt ne koristi kolačiće za praćenje, analitiku (npr. Google Analytics) niti oglašivačke mreže. Ne postoji profilisanje posetilaca niti prodaja/deljenje podataka trećim stranama u marketinške svrhe.',
+          },
+          {
+            heading: 'Podaci koje unosite sami',
+            body: 'Kada pošaljete poruku preko Kontakt forme ili upit za custom izradu, unosite ime, email i sadržaj poruke (i, kod upita za izradu, format/tehniku/budžet koje navedete). Ti podaci se čuvaju isključivo radi odgovora na vaš upit, u bazi (Supabase) kojoj pristup ima samo vlasnica sajta.',
+          },
+          {
+            heading: 'Tehničke informacije',
+            body: 'Sadržaj sajta (radovi, tekstovi, fotografije) se učitava preko Sanity CMS platforme. Sajt je hostovan na Vercel infrastrukturi, koja iz tehničkih razloga (bezbednost, sprečavanje zloupotrebe) može privremeno beležiti standardne server-log podatke (IP adresa, vreme pristupa) — ti podaci se ne koriste za identifikaciju posetilaca niti se ukrštaju sa formama koje popunite.',
+          },
+          {
+            heading: 'Vaša prava',
+            body: 'Možete zatražiti uvid, izmenu ili brisanje podataka koje ste poslali putem formi na sajtu — javite se na kontakt email naveden na Kontakt strani.',
+          },
+        ],
+      },
+      terms: {
+        title: 'Autorska prava i uslovi korišćenja',
+        updated: 'Poslednje ažurirano: avgust 2026.',
+        intro: 'Pravila korišćenja sadržaja objavljenog na zlaticart.com sajtu.',
+        sections: [
+          {
+            heading: 'Autorska prava na radove',
+            body: 'Sve slike, fotografije umetničkih radova i tekstovi objavljeni na ovom sajtu autorsko su delo i vlasništvo Zlatice, osim gde je izričito drugačije navedeno. Nije dozvoljeno kopiranje, reprodukovanje, štampanje ili komercijalno korišćenje ovog sadržaja bez prethodne pisane saglasnosti.',
+          },
+          {
+            heading: 'Izrada sajta',
+            body: 'Dizajn, kod i vizuelni efekti sajta razvijeni su za potrebe ZlaticArt brenda. Preuzimanje ili kopiranje strukture, dizajna ili programskog koda sajta u celini ili delovima nije dozvoljeno bez odobrenja.',
+          },
+          {
+            heading: 'Korišćenje sajta',
+            body: 'Sadržaj sajta je namenjen ličnom, nekomercijalnom pregledu. Automatizovano preuzimanje sadržaja (scraping), pokušaji neovlašćenog pristupa ili ometanje rada sajta nisu dozvoljeni.',
+          },
+          {
+            heading: 'Prijava problema',
+            body: 'Ako primetite tehnički problem, netačan sadržaj ili smatrate da su vaša prava povređena, javite se na kontakt email naveden na Kontakt strani.',
+          },
+        ],
+      },
     },
     about: {
       heading: 'O Zlatici',
@@ -236,6 +308,78 @@ export const translations = {
     footer: {
       tagline: 'Painter · Educator · Artist',
       rights: (year: number) => `© ${year} Zlatica. All rights reserved.`,
+      privacy: 'Privacy',
+      legalInfo: 'Copyright & Terms of Use',
+    },
+    commission: {
+      navLabel: 'Commission a piece',
+      heading: 'Commission a custom piece',
+      intro:
+        "Interested in a made-to-order painting? Describe what you have in mind — format, technique, rough budget — and we'll follow up with a proposal and timeline.",
+      form: {
+        name: 'Full name',
+        email: 'Email',
+        format: 'Format / dimensions',
+        formatPlaceholder: 'e.g. 60×80 cm, portrait, landscape…',
+        technique: 'Technique',
+        techniquePlaceholder: 'e.g. oil on canvas, acrylic, watercolor…',
+        budget: 'Rough price range',
+        budgetPlaceholder: 'e.g. €100–200',
+        description: 'Describe what you have in mind',
+        descriptionPlaceholder: 'Subject, colours, inspiration, where the piece will hang…',
+        sending: 'Sending…',
+        send: 'Send inquiry',
+        success: "Thank you — your inquiry has been sent. We'll follow up at the email you provided.",
+      },
+    },
+    legal: {
+      privacy: {
+        title: 'Privacy',
+        updated: 'Last updated: August 2026.',
+        intro:
+          'This page explains what data zlaticart.com collects, why, and which technologies the site uses — kept plain, without legal jargon.',
+        sections: [
+          {
+            heading: 'What this site does not do',
+            body: 'This site does not use tracking cookies, analytics (e.g. Google Analytics), or advertising networks. There is no visitor profiling, and no data is sold or shared with third parties for marketing purposes.',
+          },
+          {
+            heading: 'Data you provide yourself',
+            body: "When you send a message through the Contact form or a custom-artwork inquiry, you provide your name, email, and message content (and, for commission inquiries, whatever format/technique/budget you enter). That data is stored solely to respond to your inquiry, in a database (Supabase) accessible only to the site's owner.",
+          },
+          {
+            heading: 'Technical information',
+            body: 'Site content (artworks, text, photos) is served via the Sanity CMS platform. The site is hosted on Vercel infrastructure, which may briefly log standard server data (IP address, access time) for technical reasons such as security and abuse prevention — this data is not used to identify visitors and is never cross-referenced with anything you submit through a form.',
+          },
+          {
+            heading: 'Your rights',
+            body: 'You may request access to, correction of, or deletion of any data you submitted through a form on this site — reach out via the contact email listed on the Contact page.',
+          },
+        ],
+      },
+      terms: {
+        title: 'Copyright & Terms of Use',
+        updated: 'Last updated: August 2026.',
+        intro: 'Rules governing the use of content published on zlaticart.com.',
+        sections: [
+          {
+            heading: 'Copyright in the artworks',
+            body: "All paintings, artwork photography, and text published on this site are the copyrighted work and property of Zlatica, unless explicitly stated otherwise. Copying, reproducing, printing, or commercially using this content without prior written consent is not permitted.",
+          },
+          {
+            heading: 'Site build',
+            body: "The site's design, code, and visual effects were developed for the ZlaticArt brand. Copying or reproducing the site's structure, design, or source code, in whole or in part, is not permitted without permission.",
+          },
+          {
+            heading: 'Use of this site',
+            body: "Site content is intended for personal, non-commercial viewing. Automated content scraping, unauthorized access attempts, or interference with the site's operation are not permitted.",
+          },
+          {
+            heading: 'Reporting an issue',
+            body: 'If you notice a technical problem, inaccurate content, or believe your rights have been infringed, please reach out via the contact email listed on the Contact page.',
+          },
+        ],
+      },
     },
     about: {
       heading: 'About Zlatica',
@@ -332,7 +476,41 @@ export type Translations = {
     comingSoonBody: string
     linkComingSoon: string
   }
-  footer: { tagline: string; rights: (year: number) => string }
+  footer: { tagline: string; rights: (year: number) => string; privacy: string; legalInfo: string }
+  commission: {
+    navLabel: string
+    heading: string
+    intro: string
+    form: {
+      name: string
+      email: string
+      format: string
+      formatPlaceholder: string
+      technique: string
+      techniquePlaceholder: string
+      budget: string
+      budgetPlaceholder: string
+      description: string
+      descriptionPlaceholder: string
+      sending: string
+      send: string
+      success: string
+    }
+  }
+  legal: {
+    privacy: {
+      title: string
+      updated: string
+      intro: string
+      sections: readonly { heading: string; body: string }[]
+    }
+    terms: {
+      title: string
+      updated: string
+      intro: string
+      sections: readonly { heading: string; body: string }[]
+    }
+  }
   about: {
     heading: string
     roles: { painter: string; educator: string; artist: string }

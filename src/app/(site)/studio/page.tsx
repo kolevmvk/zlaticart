@@ -15,7 +15,7 @@ export default async function StudioPage() {
 
   return (
     <>
-      <Navigation />
+      <Navigation theme="light" />
       <main className="min-h-svh bg-canvas">
         <StudioPageContent feed={feed} />
 

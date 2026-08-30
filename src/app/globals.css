@@ -110,6 +110,56 @@ body[data-cursor] * { cursor: none !important; }
 
 body[data-grain].grain-paused::after { animation-play-state: paused; }
 
+/* ---- Brand wordmark shimmer ---- */
+/* A slow, infrequent gold glint sweeping through the "ZlaticArt" wordmark —
+   mostly idle (the bright band sits off-screen for most of the cycle), so it
+   reads as a rare, premium glimmer rather than a constant animated gradient
+   competing with the artwork. Gold rather than currentColor for the
+   highlight so it stays visible whether the wordmark is rendered in the
+   dark ink or the near-white canvas colour (the header alternates between
+   the two depending on scroll/theme). Falls back to a plain solid-colour
+   wordmark wherever background-clip:text isn't supported, and is skipped
+   entirely under reduced motion. */
+.brand-mark {
+  background-image: linear-gradient(
+    100deg,
+    currentColor 42%,
+    #D9B36C 50%,
+    currentColor 58%
+  );
+  background-size: 260% 100%;
+  background-position: 200% 0;
+}
+
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .brand-mark {
+    -webkit-background-clip: text;
+    background-clip: text;
+    /* -webkit-text-fill-color, not `color` — the gradient above reads
+       `currentColor` for its two base stops, which resolves to this
+       element's `color` (ink or canvas, set by the theme utility class
+       alongside .brand-mark). Setting `color: transparent` here would zero
+       out `currentColor` too, making the gradient's own base stops
+       transparent and leaving only a thin gold sliver of the wordmark
+       visible — exactly the bug this comment is warning against re-adding. */
+    -webkit-text-fill-color: transparent;
+    animation: brand-shimmer 7s ease-in-out infinite;
+  }
+}
+
+@keyframes brand-shimmer {
+  0%, 58%  { background-position: 200% 0; }
+  78%      { background-position: -60% 0; }
+  100%     { background-position: -60% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-mark {
+    animation: none;
+    background-position: -60% 0;
+  }
+}
+
 @layer components {
   .text-display {
     font-family: var(--font-serif);

@@ -29,7 +29,7 @@ export default async function WorksPage({
 
   return (
     <>
-      <Navigation />
+      <Navigation theme="light" />
       <main className="min-h-svh bg-canvas">
         <WorksPageContent artworks={artworks} works={works} activeMedium={activeMedium} />
 

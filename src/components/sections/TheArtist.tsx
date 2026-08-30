@@ -153,13 +153,15 @@ export default function TheArtist({ profile }: TheArtistProps) {
             >
               {profile.roleLine}
             </p>
-            <p
-              data-reveal
-              className="text-canvas/70 font-light leading-relaxed mb-8 md:mb-10 max-w-md"
-              style={{ fontFamily: 'var(--font-sans)', fontSize: '0.9375rem', opacity: 0 }}
-            >
-              {profile.shortBio}
-            </p>
+            {profile.shortBio && (
+              <p
+                data-reveal
+                className="text-canvas/70 font-light leading-relaxed mb-8 md:mb-10 max-w-md"
+                style={{ fontFamily: 'var(--font-sans)', fontSize: '0.9375rem', opacity: 0 }}
+              >
+                {profile.shortBio}
+              </p>
+            )}
             <Link
               data-reveal
               href="/about"

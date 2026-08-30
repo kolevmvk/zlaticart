@@ -59,7 +59,7 @@ export default async function ArtworkDetailPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <Navigation />
+      <Navigation theme="light" />
       <main className="min-h-svh bg-canvas">
         <ArtworkDetailView artwork={artwork} prev={prev} next={next} />
         <SiteFooter

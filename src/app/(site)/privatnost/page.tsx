@@ -1,15 +1,16 @@
 import type { Metadata } from 'next'
 import Navigation from '@/components/nav/Navigation'
 import SiteFooter from '@/components/nav/SiteFooter'
-import ContactPageContent from './ContactPageContent'
+import PrivatnostPageContent from './PrivatnostPageContent'
 import { getSiteSettings } from '@/lib/content/api'
 
 export const metadata: Metadata = {
-  title: 'Contact',
-  description: 'Get in touch with Zlatica.',
+  title: 'Privacy',
+  description: 'What data zlaticart.com collects and which technologies it uses.',
+  alternates: { canonical: '/privatnost' },
 }
 
-export default async function ContactPage() {
+export default async function PrivatnostPage() {
   const settings = await getSiteSettings()
   const { instagramProfileUrl, facebookProfileUrl, contactEmail } = settings
 
@@ -17,11 +18,7 @@ export default async function ContactPage() {
     <>
       <Navigation theme="light" />
       <main className="min-h-svh bg-canvas">
-        <ContactPageContent
-          instagramProfileUrl={instagramProfileUrl ?? null}
-          facebookProfileUrl={facebookProfileUrl ?? null}
-          contactEmail={contactEmail ?? null}
-        />
+        <PrivatnostPageContent />
 
         <SiteFooter
           instagramUrl={instagramProfileUrl ?? null}

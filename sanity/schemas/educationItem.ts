@@ -2,25 +2,33 @@ import { defineField, defineType } from 'sanity'
 
 export default defineType({
   name: 'educationItem',
-  title: 'Education Item',
+  title: 'Stavka edukacije',
   type: 'document',
   fields: [
-    defineField({ name: 'title', title: 'Title', type: 'string', validation: (R) => R.required() }),
+    defineField({ name: 'title', title: 'Naziv', type: 'string', validation: (R) => R.required() }),
     defineField({
       name: 'type',
-      title: 'Type',
+      title: 'Vrsta',
       type: 'string',
-      options: { list: ['teaching', 'workshop', 'student-project', 'project'], layout: 'radio' },
+      options: {
+        list: [
+          { title: 'Podučavanje', value: 'teaching' },
+          { title: 'Radionica', value: 'workshop' },
+          { title: 'Rad učenika', value: 'student-project' },
+          { title: 'Projekat', value: 'project' },
+        ],
+        layout: 'radio',
+      },
       validation: (R) => R.required(),
     }),
-    defineField({ name: 'date', title: 'Date', type: 'string' }),
-    defineField({ name: 'description', title: 'Description', type: 'text', rows: 4 }),
+    defineField({ name: 'date', title: 'Datum', type: 'string' }),
+    defineField({ name: 'description', title: 'Opis', type: 'text', rows: 4 }),
     defineField({
       name: 'images',
-      title: 'Images',
+      title: 'Fotografije',
       type: 'array',
-      of: [{ type: 'image', options: { hotspot: true }, fields: [{ name: 'alt', title: 'Alt text', type: 'string' }] }],
+      of: [{ type: 'image', options: { hotspot: true }, fields: [{ name: 'alt', title: 'Opis slike (alt tekst)', type: 'string' }] }],
     }),
-    defineField({ name: 'featured', title: 'Featured', type: 'boolean', initialValue: false }),
+    defineField({ name: 'featured', title: 'Izdvojeno', type: 'boolean', initialValue: false }),
   ],
 })

@@ -2,27 +2,33 @@ import { defineField, defineType } from 'sanity'
 
 export default defineType({
   name: 'socialItem',
-  title: 'Social Item',
+  title: 'Objava',
   type: 'document',
   fields: [
     defineField({
       name: 'platform',
-      title: 'Platform',
+      title: 'Platforma',
       type: 'string',
-      options: { list: ['instagram', 'facebook'], layout: 'radio' },
+      options: {
+        list: [
+          { title: 'Instagram', value: 'instagram' },
+          { title: 'Facebook', value: 'facebook' },
+        ],
+        layout: 'radio',
+      },
       validation: (R) => R.required(),
     }),
-    defineField({ name: 'externalUrl', title: 'External URL', type: 'url', validation: (R) => R.required() }),
+    defineField({ name: 'externalUrl', title: 'Link ka objavi', type: 'url', validation: (R) => R.required() }),
     defineField({
       name: 'image',
-      title: 'Image',
+      title: 'Fotografija',
       type: 'image',
       options: { hotspot: true },
-      fields: [defineField({ name: 'alt', title: 'Alt text', type: 'string' })],
+      fields: [defineField({ name: 'alt', title: 'Opis slike (alt tekst)', type: 'string' })],
     }),
-    defineField({ name: 'captionExcerpt', title: 'Caption Excerpt', type: 'text', rows: 2 }),
-    defineField({ name: 'publishedAt', title: 'Published At', type: 'date' }),
-    defineField({ name: 'featured', title: 'Featured', type: 'boolean', initialValue: false }),
+    defineField({ name: 'captionExcerpt', title: 'Izvod iz opisa', type: 'text', rows: 2 }),
+    defineField({ name: 'publishedAt', title: 'Datum objave', type: 'date' }),
+    defineField({ name: 'featured', title: 'Izdvojeno', type: 'boolean', initialValue: false }),
   ],
-  orderings: [{ title: 'Newest First', name: 'publishedAtDesc', by: [{ field: 'publishedAt', direction: 'desc' }] }],
+  orderings: [{ title: 'Najnovije prvo', name: 'publishedAtDesc', by: [{ field: 'publishedAt', direction: 'desc' }] }],
 })

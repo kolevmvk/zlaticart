@@ -45,7 +45,7 @@ export default async function JournalArticlePage({ params }: Props) {
 
   return (
     <>
-      <Navigation />
+      <Navigation theme="light" />
       <main className="min-h-svh bg-canvas">
         <JournalArticleContent post={post} relatedArtworks={relatedArtworks} />
         <SiteFooter

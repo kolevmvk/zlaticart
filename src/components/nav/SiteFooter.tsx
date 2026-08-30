@@ -34,6 +34,7 @@ export default function SiteFooter({ instagramUrl, facebookUrl, email }: SiteFoo
             { href: '/exhibitions', label: t.nav.exhibitions },
             { href: '/studio', label: t.nav.studio },
             { href: '/contact', label: t.nav.contact },
+            { href: '/porudzbina', label: t.commission.navLabel },
           ].map((l) => (
             <Link key={l.href} href={l.href} className="nav-link text-canvas/60 hover:text-canvas">
               {l.label}
@@ -63,9 +64,18 @@ export default function SiteFooter({ instagramUrl, facebookUrl, email }: SiteFoo
         </div>
       </div>
 
-      <div className="border-t border-canvas/10 pt-6">
+      <div className="border-t border-canvas/10 pt-6 flex flex-col gap-2">
         <p className="text-gallery-meta text-canvas/25">
           {t.footer.rights(year)}
+        </p>
+        <p className="text-gallery-meta text-canvas/25">
+          <Link href="/privatnost" className="hover:text-canvas/60 transition-colors duration-200">
+            {t.footer.privacy}
+          </Link>
+          {' · '}
+          <Link href="/pravne-informacije" className="hover:text-canvas/60 transition-colors duration-200">
+            {t.footer.legalInfo}
+          </Link>
         </p>
       </div>
     </footer>

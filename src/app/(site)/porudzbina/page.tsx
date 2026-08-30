@@ -1,15 +1,16 @@
 import type { Metadata } from 'next'
 import Navigation from '@/components/nav/Navigation'
 import SiteFooter from '@/components/nav/SiteFooter'
-import ContactPageContent from './ContactPageContent'
+import PorudzbinaPageContent from './PorudzbinaPageContent'
 import { getSiteSettings } from '@/lib/content/api'
 
 export const metadata: Metadata = {
-  title: 'Contact',
-  description: 'Get in touch with Zlatica.',
+  title: 'Commission a piece',
+  description: 'Commission a custom, made-to-order painting from Zlatica.',
+  alternates: { canonical: '/porudzbina' },
 }
 
-export default async function ContactPage() {
+export default async function PorudzbinaPage() {
   const settings = await getSiteSettings()
   const { instagramProfileUrl, facebookProfileUrl, contactEmail } = settings
 
@@ -17,11 +18,7 @@ export default async function ContactPage() {
     <>
       <Navigation theme="light" />
       <main className="min-h-svh bg-canvas">
-        <ContactPageContent
-          instagramProfileUrl={instagramProfileUrl ?? null}
-          facebookProfileUrl={facebookProfileUrl ?? null}
-          contactEmail={contactEmail ?? null}
-        />
+        <PorudzbinaPageContent />
 
         <SiteFooter
           instagramUrl={instagramProfileUrl ?? null}

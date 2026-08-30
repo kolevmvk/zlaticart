@@ -30,7 +30,7 @@ export default async function AboutPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <Navigation />
+      <Navigation theme="light" />
       <main className="min-h-svh bg-canvas">
         <AboutPageContent profile={profile} />
 

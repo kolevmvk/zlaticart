@@ -79,7 +79,8 @@ export default function Navigation({ theme = 'dark' }: NavigationProps) {
         >
           <Link
             href="/"
-            className={`font-serif italic font-light text-sm tracking-wide ${textColor} hover:opacity-60 transition-opacity duration-200`}
+            className={`brand-mark font-serif italic font-light tracking-wide ${textColor} hover:opacity-60 transition-opacity duration-200`}
+            style={{ fontSize: 'clamp(1rem, 1.7vw, 1.5rem)' }}
             aria-label="ZlaticArt — home"
           >
             ZlaticArt
@@ -137,7 +138,7 @@ export default function Navigation({ theme = 'dark' }: NavigationProps) {
         >
           <Link
             href="/"
-            className="text-label text-xs tracking-brand font-light text-canvas"
+            className="brand-mark text-label text-sm tracking-brand font-light text-canvas"
             onClick={() => setMenuOpen(false)}
           >
             ZlaticArt

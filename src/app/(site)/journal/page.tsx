@@ -28,7 +28,7 @@ export default async function JournalPage({
 
   return (
     <>
-      <Navigation />
+      <Navigation theme="light" />
       <main className="min-h-svh bg-canvas">
         <JournalPageContent posts={posts} activeCategory={activeCategory} />
 

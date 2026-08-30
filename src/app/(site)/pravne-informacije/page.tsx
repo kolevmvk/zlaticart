@@ -1,15 +1,16 @@
 import type { Metadata } from 'next'
 import Navigation from '@/components/nav/Navigation'
 import SiteFooter from '@/components/nav/SiteFooter'
-import ContactPageContent from './ContactPageContent'
+import PravneInformacijePageContent from './PravneInformacijePageContent'
 import { getSiteSettings } from '@/lib/content/api'
 
 export const metadata: Metadata = {
-  title: 'Contact',
-  description: 'Get in touch with Zlatica.',
+  title: 'Copyright & Terms of Use',
+  description: 'Image rights, site copyright, and usage rules for zlaticart.com.',
+  alternates: { canonical: '/pravne-informacije' },
 }
 
-export default async function ContactPage() {
+export default async function PravneInformacijePage() {
   const settings = await getSiteSettings()
   const { instagramProfileUrl, facebookProfileUrl, contactEmail } = settings
 
@@ -17,11 +18,7 @@ export default async function ContactPage() {
     <>
       <Navigation theme="light" />
       <main className="min-h-svh bg-canvas">
-        <ContactPageContent
-          instagramProfileUrl={instagramProfileUrl ?? null}
-          facebookProfileUrl={facebookProfileUrl ?? null}
-          contactEmail={contactEmail ?? null}
-        />
+        <PravneInformacijePageContent />
 
         <SiteFooter
           instagramUrl={instagramProfileUrl ?? null}
