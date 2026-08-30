@@ -17,15 +17,20 @@ uniform sampler2D uArtwork;
       load (0→1 once, tweened in JS, boostable by scroll/touch, skipped
       entirely under reduced motion). Drives the 7-stroke reveal loop below
       that uncovers the artwork from bare linen.
-   2) uPigmentPullStrength: the scroll-driven glass-drag smear that drags
-      already-revealed paint straight down, uniformly across the canvas,
-      once the user scrolls past the hero — see the "glass-drag oil smear"
-      block below. Computed in JS from raw scroll progress via
-      pigmentPullEnvelope() (monotonic — grows with scroll, never fades
-      back down; see that function's comment in HeroGL.tsx for why). This
-      effect only ever modifies artFinal, which is blended in via the
-      *initial* reveal's rev mask — so it can only smear paint that reveal
-      #1 has already uncovered, never bare linen. */
+   2) uPigmentPullStrength: the scroll-driven glass-drag deformation — see
+      the "glass-drag oil smear" block below. This is a continuous
+      per-pixel *displacement* of the artwork's own texture (a coherent,
+      time-independent flow field whose magnitude scales with this
+      uniform), not a blend/crossfade between an original and a distorted
+      copy — at 0 the flow field's displacement is 0, so the undistorted
+      painting falls out of the same formula rather than needing a
+      separate mix. uPigmentPullStrength is a JS-computed envelope: it
+      ramps in, holds, then fades back to 0 as the hero hands off to
+      Selected Works, so the deformation never lingers or bleeds into the
+      next section (see pigmentPullEnvelope() in HeroGL.tsx). This effect
+      only ever modifies artFinal, which is blended in via the *initial*
+      reveal's rev mask — so it can only deform paint that reveal #1 has
+      already uncovered, never bare linen. */
 uniform float uInitialRevealProgress;
 uniform float uTime;
 uniform float uAspect;
@@ -164,53 +169,154 @@ void main() {
   vec2 artUv = coverCrop(baseUv, uAspect, uArtworkAspect);
   vec4 art   = texture2D(uArtwork, artUv);
 
-  /* ─── glass-drag oil smear (scroll-driven) ──────────────────────────────
-     Picture a perfectly transparent pane resting directly on the still-wet
-     painting. As the user scrolls, that invisible pane is pulled straight
-     down, and because the paint underneath hasn't dried, it streaks
-     downward with it — uniformly across the whole canvas (the pane covers
-     all of it at once), not as a traveling window or band. Its strength
-     (uPigmentPullStrength) grows monotonically with scroll — see the
-     pigmentPullEnvelope() comment in HeroGL.tsx — so it never partially
-     "undoes" itself mid-scroll the way a passing band would.
-     Color-faithful by construction: every tap below samples the artwork's
-     own texture along the drag direction with no channel offset and no
-     added tint, so the smear is strictly the image's own fresh pigment
-     being dragged, never a colored filter over it. */
-  vec3 artFinal = art.rgb;
-  float smearStrength = uPigmentPullStrength;
-  if (smearStrength > 0.001) {
-    /* Mostly straight down, with a slow, wide per-column wobble so the
-       drag reads as viscous fluid streaking rather than a mechanically
-       uniform blur — some columns lag or lead very slightly. */
-    float wobble = (fbm(vec2(vUv.x * 4.0, uTime * 0.05 + 11.0)) - 0.5) * 0.16;
-    vec2 dragDir = normalize(vec2(wobble, 1.0));
-    /* Per-pixel drag-distance variation — thicker/wetter-looking passages
-       (a coarse noise field, independent of the impasto relief pass which
-       runs later) drag further than thin ones, so the smear reads as real
-       paint of uneven thickness moving, not a flat uniform filter. */
-    float dragVariation = 0.7 + fbm(vUv * 3.6 + vec2(4.2, 9.1)) * 0.6;
-    float dragAmt = 0.26 * smearStrength * dragVariation;
+  /* ─── glass-drag oil-paint deformation (scroll-driven) ──────────────────
+     An invisible, perfectly flat pane of glass is pressed against the
+     still-wet oil painting. As the user scrolls, the pane is pulled
+     straight down and — because the paint hasn't dried — drags the whole
+     contact surface with it at once, not as a traveling window/band.
+     This is NOT a blend/crossfade between an untouched original and a
+     distorted copy: the artwork is continuously displaced by a coherent
+     flow field whose magnitude is driven by uPigmentPullStrength, so at 0
+     the displacement is 0 and the intact painting falls out of the same
+     formula rather than needing a separate mix. The flow field itself
+     never depends on uTime — only its magnitude does — so it never
+     shimmers or boils frame to frame, only deepens with scroll.
+     uPigmentPullStrength ramps in and then HOLDS at full strength for the
+     rest of the pin (see pigmentPullEnvelope() in HeroGL.tsx) — it does not
+     fade back to 0. Wet paint that's been dragged doesn't un-drag itself
+     just because the viewer keeps scrolling the same direction; the
+     deformation is meant to still be visible as the hero hands off to
+     Selected Works, carried away in its dragged state rather than healing
+     back to the intact painting first. Colour-faithful by construction:
+     every tap samples the artwork's own texture, never a tinted or
+     channel-shifted copy.
 
-    /* Multi-tap trailing streak: each tap samples further "upstream"
-       (against the drag direction) with falling weight, so the result
-       reads as pigment trailing down from where it used to be rather than
-       a symmetric blur. Tap count scales with the (now much longer) drag
-       distance so the streak stays smooth instead of banding. Fixed tap
-       count, no dynamic loop bounds. */
-    vec3 smeared = vec3(0.0);
+     2026-08-30: deliberately pushed to near-total abstraction at peak
+     strength — a project-level exception to "the artwork must stay more
+     memorable than the effect" (docs/HERO_SPEC.md / living-canvas skill),
+     approved for this specific scroll effect only. Do not scale this back
+     down to a subtle smear without re-confirming with the project owner;
+     the intact-painting-at-rest state (uPigmentPullStrength == 0, i.e.
+     before any scroll) is what satisfies that rule, not the peak of this
+     effect. */
+  vec3 artFinal = art.rgb;
+  if (uPigmentPullStrength > 0.001) {
+    /* Nonlinear response — destruction accelerates rather than growing
+       linearly, the way a stiff pane overcoming paint's resistance tears
+       through a composition faster once it starts moving. */
+    float tt = pow(uPigmentPullStrength, 1.2);
+
+    /* Low-frequency resistance: some passages of paint drag less than
+       others — thicker/tackier areas resist the glass more. A static
+       per-pixel field (position only, no uTime), so it reads as a fixed
+       material property rather than an animated texture. */
+    float resistance = 0.5 + fbm(baseUv * 2.1 + vec2(9.3, 1.7)) * 1.0;
+
+    /* Medium-frequency shear — why neighbouring pigments drag into each
+       other and forms elongate diagonally instead of all sliding straight
+       down in lockstep. Decorrelated from resistance. */
+    float shear = (fbm(baseUv * 4.6 + vec2(31.7, 4.4)) - 0.5) * 2.0;
+
+    /* Two-pass domain warping: the flow field's own sampling coordinates
+       are bent by a first fbm pass before the second is read, so drag
+       paths curve organically instead of radiating from one uniform
+       direction — "some pigment travels farther than surrounding
+       pigment," not a mechanically uniform stretch. */
+    vec2 warpedUv = baseUv + vec2(shear, 0.0) * 0.08 * tt;
+    vec2 warp2 = vec2(
+      fbm(warpedUv * 1.6 + vec2(4.1, 8.8)),
+      fbm(warpedUv * 1.6 + vec2(11.3, 2.2))
+    ) - 0.5;
+    vec2 doubleWarpedUv = warpedUv + warp2 * 0.35 * tt;
+    float flow = fbm(doubleWarpedUv * 2.6 + vec2(0.0, 5.5));
+
+    /* Fine breakup — a subtle high-frequency nudge so streaks aren't
+       perfectly smooth, matching paint tearing at small scale. */
+    float breakupX = fbm(baseUv * 20.0 + vec2(3.3, 17.1)) - 0.5;
+    float breakupY = fbm(baseUv * 20.0 + vec2(17.1, 3.3)) - 0.5;
+
+    /* Displacement magnitude: the tt*tt term makes the final stretch of
+       scroll progress tear through the composition much faster than the
+       start, so the destruction reads as accelerating collapse rather
+       than a linear stretch. Deliberately capped so peak-strength vertical
+       pull stays under ~1 UV (one frame height) even in the
+       least-resisting passages — beyond that, CLAMP_TO_EDGE sampling makes
+       most drag taps land on the same clamped edge pixel, and the result
+       washes into flat grey fog instead of a genuinely dragged streak of
+       the artwork's own colour. Staying under that ceiling keeps every tap
+       sampling meaningfully different source content. */
+    vec2 displacement;
+    displacement.y = tt * resistance * (0.28 + flow * 0.32) + tt * tt * 0.12;
+    displacement.x = tt * shear * 0.22 * resistance;
+    displacement += tt * vec2(breakupX, breakupY) * 0.07;
+
+    /* Multi-tap trailing streak from the pigment's original position to
+       its fully displaced position — reads as coherent stretching/dragging
+       rather than a single warped sample (which would alias) or a fixed
+       global offset (which would read as simple UV scrolling). Fixed tap
+       count, no dynamic loop bounds. Tap weighting flattens toward uniform
+       as tt rises: at low strength it stays biased to the near-original
+       end (barely visible anyway), but at peak strength every point along
+       the drag path contributes almost equally, so the result is genuinely
+       built from dragged pigment across the whole path rather than a
+       lightly-streaked original. Tap count raised (14 → 20) so the much
+       longer drag path at peak strength stays a smooth streak, not banding.
+
+       Path meander: without this, every tap along a given column samples
+       straight up that same column — the drag only ever stretches a
+       pixel's own local gradient, so distinct passages of colour never
+       actually touch. Real wet paint dragged under glass doesn't move in
+       parallel lanes: neighbouring streaks wander into each other. So each
+       tap gets a small lateral+vertical jitter, seeded by the tap index
+       and a mid-frequency noise field, that grows with both how far along
+       the path (fk) and how strong the pull is (tt) — deep into a strong
+       drag, the sampled point has wandered sideways enough to cross into a
+       neighbouring colour's original territory, which is what produces
+       genuine pigment-mixing at boundaries rather than parallel streaking. */
+    vec3 dragged = vec3(0.0);
     float wsum = 0.0;
-    const int SMEAR_TAPS = 12;
-    for (int t = 0; t < SMEAR_TAPS; t++) {
-      float ft = float(t) / float(SMEAR_TAPS - 1);
-      float w  = 1.0 - ft * 0.8;
-      vec2 tapUv = coverCrop(baseUv - dragDir * dragAmt * ft, uAspect, uArtworkAspect);
-      smeared += texture2D(uArtwork, clamp(tapUv, 0.001, 0.999)).rgb * w;
+    const int DRAG_TAPS = 20;
+    for (int k = 0; k < DRAG_TAPS; k++) {
+      float fk = float(k) / float(DRAG_TAPS - 1);
+      float w  = mix(1.0 - fk * 0.85, 1.0 - fk * 0.35, tt);
+      vec2 meanderFine = vec2(
+        vnoise(baseUv * 22.0 + vec2(fk * 17.3, 4.1)) - 0.5,
+        vnoise(baseUv * 22.0 + vec2(9.7, fk * 13.9)) - 0.5
+      );
+      /* Coarse component — swings wide enough to cross into a clearly
+         different painted passage (not just texture-scale wobble), which is
+         what actually produces visible colour-mixing between neighbouring
+         pigments rather than a same-region blur. */
+      vec2 meanderCoarse = vec2(
+        fbm(baseUv * 3.5 + vec2(fk * 6.1, 2.2)) - 0.5,
+        fbm(baseUv * 3.5 + vec2(1.4, fk * 5.7)) - 0.5
+      );
+      vec2 meanderRaw = (meanderFine * 0.12 + meanderCoarse * 0.4) * tt * fk;
+      /* Biased strongly vertical: mixing must read as pigment travelling up
+         the same column and blending with what's above it, not drifting
+         sideways into unrelated passages. The x component is heavily
+         damped relative to y so any given tap still lands close to its
+         own column — enough lateral give for boundaries to feel organic,
+         not a diagonal/omnidirectional wander. */
+      vec2 meander = vec2(meanderRaw.x * 0.28, meanderRaw.y);
+      /* + not -: pigment from BELOW the current point is pulled UP into it
+         (glass slides down, but the paint stuck to it travels up through
+         the fixed viewing frame — lower colour rises and mixes into what
+         sits above it, per the confirmed direction). */
+      vec2 tapUv = coverCrop(baseUv + displacement * fk + meander, uAspect, uArtworkAspect);
+      dragged += texture2D(uArtwork, clamp(tapUv, 0.001, 0.999)).rgb * w;
       wsum += w;
     }
-    smeared /= wsum;
+    artFinal = dragged / wsum;
 
-    artFinal = mix(art.rgb, smeared, smearStrength);
+    /* Averaging many taps of genuinely different pigment (the point of the
+       meander above) naturally desaturates toward grey/brown — physically
+       correct for mixed paint, but on screen it reads as the whole surface
+       fogging over rather than distinct colours visibly dragging into each
+       other. Restore saturation as strength rises so the streaks stay
+       legibly the artwork's own colours meeting and mixing, not a wash. */
+    float lum = dot(artFinal, vec3(0.299, 0.587, 0.114));
+    artFinal = clamp(mix(vec3(lum), artFinal, 1.0 + tt * 0.6), 0.0, 1.0);
   }
 
   /* ── raw linen ground ── */

@@ -248,27 +248,34 @@ function Wordmark({ visible, tagline, cta }: { visible: boolean; tagline: string
 //    Drives the shader's 7-stroke brush reveal that uncovers the artwork
 //    from bare linen. Nothing below this effect touches that tween.
 //
-// 2) Scroll glass-drag smear (scrollSmearProgressRef → pigmentPullEnvelope()
-//    → uPigmentPullStrength). Only starts once the user scrolls the hero (a
-//    separate ScrollTrigger, briefly pinning the section — see the
-//    pigment-pull-scroll useEffect further down). Drags/smears paint that
-//    effect (1) has already revealed, straight down and uniformly across
-//    the canvas, like an invisible pane dragging the still-wet paint with
-//    it; it can never touch bare linen. Also skipped entirely under
-//    reduced motion.
+// 2) Scroll glass-drag deformation (scrollSmearProgressRef →
+//    pigmentPullEnvelope() → uPigmentPullStrength). Only starts once the
+//    user scrolls the hero (a separate ScrollTrigger, briefly pinning the
+//    section — see the pigment-pull-scroll useEffect further down). Drags
+//    paint that effect (1) has already revealed, via a coherent flow-field
+//    displacement (see brushShader.ts) — an invisible pane dragging the
+//    still-wet paint with it as it moves straight down; it can never touch
+//    bare linen. Also skipped entirely under reduced motion.
 //
 // pigmentPullEnvelope() below belongs to effect (2) only — it maps that
-// ScrollTrigger's raw progress (0 = pin start, 1 = pin end) to how far the
-// glass-drag smear has pulled the wet paint at that point. Deliberately
-// monotonic (no fade-out): the effect reads as "the further you've
-// scrolled, the further the invisible glass has dragged the still-wet
-// paint down" — a cumulative drag, not a band passing through and
-// vanishing. It should never partially undo itself mid-scroll. Eased with
-// smootherstep for a soft start rather than snapping straight to a linear
-// drag. See docs/HERO_SPEC.md scroll-handoff + the living-canvas skill.
+// ScrollTrigger's raw progress (0 = pin start, 1 = pin end) to the
+// deformation's overall magnitude at that point. Monotonic: ramps in, then
+// holds at full strength — it deliberately does NOT fade back to 0 as the
+// pin ends. Wet paint that's been dragged doesn't un-drag itself just
+// because the viewer keeps scrolling in the same direction; a fade-back-out
+// here would read as the painting healing itself, which breaks the entire
+// physical premise of the effect. The hero's own scale/opacity handoff (see
+// the pigment-pull-scroll useEffect below) still carries the — now
+// permanently deformed — canvas out toward Selected Works; scrubbing back
+// up still relaxes the drag (the glass moving back up), which is expected,
+// reversible scroll-linked behaviour, not "healing." See docs/HERO_SPEC.md
+// scroll-handoff + the living-canvas skill.
 function pigmentPullEnvelope(t: number): number {
-  const c = Math.min(Math.max(t, 0), 1)
-  return c * c * c * (c * (c * 6 - 15) + 10)
+  const smootherstep = (x: number) => {
+    const c = Math.min(Math.max(x, 0), 1)
+    return c * c * c * (c * (c * 6 - 15) + 10)
+  }
+  return smootherstep(Math.min(t / 0.55, 1))
 }
 
 // ---------------------------------------------------------------------------
