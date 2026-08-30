@@ -187,14 +187,23 @@ function Wordmark({ visible, tagline, cta }: { visible: boolean; tagline: string
     // hard bright flash, then dimmer again, then it holds at a dim glow
     // for a noticeably longer beat before finally catching fully — not a
     // uniform stutter of same-length blinks.
+    // Glow strings paired with each opacity level below — a neon tube
+    // doesn't just get more opaque as it catches, it actually casts light.
+    // No glow at the dimmest dips, a soft bloom at partial brightness, and
+    // a hot, wide bloom at full/flash brightness so "lit" reads as
+    // genuinely blazing rather than merely "not transparent."
+    const glowOff = '0 0 0px rgba(250,240,210,0)'
+    const glowDim = '0 0 8px rgba(250,240,210,0.35)'
+    const glowFull = '0 0 22px rgba(250,240,210,0.9), 0 0 44px rgba(250,240,210,0.5)'
+
     if (art) {
-      tl.set(art, { opacity: 0, x: -20, filter: 'blur(2px)' }, 'gildEnd-=0.15')
-        .to(art, { opacity: 0.22, duration: 0.14 }) // dim glow catches first
-        .to(art, { opacity: 0.04, duration: 0.07 }) // dips out
-        .to(art, { opacity: 0.95, duration: 0.05 }) // hard bright flash
-        .to(art, { opacity: 0.1, duration: 0.12 }) // dimmer again
-        .to(art, { opacity: 0.3, x: 0, filter: 'blur(0px)', duration: 0.55 }) // holds dim, noticeably longer
-        .to(art, { opacity: 1, duration: 0.85, ease: 'power2.out' }) // finally catches fully
+      tl.set(art, { opacity: 0, x: -20, filter: 'blur(2px)', textShadow: glowOff }, 'gildEnd-=0.15')
+        .to(art, { opacity: 0.22, textShadow: glowDim, duration: 0.14 }) // dim glow catches first
+        .to(art, { opacity: 0.04, textShadow: glowOff, duration: 0.07 }) // dips out
+        .to(art, { opacity: 0.95, textShadow: glowFull, duration: 0.05 }) // hard bright flash
+        .to(art, { opacity: 0.1, textShadow: glowOff, duration: 0.12 }) // dimmer again
+        .to(art, { opacity: 0.3, x: 0, filter: 'blur(0px)', textShadow: glowDim, duration: 0.55 }) // holds dim, noticeably longer
+        .to(art, { opacity: 1, textShadow: glowFull, duration: 0.85, ease: 'power2.out' }) // finally catches fully, blazing
         .call(() => {
           // A real faulty tube doesn't catch once and stay perfectly
           // steady forever — it keeps dipping every so often. Runs
@@ -209,10 +218,10 @@ function Wordmark({ visible, tagline, cta }: { visible: boolean; tagline: string
               if (cancelled) return
               gsap
                 .timeline({ onComplete: loopFlicker })
-                .to(art, { opacity: 0.35, duration: 0.05 })
-                .to(art, { opacity: 1, duration: 0.08 })
-                .to(art, { opacity: 0.55, duration: 0.04 })
-                .to(art, { opacity: 1, duration: 0.1 })
+                .to(art, { opacity: 0.35, textShadow: glowDim, duration: 0.05 })
+                .to(art, { opacity: 1, textShadow: glowFull, duration: 0.08 })
+                .to(art, { opacity: 0.55, textShadow: glowDim, duration: 0.04 })
+                .to(art, { opacity: 1, textShadow: glowFull, duration: 0.1 })
             })
           }
           loopFlicker()
@@ -280,10 +289,11 @@ function Wordmark({ visible, tagline, cta }: { visible: boolean; tagline: string
             fontSize: 'clamp(1rem, 2.8vw, 2.8rem)',
             letterSpacing: '0.6em',
             textTransform: 'uppercase',
-            color: 'rgba(240,237,230,0.5)',
+            color: 'rgba(250,247,238,0.92)',
             paddingBottom: '0.15em',
             marginLeft: '0.3em',
-            willChange: 'opacity, transform, filter',
+            textShadow: '0 0 0px rgba(250,240,210,0)',
+            willChange: 'opacity, transform, filter, text-shadow',
           }}
         >
           Art
