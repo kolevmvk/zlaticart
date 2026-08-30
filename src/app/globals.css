@@ -111,23 +111,24 @@ body[data-cursor] * { cursor: none !important; }
 body[data-grain].grain-paused::after { animation-play-state: paused; }
 
 /* ---- Brand wordmark shimmer ---- */
-/* A slow, infrequent gold glint sweeping through the "ZlaticArt" wordmark —
-   mostly idle (the bright band sits off-screen for most of the cycle), so it
-   reads as a rare, premium glimmer rather than a constant animated gradient
-   competing with the artwork. Gold rather than currentColor for the
-   highlight so it stays visible whether the wordmark is rendered in the
-   dark ink or the near-white canvas colour (the header alternates between
-   the two depending on scroll/theme). Falls back to a plain solid-colour
-   wordmark wherever background-clip:text isn't supported, and is skipped
-   entirely under reduced motion. */
+/* A gold glint sweeping through the "ZlaticArt" wordmark, repeating often
+   enough to read as a deliberate, living brand animation rather than a
+   one-off. Gold rather than currentColor for the highlight so it stays
+   visible whether the wordmark is rendered in the dark ink or the
+   near-white canvas colour (the header alternates between the two
+   depending on scroll/theme). Falls back to a plain solid-colour wordmark
+   wherever background-clip:text isn't supported, and is skipped entirely
+   under reduced motion. */
 .brand-mark {
   background-image: linear-gradient(
     100deg,
-    currentColor 42%,
-    #D9B36C 50%,
-    currentColor 58%
+    currentColor 32%,
+    #E8C077 46%,
+    #F4D89A 50%,
+    #E8C077 54%,
+    currentColor 68%
   );
-  background-size: 260% 100%;
+  background-size: 220% 100%;
   background-position: 200% 0;
 }
 
@@ -143,20 +144,20 @@ body[data-grain].grain-paused::after { animation-play-state: paused; }
        transparent and leaving only a thin gold sliver of the wordmark
        visible — exactly the bug this comment is warning against re-adding. */
     -webkit-text-fill-color: transparent;
-    animation: brand-shimmer 7s ease-in-out infinite;
+    animation: brand-shimmer 3.2s ease-in-out infinite;
   }
 }
 
 @keyframes brand-shimmer {
-  0%, 58%  { background-position: 200% 0; }
-  78%      { background-position: -60% 0; }
-  100%     { background-position: -60% 0; }
+  0%   { background-position: 200% 0; }
+  55%  { background-position: -40% 0; }
+  100% { background-position: -40% 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .brand-mark {
     animation: none;
-    background-position: -60% 0;
+    background-position: -40% 0;
   }
 }
 

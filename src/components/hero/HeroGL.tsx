@@ -358,11 +358,35 @@ export default function HeroGL({ artwork }: HeroGLProps) {
     }
   }, [artwork.primaryImage.width, artwork.primaryImage.height])
 
-  // rAF loop
+  // rAF loop. Guarded by loopRunningRef (see startLoop/stopLoop below) so a
+  // frame already in flight when the hero scrolls out of view doesn't
+  // reschedule itself once more before the observer's stop takes effect.
+  const loopRunningRef = useRef(false)
   const loop = useCallback(() => {
     render()
-    rafRef.current = requestAnimationFrame(loop)
+    if (loopRunningRef.current) {
+      rafRef.current = requestAnimationFrame(loop)
+    }
   }, [render])
+
+  // The hero's fragment shader is expensive (7-stroke reveal loop, multiple
+  // fbm/noise evaluations per pixel for relief shading and, once scrolled,
+  // the 20-tap glass-drag). Rendering it at 60fps forever — including long
+  // after the user has scrolled well past the hero into later sections —
+  // was pure wasted GPU/CPU work and a real contributor to the site feeling
+  // sluggish. An IntersectionObserver pauses the rAF loop entirely while
+  // the hero isn't on screen, and resumes it the moment it scrolls back
+  // into view (rootMargin gives it a head start so there's no visible pop
+  // when it re-enters).
+  const startLoop = useCallback(() => {
+    if (loopRunningRef.current) return
+    loopRunningRef.current = true
+    rafRef.current = requestAnimationFrame(loop)
+  }, [loop])
+  const stopLoop = useCallback(() => {
+    loopRunningRef.current = false
+    cancelAnimationFrame(rafRef.current)
+  }, [])
 
   useEffect(() => {
     reducedMotion.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -448,7 +472,7 @@ export default function HeroGL({ artwork }: HeroGLProps) {
         textureRef.current = tex
 
         // Start rendering loop
-        rafRef.current = requestAnimationFrame(loop)
+        startLoop()
 
         if (reducedMotion.current) {
           initialRevealRef.current.value = 1
@@ -481,24 +505,41 @@ export default function HeroGL({ artwork }: HeroGLProps) {
       .catch(() => {
         // Texture failed — still show hero without artwork
         setWordmarkVisible(true)
-        rafRef.current = requestAnimationFrame(loop)
+        startLoop()
       })
 
     // Resize observer
     const ro = new ResizeObserver(setSize)
     ro.observe(container)
 
+    // Pause/resume the render loop based on hero visibility — see the
+    // startLoop/stopLoop comment above for why this matters. rootMargin
+    // gives it a 25% viewport-height head start so scrolling back up never
+    // shows a blank/stale frame popping in.
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          startLoop()
+        } else {
+          stopLoop()
+        }
+      },
+      { rootMargin: '25% 0px' }
+    )
+    io.observe(container)
+
     // WebGL context lost handler
     const onContextLost = (e: Event) => {
       e.preventDefault()
-      cancelAnimationFrame(rafRef.current)
+      stopLoop()
     }
     canvas.addEventListener('webglcontextlost', onContextLost)
 
     return () => {
-      cancelAnimationFrame(rafRef.current)
+      stopLoop()
       tweenRef.current?.kill()
       ro.disconnect()
+      io.disconnect()
       canvas.removeEventListener('webglcontextlost', onContextLost)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps

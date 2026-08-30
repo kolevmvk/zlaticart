@@ -24,6 +24,7 @@ export default function Navigation({ theme = 'dark' }: NavigationProps) {
     { href: '/education', label: t.nav.education },
     { href: '/exhibitions', label: t.nav.exhibitions },
     { href: '/contact', label: t.nav.contact },
+    { href: '/porudzbina', label: t.commission.navLabel },
   ]
 
   useEffect(() => {
@@ -97,7 +98,7 @@ export default function Navigation({ theme = 'dark' }: NavigationProps) {
             href="/"
             className={`brand-mark font-serif italic font-light tracking-wide ${textColor} hover:opacity-60 transition-opacity duration-200`}
             style={{
-              fontSize: 'clamp(1.2rem, 2.6vw, 2rem)',
+              fontSize: 'clamp(1.6rem, 3.6vw, 2.6rem)',
               filter: isDark ? 'drop-shadow(0 1px 10px rgba(0,0,0,0.4))' : 'none',
             }}
             aria-label="ZlaticArt — home"
