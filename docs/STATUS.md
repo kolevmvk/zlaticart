@@ -1,5 +1,7 @@
 # ZlaticArt Rebirth — Status
 
+> **2026-08-30 update (5):** Redesigned the scroll smear per art-direction feedback ("glass sweep" band read as unfaithful/gimmicky) into a "glass-drag" concept: imagine a perfectly transparent pane resting on the still-wet painting, pulled straight down as the user scrolls — the whole canvas streaks downward uniformly (not a traveling colored band anymore), color-faithful to the artwork (removed the per-channel chromatic-bleed sampling and the added warm tint entirely — the smear is now strictly the artwork's own pixels dragged along a mostly-vertical direction). `pigmentPullEnvelope()` is now monotonic (0→1, no fade-out) since the metaphor is cumulative drag depth, not a passing band; the now-unused `uScrollSmearProgress` uniform was removed. Deployed to production — see "Hero pigment pull" → "Glass-drag redesign" below.
+>
 > **2026-08-30 update (4):** Strengthened the oil-paint texture/impasto on the hero artwork so it reads as raised, tactile paint rather than a flat photo, and made the surface "alive": lighting now reacts to the cursor (desktop) plus a constant subtle idle drift (touch/no-input fallback), so paint thickness visibly catches and loses light like real oil under gallery light. New `uPointerTiltX`/`uPointerTiltY` uniforms, three-octave `paintRelief()` (was two), stronger diffuse/specular response, added a broader soft sheen term. No new effect/state — purely enriches the existing "initial brush reveal" relief shading (effect 1) — verified the scroll-smear (effect 2) is unchanged and layers correctly on top. Build/typecheck pass; verified desktop (cursor-reactive), mobile/touch, and reduced-motion (idle-drift-only, no jank). See "Hero pigment pull" → "Paint texture / 3D relief" below.
 >
 > **2026-08-30 update (3):** Audited the hero on `feat/animation-gallery-upgrade` to confirm the initial brush reveal and the scroll oil-smear are genuinely two independent effects, not one replacing the other. They were already functionally separate (separate uniforms, separate JS-side drivers) but the naming didn't make that obvious, so everything was renamed to `uInitialRevealProgress` / `uScrollSmearProgress` / `uPigmentPullStrength` (shader) and `initialRevealRef` / `scrollSmearProgressRef` / `pigmentPullEnvelope()` (JS), with explicit "two independent effects" doc comments added at both uniform declarations and the two driving `useEffect`s. Verified via Playwright: the reveal plays fully with `scrollY` pinned at 0 (proves it's independent of scroll), reduced-motion snaps straight to the fully-revealed static state, and the scroll smear band is still visible and unchanged after the rename. Build/typecheck pass. See "Animation & Gallery Upgrade" → "Hero pigment pull" below for the full breakdown.
@@ -10,7 +12,9 @@
 
 ## Animation & Gallery Upgrade (2026-08-30, branch `feat/animation-gallery-upgrade`)
 
-Implemented per `docs/CLAUDE_ANIMATION_GALLERY_PROMPT.md` / `docs/ZLATICART_ANIMATION_GALLERY_AUDIT.md`. Not merged to `main` — review first.
+Implemented per `docs/CLAUDE_ANIMATION_GALLERY_PROMPT.md` / `docs/ZLATICART_ANIMATION_GALLERY_AUDIT.md`.
+
+**Deploys:** update 1–4 (hero pigment-pull rename/texture, desktop gallery, hero-to-works handoff, responsive polish) merged `feat/animation-gallery-upgrade` → `main` via fast-forward and pushed live on 2026-08-30 (Vercel auto-deploy, confirmed via `vercel inspect` that `www.zlaticart.com` aliased to the new deployment, smoke-tested with Playwright against production). Update 5 (glass-drag redesign) shipped the same way, from `feat/glass-drag-smear` → `main`. Pre-existing unrelated uncommitted work (Supabase contact form, Sanity schema edits) was stashed before each branch switch and restored after, so it never touched either branch or production.
 
 ### Hero pigment pull (`src/lib/gl/brushShader.ts`, `src/components/hero/HeroGL.tsx`)
 
@@ -44,6 +48,22 @@ Belongs entirely to effect (1)'s relief shading — no new uniform besides the p
 - Screenshots with the cursor moved to opposite corners show the sheen/highlight pattern visibly shifting — confirms the pointer-reactive lighting works.
 - Screenshot after a scroll-smear pass confirms the two effects still layer correctly (smear band + relief texture both visible together, no fighting).
 - `npm run typecheck` and `npm run build` both pass.
+
+### Glass-drag redesign (2026-08-30, update 5)
+
+Direct art-direction feedback on the deployed effect: it read as a colored band sweeping across, not as faithful wet-paint drag, and the chromatic bleed/warm tint distorted the artwork's own colors. Redesigned effect (2) end to end, keeping effect (1)'s relief/texture work from update 4 untouched:
+
+- **Old model:** a Gaussian band traveled left→right across the canvas (`boundaryX`/`bandDist`), diagonally dragging pigment with per-channel (R/G/B) sample offsets for chromatic bleed, plus an added warm-tint color. Strength followed a ramp-in/hold/fade-out envelope.
+- **New model:** no traveling band at all. A single uniform, mostly-vertical drag is applied across the *entire* canvas at once — the "invisible glass pane pulled straight down over the still-wet painting" concept. Implementation: a 6-tap trailing streak sampling the artwork's own texture upstream along the drag direction (falling weight per tap, all three channels sampled together — no chromatic offset, no tint added). A small per-column FBM wobble keeps the drag from looking like a mechanical uniform blur.
+- `pigmentPullEnvelope()` (`HeroGL.tsx`) simplified to a single monotonic `smootherstep(0→1)` — no fade-out — because the new metaphor is cumulative drag depth ("however far you've scrolled, that's how far the glass has dragged the paint"), not a band passing through and disappearing.
+- The now-unused `uScrollSmearProgress` uniform was removed from both the shader and its JS upload/location code (the shader no longer needs the raw scroll position, only the eased strength). `scrollSmearProgressRef` stays — it's still the JS-side input to `pigmentPullEnvelope()`.
+- The old band's "wet edge" highlight (which depended on the removed `bandDist`) was replaced with a small, near-white "wet-drag sheen" that scales with overall smear strength — a lighting cue, not a color tint, so it doesn't compromise fidelity to the artwork's own colors.
+
+**Verification (update 5):**
+- Playwright scroll-step screenshots (6 steps through the pin) show the smear building up smoothly and cumulatively — no band, no rainbow fringing, colors stay faithful to the source artwork.
+- Zero console/page errors on desktop, mobile/touch, and `reducedMotion: 'reduce'` (hero still never pins under reduced motion).
+- `npm run typecheck` and `npm run build` both pass.
+- Merged to `main` (fast-forward) and deployed to production via the same safe flow as update 2 — see "Deploys" below.
 
 ### Desktop horizontal gallery (`src/components/sections/MediaTransitions.tsx`)
 - Rewritten with `gsap.matchMedia()`: desktop/tablet (`min-width: 768px`) pins the section and maps vertical scroll to horizontal strip translation (`ScrollTrigger` with `pin: true`, distance = strip scrollWidth − viewport width); mobile keeps the original native `overflow-x-auto` + scroll-snap untouched.

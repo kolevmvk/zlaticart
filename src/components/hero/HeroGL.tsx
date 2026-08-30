@@ -248,25 +248,27 @@ function Wordmark({ visible, tagline, cta }: { visible: boolean; tagline: string
 //    Drives the shader's 7-stroke brush reveal that uncovers the artwork
 //    from bare linen. Nothing below this effect touches that tween.
 //
-// 2) Scroll oil-smear (scrollSmearProgressRef, → uScrollSmearProgress /
-//    uPigmentPullStrength) Only starts once the user scrolls the hero
-//    (a separate ScrollTrigger, briefly pinning the section — see the
+// 2) Scroll glass-drag smear (scrollSmearProgressRef → pigmentPullEnvelope()
+//    → uPigmentPullStrength). Only starts once the user scrolls the hero (a
+//    separate ScrollTrigger, briefly pinning the section — see the
 //    pigment-pull-scroll useEffect further down). Drags/smears paint that
-//    effect (1) has already revealed; it can never touch bare linen. Also
-//    skipped entirely under reduced motion.
+//    effect (1) has already revealed, straight down and uniformly across
+//    the canvas, like an invisible pane dragging the still-wet paint with
+//    it; it can never touch bare linen. Also skipped entirely under
+//    reduced motion.
 //
 // pigmentPullEnvelope() below belongs to effect (2) only — it maps that
-// ScrollTrigger's raw progress (0 = pin start, 1 = pin end) to how strong
-// the smear looks at that position. See docs/HERO_SPEC.md scroll-handoff +
-// the living-canvas skill.
+// ScrollTrigger's raw progress (0 = pin start, 1 = pin end) to how far the
+// glass-drag smear has pulled the wet paint at that point. Deliberately
+// monotonic (no fade-out): the effect reads as "the further you've
+// scrolled, the further the invisible glass has dragged the still-wet
+// paint down" — a cumulative drag, not a band passing through and
+// vanishing. It should never partially undo itself mid-scroll. Eased with
+// smootherstep for a soft start rather than snapping straight to a linear
+// drag. See docs/HERO_SPEC.md scroll-handoff + the living-canvas skill.
 function pigmentPullEnvelope(t: number): number {
-  const smootherstep = (x: number) => {
-    const c = Math.min(Math.max(x, 0), 1)
-    return c * c * c * (c * (c * 6 - 15) + 10)
-  }
-  if (t <= 0.32) return smootherstep(t / 0.32)
-  if (t <= 0.8) return 1
-  return 1 - smootherstep((t - 0.8) / 0.2)
+  const c = Math.min(Math.max(t, 0), 1)
+  return c * c * c * (c * (c * 6 - 15) + 10)
 }
 
 // ---------------------------------------------------------------------------
@@ -328,7 +330,6 @@ export default function HeroGL({ artwork }: HeroGLProps) {
       u.uArtworkAspect,
       artwork.primaryImage.width / artwork.primaryImage.height
     )
-    gl.uniform1f(u.uScrollSmearProgress, scrollSmearProgressRef.current)
     gl.uniform1f(
       u.uPigmentPullStrength,
       pigmentPullEnvelope(scrollSmearProgressRef.current) * pigmentPullDeviceScaleRef.current
@@ -427,7 +428,6 @@ export default function HeroGL({ artwork }: HeroGLProps) {
       uTime: gl.getUniformLocation(prog, 'uTime'),
       uAspect: gl.getUniformLocation(prog, 'uAspect'),
       uArtworkAspect: gl.getUniformLocation(prog, 'uArtworkAspect'),
-      uScrollSmearProgress: gl.getUniformLocation(prog, 'uScrollSmearProgress'),
       uPigmentPullStrength: gl.getUniformLocation(prog, 'uPigmentPullStrength'),
       uPointerTiltX: gl.getUniformLocation(prog, 'uPointerTiltX'),
       uPointerTiltY: gl.getUniformLocation(prog, 'uPointerTiltY'),

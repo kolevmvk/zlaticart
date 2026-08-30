@@ -17,20 +17,19 @@ uniform sampler2D uArtwork;
       load (0→1 once, tweened in JS, boostable by scroll/touch, skipped
       entirely under reduced motion). Drives the 7-stroke reveal loop below
       that uncovers the artwork from bare linen.
-   2) uScrollSmearProgress + uPigmentPullStrength: the scroll-driven wet-oil
-      smear that drags already-revealed paint once the user scrolls past
-      the hero. uScrollSmearProgress is the raw, monotonic scroll position
-      (position of the traveling band); uPigmentPullStrength is a separate
-      JS-computed stage envelope (how strong the smear looks at that
-      position — ramps in, holds, fades out). This effect only ever
-      modifies artFinal, which is blended in via the *initial* reveal's
-      rev mask — so it can only smear paint that reveal #1 has already
-      uncovered, never bare linen. */
+   2) uPigmentPullStrength: the scroll-driven glass-drag smear that drags
+      already-revealed paint straight down, uniformly across the canvas,
+      once the user scrolls past the hero — see the "glass-drag oil smear"
+      block below. Computed in JS from raw scroll progress via
+      pigmentPullEnvelope() (monotonic — grows with scroll, never fades
+      back down; see that function's comment in HeroGL.tsx for why). This
+      effect only ever modifies artFinal, which is blended in via the
+      *initial* reveal's rev mask — so it can only smear paint that reveal
+      #1 has already uncovered, never bare linen. */
 uniform float uInitialRevealProgress;
 uniform float uTime;
 uniform float uAspect;
 uniform float uArtworkAspect;
-uniform float uScrollSmearProgress;
 uniform float uPigmentPullStrength;
 /* Cursor position (-1..1, lerped/smoothed in JS), used only to relight the
    impasto surface — paint catches/loses light as the viewer's "light
@@ -165,60 +164,46 @@ void main() {
   vec2 artUv = coverCrop(baseUv, uAspect, uArtworkAspect);
   vec4 art   = texture2D(uArtwork, artUv);
 
-  /* ─── pigment pull (scroll-driven) ──────────────────────────────────────
-     A loaded band of wet oil pigment is dragged left→right across the
-     canvas as the user scrolls past the hero — pressure, drag, chromatic
-     bleed and bristle breakup, not a glass/refraction pane. Its position
-     is tied directly to raw scroll progress (uScrollSmearProgress) so it always slides
-     forward, never back; its intensity (uPigmentPullStrength) is a stage envelope
-     computed in JS — see docs/HERO_SPEC.md scroll-handoff notes. */
+  /* ─── glass-drag oil smear (scroll-driven) ──────────────────────────────
+     Picture a perfectly transparent pane resting directly on the still-wet
+     painting. As the user scrolls, that invisible pane is pulled straight
+     down, and because the paint underneath hasn't dried, it streaks
+     downward with it — uniformly across the whole canvas (the pane covers
+     all of it at once), not as a traveling window or band. Its strength
+     (uPigmentPullStrength) grows monotonically with scroll — see the
+     pigmentPullEnvelope() comment in HeroGL.tsx — so it never partially
+     "undoes" itself mid-scroll the way a passing band would.
+     Color-faithful by construction: every tap below samples the artwork's
+     own texture along the drag direction with no channel offset and no
+     added tint, so the smear is strictly the image's own fresh pigment
+     being dragged, never a colored filter over it. */
   vec3 artFinal = art.rgb;
-  float boundaryX = mix(-0.3, 1.3, uScrollSmearProgress);
-  /* Bristle breakup: fray the band's leading/trailing edge per scanline so
-     the boundary reads as pigment dragged unevenly by bristles rather than
-     a clean gradient. */
-  float rowBreak = (vnoise(vec2(vUv.y * 24.0, uScrollSmearProgress * 5.0 + 4.1)) - 0.5) * 0.3;
-  float bandDist  = (vUv.x - boundaryX) / 0.34;
-  float pigmentBand = exp(-pow(bandDist + rowBreak, 2.0)) * uPigmentPullStrength;
-  {
-    float band = pigmentBand;
-    if (band > 0.001) {
-      // (declarations below intentionally scoped to this block)
-      /* Directional drag: pigment pulled down-and-across, as if dragged by
-         a loaded brush under pressure rather than smeared uniformly. */
-      vec2 dragDir  = normalize(vec2(0.4, 1.0));
-      float dragAmt = 0.09 * band;
+  float smearStrength = uPigmentPullStrength;
+  if (smearStrength > 0.001) {
+    /* Mostly straight down, with a slow, wide per-column wobble so the
+       drag reads as viscous fluid streaking rather than a mechanically
+       uniform blur — some columns lag or lead very slightly. */
+    float wobble = (fbm(vec2(vUv.x * 4.0, uTime * 0.05 + 11.0)) - 0.5) * 0.12;
+    vec2 dragDir = normalize(vec2(wobble, 1.0));
+    float dragAmt = 0.1 * smearStrength;
 
-      /* Viscous wobble — wet paint is never pulled in a perfectly straight
-         line. */
-      float refr = (fbm(vUv * 9.0 + uTime * 0.06) - 0.5) * 0.022 * band;
-
-      vec2 smearUv = coverCrop(baseUv + dragDir * refr, uAspect, uArtworkAspect);
-
-      /* Short multi-tap drag along dragDir doubles as the smear's blur —
-         cheap, fixed tap count, no dynamic loop bounds. Each tap samples
-         channels with a tiny directional offset so the spill shows visible
-         chromatic bleed at its edges, like pigment separating as it drags. */
-      vec3 smeared = vec3(0.0);
-      float wsum = 0.0;
-      for (int t = 0; t < 5; t++) {
-        float ft = float(t) / 4.0;
-        float w  = 1.0 - abs(ft - 0.5) * 1.4;
-        vec2 tapUv = smearUv + dragDir * dragAmt * (ft - 0.5) * 2.0;
-        vec3 tapCol;
-        tapCol.r = texture2D(uArtwork, clamp(tapUv + dragDir * 0.007 * band, 0.001, 0.999)).r;
-        tapCol.g = texture2D(uArtwork, clamp(tapUv, 0.001, 0.999)).g;
-        tapCol.b = texture2D(uArtwork, clamp(tapUv - dragDir * 0.007 * band, 0.001, 0.999)).b;
-        smeared += tapCol * w;
-        wsum += w;
-      }
-      smeared /= wsum;
-
-      artFinal = mix(art.rgb, smeared, band);
-      /* Wet-oil warmth — same tint family as the leading-edge glow below,
-         boosted so the spill reads as freshly pulled pigment, not a filter. */
-      artFinal += vec3(0.1, 0.055, -0.025) * band * 0.6;
+    /* Multi-tap trailing streak: each tap samples further "upstream"
+       (against the drag direction) with falling weight, so the result
+       reads as pigment trailing down from where it used to be rather than
+       a symmetric blur. Fixed tap count, no dynamic loop bounds. */
+    vec3 smeared = vec3(0.0);
+    float wsum = 0.0;
+    const int SMEAR_TAPS = 6;
+    for (int t = 0; t < SMEAR_TAPS; t++) {
+      float ft = float(t) / float(SMEAR_TAPS - 1);
+      float w  = 1.0 - ft * 0.72;
+      vec2 tapUv = coverCrop(baseUv - dragDir * dragAmt * ft, uAspect, uArtworkAspect);
+      smeared += texture2D(uArtwork, clamp(tapUv, 0.001, 0.999)).rgb * w;
+      wsum += w;
     }
+    smeared /= wsum;
+
+    artFinal = mix(art.rgb, smeared, smearStrength);
   }
 
   /* ── raw linen ground ── */
@@ -305,10 +290,11 @@ void main() {
   float wetGloss = pow(leadE, 1.8) * 0.32;
   col += vec3(1.0, 0.97, 0.88) * wetGloss;
 
-  /* ── wet edge — raised, glistening rim at the leading edge of the pulled
-     pigment, where paint is thickest and catches the most light ── */
-  float wetEdge = exp(-bandDist * bandDist * 4.5) * uPigmentPullStrength;
-  col += vec3(1.0, 0.98, 0.9) * wetEdge * 0.22 * rev;
+  /* ── wet-drag sheen — freshly disturbed paint is glossier than settled
+     paint, so a bit more light catches the whole surface as the glass-drag
+     strengthens. Colorless-ish (near-white, very low intensity) so it
+     reads as a lighting change, not a tint on the artwork's own colors. ── */
+  col += vec3(1.0, 0.99, 0.97) * uPigmentPullStrength * 0.05 * rev;
 
   /* ── vignette — activates after reveal ─── */
   float vd = length((vUv - 0.5) * vec2(1.1, 1.25));
