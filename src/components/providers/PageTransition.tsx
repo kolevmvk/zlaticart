@@ -22,16 +22,20 @@ export default function PageTransition({ children }: { children: React.ReactNode
 
     if (prefersReduced) {
       // Snap straight to visible — no animation
-      gsap.set(el, { opacity: 1, y: 0, clearProps: 'willChange' })
+      gsap.set(el, { opacity: 1, clearProps: 'willChange' })
       return
     }
 
+    // Opacity-only: a `y`/transform tween here would give this wrapper a CSS
+    // transform, which turns it into a new containing block for any
+    // `position: fixed` descendant (header, mobile menu overlay) — they'd
+    // stop tracking the viewport and instead position relative to this
+    // (page-tall) wrapper. Keep this fade-only to avoid breaking fixed nav.
     tweenRef.current = gsap.fromTo(
       el,
-      { opacity: 0, y: 12 },
+      { opacity: 0 },
       {
         opacity: 1,
-        y: 0,
         duration: 0.45,
         ease: 'power2.out',
         delay: 0.05,
@@ -54,7 +58,7 @@ export default function PageTransition({ children }: { children: React.ReactNode
       style={{
         minHeight: '100vh',
         opacity: 0,
-        willChange: 'opacity, transform',
+        willChange: 'opacity',
       }}
     >
       {children}
