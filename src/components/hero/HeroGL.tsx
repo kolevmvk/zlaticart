@@ -100,6 +100,11 @@ function Wordmark({ visible, tagline, cta }: { visible: boolean; tagline: string
     const art = artRef.current
     const subtitle = subtitleRef.current
     const cta = ctaRef.current
+    // Guards the recurring flicker loop below (started once ART first
+    // catches) so it stops scheduling itself once this effect's cleanup
+    // runs — otherwise gsap.delayedCall's self-rescheduling recursion would
+    // keep firing forever on a stale `art` node after unmount.
+    let cancelled = false
 
     const tl = gsap.timeline()
 
@@ -145,42 +150,73 @@ function Wordmark({ visible, tagline, cta }: { visible: boolean; tagline: string
     // ends). Two sequential tweens, cream→gold then gold→cream, so the
     // glow peaks exactly when the colour does, at the midpoint — a single
     // fromTo can't do that since it only has two keyframes.
+    // Durations here are a deliberate middle ground: the original ~2.5s
+    // total was real but too quick to consciously register on a normal
+    // viewing (easy to confirm frame-by-frame in a screenshot trace, easy
+    // to miss in person). A first attempt at fixing that stretched it to
+    // ~6s, which swung too far the other way — by the time the full
+    // sequence (chars reveal + gild + flicker) finished, "Art" wasn't
+    // fully lit until ~10-12s after page load, long enough to feel like
+    // the page was slow rather than cinematic. This settles at roughly
+    // 3.2s for the gild sweep alone — clearly visible, not a multi-second wait.
     tl.fromTo(
       Array.from(chars),
       { backgroundPosition: '100% 0', textShadow: '0 0 0px rgba(224,169,62,0)' },
       {
         backgroundPosition: '-100% 0',
-        textShadow: '0 0 32px rgba(224,169,62,0.85)',
-        duration: 0.9,
+        textShadow: '0 0 36px rgba(224,169,62,0.9)',
+        duration: 1.2,
         ease: 'power2.inOut',
-        stagger: { each: 0.08, from: 'start' },
+        stagger: { each: 0.1, from: 'start' },
       },
       'charsRevealEnd-=0.6'
     ).to(Array.from(chars), {
       backgroundPosition: '100% 0',
       textShadow: '0 0 0px rgba(224,169,62,0)',
-      duration: 1.1,
+      duration: 1.4,
       ease: 'power2.out',
-      stagger: { each: 0.08, from: 'start' },
+      stagger: { each: 0.1, from: 'start' },
     })
 
     tl.addLabel('gildEnd')
 
     // ART suffix — a faulty-neon-sign flicker rather than a plain fade,
     // timed to switch on right as the "Zlatica" gild sweep finishes
-    // settling (per feedback: ART should react to the gild completing,
-    // not appear independently of it). Irregular opacity steps of
-    // deliberately uneven duration before it catches and holds, the way a
-    // real tube flickers on rather than a clean linear brighten.
+    // settling. Modelled on how a real failing tube actually behaves,
+    // per explicit feedback on the shape of it: dim glow first, then a
+    // hard bright flash, then dimmer again, then it holds at a dim glow
+    // for a noticeably longer beat before finally catching fully — not a
+    // uniform stutter of same-length blinks.
     if (art) {
       tl.set(art, { opacity: 0, x: -20, filter: 'blur(2px)' }, 'gildEnd-=0.15')
-        .to(art, { opacity: 0.7, duration: 0.05 })
-        .to(art, { opacity: 0.05, duration: 0.06 })
-        .to(art, { opacity: 0.85, duration: 0.04 })
-        .to(art, { opacity: 0.15, duration: 0.09 })
-        .to(art, { opacity: 0.9, x: 0, filter: 'blur(0px)', duration: 0.06 })
-        .to(art, { opacity: 0.25, duration: 0.07 })
-        .to(art, { opacity: 1, duration: 0.5, ease: 'power2.out' })
+        .to(art, { opacity: 0.22, duration: 0.14 }) // dim glow catches first
+        .to(art, { opacity: 0.04, duration: 0.07 }) // dips out
+        .to(art, { opacity: 0.95, duration: 0.05 }) // hard bright flash
+        .to(art, { opacity: 0.1, duration: 0.12 }) // dimmer again
+        .to(art, { opacity: 0.3, x: 0, filter: 'blur(0px)', duration: 0.55 }) // holds dim, noticeably longer
+        .to(art, { opacity: 1, duration: 0.85, ease: 'power2.out' }) // finally catches fully
+        .call(() => {
+          // A real faulty tube doesn't catch once and stay perfectly
+          // steady forever — it keeps dipping every so often. Runs
+          // indefinitely at random 2-7s intervals for as long as the hero
+          // stays mounted (skipped under reduced motion — a perpetual
+          // flicker is exactly the kind of thing that preference exists
+          // to avoid, even though the one-time catch above is tolerated).
+          if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+          const loopFlicker = () => {
+            if (cancelled) return
+            gsap.delayedCall(2 + Math.random() * 5, () => {
+              if (cancelled) return
+              gsap
+                .timeline({ onComplete: loopFlicker })
+                .to(art, { opacity: 0.35, duration: 0.05 })
+                .to(art, { opacity: 1, duration: 0.08 })
+                .to(art, { opacity: 0.55, duration: 0.04 })
+                .to(art, { opacity: 1, duration: 0.1 })
+            })
+          }
+          loopFlicker()
+        })
     }
 
     // CTA — quiet fade, right after ART catches
@@ -191,6 +227,11 @@ function Wordmark({ visible, tagline, cta }: { visible: boolean; tagline: string
         { opacity: 1, y: 0, duration: 0.9, ease: 'power2.out' },
         '-=0.3'
       )
+    }
+
+    return () => {
+      cancelled = true
+      tl.kill()
     }
   }, [visible])
 
@@ -235,7 +276,7 @@ function Wordmark({ visible, tagline, cta }: { visible: boolean; tagline: string
           style={{
             opacity: 0,
             fontFamily: 'var(--font-sans)',
-            fontWeight: 200,
+            fontWeight: 400,
             fontSize: 'clamp(1rem, 2.8vw, 2.8rem)',
             letterSpacing: '0.6em',
             textTransform: 'uppercase',
