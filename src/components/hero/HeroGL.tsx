@@ -193,8 +193,8 @@ function Wordmark({ visible, tagline, cta }: { visible: boolean; tagline: string
     // a hot, wide bloom at full/flash brightness so "lit" reads as
     // genuinely blazing rather than merely "not transparent."
     const glowOff = '0 0 0px rgba(250,240,210,0)'
-    const glowDim = '0 0 8px rgba(250,240,210,0.35)'
-    const glowFull = '0 0 22px rgba(250,240,210,0.9), 0 0 44px rgba(250,240,210,0.5)'
+    const glowDim = '0 0 12px rgba(250,240,210,0.5)'
+    const glowFull = '0 0 30px rgba(250,240,210,1), 0 0 60px rgba(250,240,210,0.75), 0 0 90px rgba(224,169,62,0.4)'
 
     if (art) {
       tl.set(art, { opacity: 0, x: -20, filter: 'blur(2px)', textShadow: glowOff }, 'gildEnd-=0.15')
@@ -207,14 +207,15 @@ function Wordmark({ visible, tagline, cta }: { visible: boolean; tagline: string
         .call(() => {
           // A real faulty tube doesn't catch once and stay perfectly
           // steady forever — it keeps dipping every so often. Runs
-          // indefinitely at random 2-7s intervals for as long as the hero
+          // indefinitely at random 0.8-2.2s intervals (was 2-7s — per
+          // feedback, more insistent/frequent) for as long as the hero
           // stays mounted (skipped under reduced motion — a perpetual
           // flicker is exactly the kind of thing that preference exists
           // to avoid, even though the one-time catch above is tolerated).
           if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
           const loopFlicker = () => {
             if (cancelled) return
-            gsap.delayedCall(2 + Math.random() * 5, () => {
+            gsap.delayedCall(0.8 + Math.random() * 1.4, () => {
               if (cancelled) return
               gsap
                 .timeline({ onComplete: loopFlicker })
