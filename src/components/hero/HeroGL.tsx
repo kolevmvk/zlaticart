@@ -40,7 +40,30 @@ function createProgram(gl: WebGLRenderingContext, vert: string, frag: string): W
   return p
 }
 
-function loadImageTexture(gl: WebGLRenderingContext, src: string): Promise<WebGLTexture> {
+// Routes the raw asset through Next's own image optimizer (resize +
+// compress + WebP/AVIF negotiation) — the same pipeline every other image
+// on the site gets via <Image>, which this one otherwise bypasses entirely
+// because WebGL needs a raw `new Image()` for direct pixel access.
+// Profiling found the hero texture being served at its untouched original
+// size (2009×2015, ~507KB) regardless of viewport — on a 390px-wide phone
+// that's roughly 15-20x more image data than the canvas can even display.
+// Only for same-origin/relative sources: an absolute external URL (e.g.
+// once real Sanity CDN images are wired up as hero art) would need
+// next.config's remotePatterns configured for this proxy to work, so it's
+// passed through untouched until that's set up.
+// Must match next.config.ts's images.deviceSizes + images.imageSizes
+// (merged/sorted) — Next's image optimizer 400s on any `w` value that
+// isn't exactly one of these, so an arbitrary computed width can't be
+// passed straight through.
+const NEXT_IMAGE_WIDTHS = [320, 375, 430, 640, 768, 960, 1024, 1280, 1920, 2560]
+
+function buildOptimizedSrc(src: string, targetWidth: number, quality = 85): string {
+  if (src.startsWith('http')) return src
+  const w = NEXT_IMAGE_WIDTHS.find((width) => width >= targetWidth) ?? NEXT_IMAGE_WIDTHS[NEXT_IMAGE_WIDTHS.length - 1]
+  return `/_next/image?url=${encodeURIComponent(src)}&w=${w}&q=${quality}`
+}
+
+function loadImageTexture(gl: WebGLRenderingContext, src: string, targetWidth: number): Promise<WebGLTexture> {
   return new Promise((resolve, reject) => {
     const tex = gl.createTexture()!
     const img = new window.Image()
@@ -55,7 +78,7 @@ function loadImageTexture(gl: WebGLRenderingContext, src: string): Promise<WebGL
       resolve(tex)
     }
     img.onerror = reject
-    img.src = src
+    img.src = buildOptimizedSrc(src, targetWidth)
   })
 }
 
@@ -467,7 +490,7 @@ export default function HeroGL({ artwork }: HeroGLProps) {
     startTimeRef.current = performance.now()
 
     // Load artwork texture, then start animation
-    loadImageTexture(gl, artwork.primaryImage.src)
+    loadImageTexture(gl, artwork.primaryImage.src, canvas.width)
       .then((tex) => {
         textureRef.current = tex
 
