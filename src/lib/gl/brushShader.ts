@@ -16,6 +16,8 @@ uniform float uProgress;
 uniform float uTime;
 uniform float uAspect;
 uniform float uArtworkAspect;
+uniform float uScrollT;
+uniform float uGlassStrength;
 
 varying vec2 vUv;
 
@@ -138,6 +140,56 @@ void main() {
   vec2 artUv = coverCrop(baseUv, uAspect, uArtworkAspect);
   vec4 art   = texture2D(uArtwork, artUv);
 
+  /* ─── glass-sweep oil smear (scroll-driven) ─────────────────────────────
+     A soft pane of "glass" travels left→right across the canvas as the
+     user scrolls past the hero. Its position is tied directly to raw
+     scroll progress (uScrollT) so it always slides forward, never back;
+     its intensity (uGlassStrength) is a stage envelope computed in JS —
+     see docs/HERO_SPEC.md scroll-handoff notes. Kept in the same warm
+     wet-paint material language as the brush reveal above rather than
+     reading as a generic image filter. */
+  vec3 artFinal = art.rgb;
+  float boundaryX = mix(-0.22, 1.22, uScrollT);
+  /* Narrow band (0.2, not the original 0.5): at 0.5 the gaussian stayed at
+     20–55% strength even at the frame's far edges, so the "sheet" covered
+     almost the whole canvas at once and read as an ambient wash rather
+     than a discrete pane sweeping past. 0.2 keeps it a genuinely localized
+     band that visibly travels. */
+  float bandDist  = (vUv.x - boundaryX) / 0.2;
+  float glassBand = exp(-bandDist * bandDist) * uGlassStrength;
+  {
+    float band = glassBand;
+    if (band > 0.001) {
+      // (declarations below intentionally scoped to this block)
+      /* Directional drag: pigment pulled down-and-across, as if dragged by
+         pressure from a moving pane rather than smeared uniformly. */
+      vec2 dragDir  = normalize(vec2(0.35, 1.0));
+      float dragAmt = 0.016 * band;
+
+      /* Tiny optical refraction — glass is never perfectly flat. */
+      float refr = (fbm(vUv * 11.0 + uTime * 0.05) - 0.5) * 0.008 * band;
+
+      vec2 smearUv = coverCrop(baseUv + dragDir * refr, uAspect, uArtworkAspect);
+
+      /* Short multi-tap drag along dragDir doubles as the smear's blur —
+         cheap, fixed tap count, no dynamic loop bounds. */
+      vec3 smeared = vec3(0.0);
+      float wsum = 0.0;
+      for (int t = 0; t < 5; t++) {
+        float ft = float(t) / 4.0;
+        float w  = 1.0 - abs(ft - 0.5) * 1.4;
+        vec2 tapUv = smearUv + dragDir * dragAmt * (ft - 0.5) * 2.0;
+        smeared += texture2D(uArtwork, clamp(tapUv, 0.001, 0.999)).rgb * w;
+        wsum += w;
+      }
+      smeared /= wsum;
+
+      artFinal = mix(art.rgb, smeared, band);
+      /* Wet-oil warmth — same tint family as the leading-edge glow below. */
+      artFinal += vec3(0.05, 0.03, -0.01) * band * 0.4;
+    }
+  }
+
   /* ── raw linen ground ── */
   float grain  = fbm(vUv * 88.0 + uTime * 0.14) * 0.014;
   float weave  = canvasWeave(vUv);
@@ -186,7 +238,7 @@ void main() {
   float specPaint = pow(max(dot(reflect(-lightDir, normal), vec3(0,0,1)), 0.0), 18.0);
 
   /* ── base colour mix: linen → oil painting ── */
-  vec3 col = mix(linen, art.rgb, rev);
+  vec3 col = mix(linen, artFinal, rev);
 
   /* Impasto thickness: slightly brightens peaks, darkens valleys */
   col += vec3(0.06, 0.05, 0.03) * (diffuse - 0.5) * rev * 0.55;
@@ -207,6 +259,10 @@ void main() {
   /* Gloss highlight: wet paint catches studio light */
   float wetGloss = pow(leadE, 1.8) * 0.32;
   col += vec3(1.0, 0.97, 0.88) * wetGloss;
+
+  /* ── glass-sweep highlight — soft reflection riding the traveling pane ── */
+  float glassHighlight = exp(-bandDist * bandDist * 4.0) * uGlassStrength;
+  col += vec3(1.0, 0.99, 0.95) * glassHighlight * 0.13 * rev;
 
   /* ── vignette — activates after reveal ─── */
   float vd = length((vUv - 0.5) * vec2(1.1, 1.25));

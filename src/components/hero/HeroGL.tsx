@@ -239,6 +239,26 @@ function Wordmark({ visible, tagline, cta }: { visible: boolean; tagline: string
 }
 
 // ---------------------------------------------------------------------------
+// Scroll-driven "glass sweep" stage envelope
+// ---------------------------------------------------------------------------
+// Maps raw scroll progress (0 = hero fully in view, 1 = hero fully scrolled
+// past) to the effect's intensity. Position of the traveling band in the
+// shader is driven directly by the raw progress instead (always advances,
+// never reverses); this envelope only controls how strong it looks at that
+// position. See docs/HERO_SPEC.md scroll-handoff + the living-canvas skill.
+function glassEnvelope(t: number): number {
+  const smootherstep = (x: number) => {
+    const c = Math.min(Math.max(x, 0), 1)
+    return c * c * c * (c * (c * 6 - 15) + 10)
+  }
+  if (t <= 0.15) return 0
+  if (t <= 0.55) return smootherstep((t - 0.15) / 0.4)
+  if (t <= 0.85) return 1
+  if (t <= 1) return 1 - smootherstep((t - 0.85) / 0.15)
+  return 0
+}
+
+// ---------------------------------------------------------------------------
 // Main hero component
 // ---------------------------------------------------------------------------
 
@@ -265,6 +285,11 @@ export default function HeroGL({ artwork }: HeroGLProps) {
   const wordmarkShownRef = useRef(false)
   const [glFailed, setGlFailed] = useState(false)
   const reducedMotion = useRef(false)
+  // Raw scroll progress (0→1) driving the glass-sweep effect, and a
+  // one-time device scale factor (1 desktop / 0.5 mobile-or-touch). Refs,
+  // not state — read every rAF frame, never trigger a re-render.
+  const glassScrollRef = useRef(0)
+  const glassDeviceScaleRef = useRef(1)
 
   // Render one WebGL frame
   const render = useCallback(() => {
@@ -284,6 +309,11 @@ export default function HeroGL({ artwork }: HeroGLProps) {
     gl.uniform1f(
       u.uArtworkAspect,
       artwork.primaryImage.width / artwork.primaryImage.height
+    )
+    gl.uniform1f(u.uScrollT, glassScrollRef.current)
+    gl.uniform1f(
+      u.uGlassStrength,
+      glassEnvelope(glassScrollRef.current) * glassDeviceScaleRef.current
     )
 
     gl.activeTexture(gl.TEXTURE0)
@@ -377,6 +407,8 @@ export default function HeroGL({ artwork }: HeroGLProps) {
       uTime: gl.getUniformLocation(prog, 'uTime'),
       uAspect: gl.getUniformLocation(prog, 'uAspect'),
       uArtworkAspect: gl.getUniformLocation(prog, 'uArtworkAspect'),
+      uScrollT: gl.getUniformLocation(prog, 'uScrollT'),
+      uGlassStrength: gl.getUniformLocation(prog, 'uGlassStrength'),
     }
 
     startTimeRef.current = performance.now()
@@ -523,6 +555,47 @@ export default function HeroGL({ artwork }: HeroGLProps) {
     })
 
     return () => ctx.revert()
+  }, [])
+
+  // Glass-sweep scroll progress — pure progress tracking (no tween target),
+  // so it never fights the wrapper scale/opacity trigger above; both read
+  // the same native scroll, neither pins or intercepts it. Skipped entirely
+  // under reduced motion, which leaves glassScrollRef at 0 forever — the
+  // shader then applies zero displacement and the hero stays permanently
+  // sharp, matching this file's other reduced-motion fallbacks.
+  //
+  // end: '70% top' (not 'bottom top') deliberately — this hero is not
+  // pinned, so it scrolls away in normal flow as the user scrolls. By the
+  // time 100% of its own height has been scrolled, it's entirely off
+  // screen. Spanning the full height would put the effect's "strongest"
+  // stage (0.55–0.85 of progress) at a point where the hero is already
+  // mostly or fully invisible. Ending at 70% keeps the hero substantially
+  // on screen (~30–60% visible) through the strongest stage, matching how
+  // the existing wrapper scale/opacity trigger above is likewise scoped
+  // tightly to the portion of scroll where the hero is still meaningfully
+  // in view rather than its full height.
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const container = containerRef.current
+    if (!container) return
+
+    glassDeviceScaleRef.current = window.matchMedia(
+      '(pointer: coarse), (max-width: 767px)'
+    ).matches
+      ? 0.5
+      : 1
+
+    const trigger = ScrollTrigger.create({
+      trigger: container,
+      start: 'top top',
+      end: '70% top',
+      scrub: true,
+      onUpdate: (self) => {
+        glassScrollRef.current = self.progress
+      },
+    })
+
+    return () => trigger.kill()
   }, [])
 
   return (
