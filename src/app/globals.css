@@ -168,6 +168,9 @@ body[data-grain].grain-paused::after { animation-play-state: paused; }
     text-transform: uppercase;
     color: inherit;
     transition: opacity 0.2s var(--ease-art);
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
   }
 
   .nav-link:hover {

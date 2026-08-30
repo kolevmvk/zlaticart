@@ -74,7 +74,7 @@ export default function ArtworkCard({ artwork, priority = false, size = 'medium'
         </div>
       </div>
 
-      <div className="mt-3 md:mt-4">
+      <div className="mt-3 md:mt-4" data-work-meta>
         <p
           className="font-serif text-ink font-light leading-snug"
           style={{ fontSize: size === 'large' ? '1.125rem' : '0.9375rem' }}

@@ -73,7 +73,10 @@ export default function Navigation({ theme = 'dark' }: NavigationProps) {
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${bgColor}`}
         role="banner"
       >
-        <div className="section-gutter flex items-center justify-between py-5 md:py-6">
+        <div
+          className="section-gutter flex items-center justify-between py-5 md:py-6"
+          style={{ paddingTop: 'max(1.25rem, calc(env(safe-area-inset-top) + 0.5rem))' }}
+        >
           <Link
             href="/"
             className={`font-serif italic font-light text-sm tracking-wide ${textColor} hover:opacity-60 transition-opacity duration-200`}
@@ -105,7 +108,7 @@ export default function Navigation({ theme = 'dark' }: NavigationProps) {
 
             <button
               ref={buttonRef}
-              className={`flex flex-col gap-[5px] p-2 -mr-2 ${textColor}`}
+              className={`flex flex-col items-center justify-center gap-[5px] min-w-[44px] min-h-[44px] -mr-2.5 ${textColor}`}
               onClick={() => setMenuOpen(true)}
               aria-label="Open navigation menu"
               aria-expanded={menuOpen}
@@ -126,8 +129,12 @@ export default function Navigation({ theme = 'dark' }: NavigationProps) {
           menuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
         aria-hidden={!menuOpen}
+        inert={!menuOpen}
       >
-        <div className="section-gutter flex items-center justify-between py-5">
+        <div
+          className="section-gutter flex items-center justify-between py-5"
+          style={{ paddingTop: 'max(1.25rem, calc(env(safe-area-inset-top) + 0.5rem))' }}
+        >
           <Link
             href="/"
             className="text-label text-xs tracking-brand font-light text-canvas"
@@ -136,7 +143,7 @@ export default function Navigation({ theme = 'dark' }: NavigationProps) {
             ZlaticArt
           </Link>
           <button
-            className="text-canvas p-2 -mr-2"
+            className="text-canvas flex items-center justify-center min-w-[44px] min-h-[44px] -mr-2.5"
             onClick={() => setMenuOpen(false)}
             aria-label="Close navigation menu"
           >
@@ -166,7 +173,10 @@ export default function Navigation({ theme = 'dark' }: NavigationProps) {
           ))}
         </nav>
 
-        <div className="section-gutter pb-8">
+        <div
+          className="section-gutter pb-8"
+          style={{ paddingBottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1rem))' }}
+        >
           <p className="text-gallery-meta text-canvas/40">
             {t.hero.tagline}
           </p>

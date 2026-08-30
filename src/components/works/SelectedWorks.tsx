@@ -57,7 +57,13 @@ export default function SelectedWorks({ artworks }: SelectedWorksProps) {
   // wall rising to present the paintings. Scrubbed so it responds linearly
   // to scroll speed; animation completes before the section top reaches
   // 60 % of the screen, leaving the rest of scroll for content discovery.
-  // Skipped entirely when the user has requested reduced motion.
+  //
+  // Layered on top: the hero card (first work) settles out of a soft blur
+  // and slight overscale — a visual continuation of the WebGL hero canvas
+  // above, which itself scales/fades as it exits (see HeroGL's pigment-pull
+  // handoff). Its caption then rises in like a museum label once the image
+  // has resolved. Secondary cards are staggered with varied offsets instead
+  // of animating identically. Skipped entirely under reduced motion.
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
@@ -83,6 +89,59 @@ export default function SelectedWorks({ artworks }: SelectedWorksProps) {
               },
             }
           )
+
+          const heroCards = sectionRef.current!.querySelectorAll('[data-work-card="hero"]')
+          heroCards.forEach((card) => {
+            gsap.fromTo(
+              card,
+              { scale: 1.06, opacity: 0.5, filter: 'blur(12px)' },
+              {
+                scale: 1,
+                opacity: 1,
+                filter: 'blur(0px)',
+                ease: 'power2.out',
+                scrollTrigger: {
+                  trigger: card,
+                  start: 'top 92%',
+                  end: 'top 48%',
+                  scrub: 1,
+                },
+              }
+            )
+
+            const meta = card.querySelector('[data-work-meta]')
+            if (meta) {
+              gsap.fromTo(
+                meta,
+                { opacity: 0, y: 14 },
+                {
+                  opacity: 1,
+                  y: 0,
+                  duration: 0.9,
+                  ease: 'power2.out',
+                  scrollTrigger: { trigger: card, start: 'top 45%', once: true },
+                }
+              )
+            }
+          })
+
+          const secondaryCards = sectionRef.current!.querySelectorAll('[data-work-card="secondary"]')
+          secondaryCards.forEach((card, i) => {
+            const dir = i % 2 === 0 ? 1 : -1
+            gsap.fromTo(
+              card,
+              { y: 44 + (i % 3) * 12, x: dir * 10, opacity: 0 },
+              {
+                y: 0,
+                x: 0,
+                opacity: 1,
+                duration: 1,
+                delay: (i % 4) * 0.06,
+                ease: 'power3.out',
+                scrollTrigger: { trigger: card, start: 'top 90%', once: true },
+              }
+            )
+          })
         })
       }
     )
@@ -141,21 +200,21 @@ export default function SelectedWorks({ artworks }: SelectedWorksProps) {
         {/* Desktop: editorial asymmetric layout */}
         <div className="hidden md:grid md:grid-cols-12 md:gap-6 lg:gap-8">
           {hero && (
-            <div className="md:col-span-7">
+            <div className="md:col-span-7" data-work-card="hero">
               <ArtworkCard artwork={hero} priority size="large" />
             </div>
           )}
           <div className="md:col-span-5 flex flex-col gap-6 lg:gap-8">
-            {rest.slice(0, 2).map((aw) => (
-              <div key={aw.id}>
+            {rest.slice(0, 2).map((aw, i) => (
+              <div key={aw.id} data-work-card="secondary" data-work-index={i}>
                 <ArtworkCard artwork={aw} size="medium" />
               </div>
             ))}
           </div>
 
           {/* Second row: 3 columns */}
-          {rest.slice(2, 5).map((aw) => (
-            <div key={aw.id} className="md:col-span-4">
+          {rest.slice(2, 5).map((aw, i) => (
+            <div key={aw.id} className="md:col-span-4" data-work-card="secondary" data-work-index={i + 2}>
               <ArtworkCard artwork={aw} size="small" />
             </div>
           ))}
@@ -164,7 +223,7 @@ export default function SelectedWorks({ artworks }: SelectedWorksProps) {
         {/* Mobile: vertical stack */}
         <div className="flex flex-col gap-10 md:hidden">
           {artworks.slice(0, 4).map((aw, i) => (
-            <div key={aw.id}>
+            <div key={aw.id} data-work-card={i === 0 ? 'hero' : 'secondary'} data-work-index={i}>
               <ArtworkCard artwork={aw} priority={i === 0} size={i === 0 ? 'large' : 'medium'} />
             </div>
           ))}

@@ -17,7 +17,7 @@ uniform float uTime;
 uniform float uAspect;
 uniform float uArtworkAspect;
 uniform float uScrollT;
-uniform float uGlassStrength;
+uniform float uPigmentPull;
 
 varying vec2 vUv;
 
@@ -140,53 +140,59 @@ void main() {
   vec2 artUv = coverCrop(baseUv, uAspect, uArtworkAspect);
   vec4 art   = texture2D(uArtwork, artUv);
 
-  /* ─── glass-sweep oil smear (scroll-driven) ─────────────────────────────
-     A soft pane of "glass" travels left→right across the canvas as the
-     user scrolls past the hero. Its position is tied directly to raw
-     scroll progress (uScrollT) so it always slides forward, never back;
-     its intensity (uGlassStrength) is a stage envelope computed in JS —
-     see docs/HERO_SPEC.md scroll-handoff notes. Kept in the same warm
-     wet-paint material language as the brush reveal above rather than
-     reading as a generic image filter. */
+  /* ─── pigment pull (scroll-driven) ──────────────────────────────────────
+     A loaded band of wet oil pigment is dragged left→right across the
+     canvas as the user scrolls past the hero — pressure, drag, chromatic
+     bleed and bristle breakup, not a glass/refraction pane. Its position
+     is tied directly to raw scroll progress (uScrollT) so it always slides
+     forward, never back; its intensity (uPigmentPull) is a stage envelope
+     computed in JS — see docs/HERO_SPEC.md scroll-handoff notes. */
   vec3 artFinal = art.rgb;
-  float boundaryX = mix(-0.22, 1.22, uScrollT);
-  /* Narrow band (0.2, not the original 0.5): at 0.5 the gaussian stayed at
-     20–55% strength even at the frame's far edges, so the "sheet" covered
-     almost the whole canvas at once and read as an ambient wash rather
-     than a discrete pane sweeping past. 0.2 keeps it a genuinely localized
-     band that visibly travels. */
-  float bandDist  = (vUv.x - boundaryX) / 0.2;
-  float glassBand = exp(-bandDist * bandDist) * uGlassStrength;
+  float boundaryX = mix(-0.3, 1.3, uScrollT);
+  /* Bristle breakup: fray the band's leading/trailing edge per scanline so
+     the boundary reads as pigment dragged unevenly by bristles rather than
+     a clean gradient. */
+  float rowBreak = (vnoise(vec2(vUv.y * 24.0, uScrollT * 5.0 + 4.1)) - 0.5) * 0.3;
+  float bandDist  = (vUv.x - boundaryX) / 0.34;
+  float pigmentBand = exp(-pow(bandDist + rowBreak, 2.0)) * uPigmentPull;
   {
-    float band = glassBand;
+    float band = pigmentBand;
     if (band > 0.001) {
       // (declarations below intentionally scoped to this block)
       /* Directional drag: pigment pulled down-and-across, as if dragged by
-         pressure from a moving pane rather than smeared uniformly. */
-      vec2 dragDir  = normalize(vec2(0.35, 1.0));
-      float dragAmt = 0.016 * band;
+         a loaded brush under pressure rather than smeared uniformly. */
+      vec2 dragDir  = normalize(vec2(0.4, 1.0));
+      float dragAmt = 0.09 * band;
 
-      /* Tiny optical refraction — glass is never perfectly flat. */
-      float refr = (fbm(vUv * 11.0 + uTime * 0.05) - 0.5) * 0.008 * band;
+      /* Viscous wobble — wet paint is never pulled in a perfectly straight
+         line. */
+      float refr = (fbm(vUv * 9.0 + uTime * 0.06) - 0.5) * 0.022 * band;
 
       vec2 smearUv = coverCrop(baseUv + dragDir * refr, uAspect, uArtworkAspect);
 
       /* Short multi-tap drag along dragDir doubles as the smear's blur —
-         cheap, fixed tap count, no dynamic loop bounds. */
+         cheap, fixed tap count, no dynamic loop bounds. Each tap samples
+         channels with a tiny directional offset so the spill shows visible
+         chromatic bleed at its edges, like pigment separating as it drags. */
       vec3 smeared = vec3(0.0);
       float wsum = 0.0;
       for (int t = 0; t < 5; t++) {
         float ft = float(t) / 4.0;
         float w  = 1.0 - abs(ft - 0.5) * 1.4;
         vec2 tapUv = smearUv + dragDir * dragAmt * (ft - 0.5) * 2.0;
-        smeared += texture2D(uArtwork, clamp(tapUv, 0.001, 0.999)).rgb * w;
+        vec3 tapCol;
+        tapCol.r = texture2D(uArtwork, clamp(tapUv + dragDir * 0.007 * band, 0.001, 0.999)).r;
+        tapCol.g = texture2D(uArtwork, clamp(tapUv, 0.001, 0.999)).g;
+        tapCol.b = texture2D(uArtwork, clamp(tapUv - dragDir * 0.007 * band, 0.001, 0.999)).b;
+        smeared += tapCol * w;
         wsum += w;
       }
       smeared /= wsum;
 
       artFinal = mix(art.rgb, smeared, band);
-      /* Wet-oil warmth — same tint family as the leading-edge glow below. */
-      artFinal += vec3(0.05, 0.03, -0.01) * band * 0.4;
+      /* Wet-oil warmth — same tint family as the leading-edge glow below,
+         boosted so the spill reads as freshly pulled pigment, not a filter. */
+      artFinal += vec3(0.1, 0.055, -0.025) * band * 0.6;
     }
   }
 
@@ -260,9 +266,10 @@ void main() {
   float wetGloss = pow(leadE, 1.8) * 0.32;
   col += vec3(1.0, 0.97, 0.88) * wetGloss;
 
-  /* ── glass-sweep highlight — soft reflection riding the traveling pane ── */
-  float glassHighlight = exp(-bandDist * bandDist * 4.0) * uGlassStrength;
-  col += vec3(1.0, 0.99, 0.95) * glassHighlight * 0.13 * rev;
+  /* ── wet edge — raised, glistening rim at the leading edge of the pulled
+     pigment, where paint is thickest and catches the most light ── */
+  float wetEdge = exp(-bandDist * bandDist * 4.5) * uPigmentPull;
+  col += vec3(1.0, 0.98, 0.9) * wetEdge * 0.22 * rev;
 
   /* ── vignette — activates after reveal ─── */
   float vd = length((vUv - 0.5) * vec2(1.1, 1.25));
