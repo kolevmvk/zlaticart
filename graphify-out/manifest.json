@@ -1,0 +1,747 @@
+{
+  "/Volumes/KoleOPS/zlaticart/.eslintrc.json": {
+    "mtime": 1788022966.0107481,
+    "ast_hash": "5cc89077d438e3d0d0a8308ab7e06a5a",
+    "semantic_hash": "5cc89077d438e3d0d0a8308ab7e06a5a"
+  },
+  "/Volumes/KoleOPS/zlaticart/next.config.ts": {
+    "mtime": 1788042043.940053,
+    "ast_hash": "576eeb3c9fa4d7f55fe8d6fc49077039",
+    "semantic_hash": "576eeb3c9fa4d7f55fe8d6fc49077039"
+  },
+  "/Volumes/KoleOPS/zlaticart/package.json": {
+    "mtime": 1788050524.4423113,
+    "ast_hash": "ede711b19b4e979dbfff112b944035ec",
+    "semantic_hash": "ede711b19b4e979dbfff112b944035ec"
+  },
+  "/Volumes/KoleOPS/zlaticart/postcss.config.mjs": {
+    "mtime": 1788022966.0405483,
+    "ast_hash": "9b6603c7cd7650cffc6036e05548e873",
+    "semantic_hash": "9b6603c7cd7650cffc6036e05548e873"
+  },
+  "/Volumes/KoleOPS/zlaticart/sanity.config.ts": {
+    "mtime": 1788041081.6612706,
+    "ast_hash": "5a2ba96c0fdd69b74525460673e40cba",
+    "semantic_hash": "5a2ba96c0fdd69b74525460673e40cba"
+  },
+  "/Volumes/KoleOPS/zlaticart/sanity/components/SocialConnectionGuide.tsx": {
+    "mtime": 1788038854.3858154,
+    "ast_hash": "8ac769488cf6baaa3e39011355456243",
+    "semantic_hash": "8ac769488cf6baaa3e39011355456243"
+  },
+  "/Volumes/KoleOPS/zlaticart/sanity/components/StudioLogo.tsx": {
+    "mtime": 1788041074.232714,
+    "ast_hash": "8c7b3a1e0c57a9a181c1c0be1a949bd4",
+    "semantic_hash": "8c7b3a1e0c57a9a181c1c0be1a949bd4"
+  },
+  "/Volumes/KoleOPS/zlaticart/sanity/schemas/artistProfile.ts": {
+    "mtime": 1788050524.442813,
+    "ast_hash": "e7825c95280fe0164733409a02f13fc8",
+    "semantic_hash": "e7825c95280fe0164733409a02f13fc8"
+  },
+  "/Volumes/KoleOPS/zlaticart/sanity/schemas/artwork.ts": {
+    "mtime": 1788050524.4433024,
+    "ast_hash": "16a507121c81ab8a83f87048d72e4d9a",
+    "semantic_hash": "16a507121c81ab8a83f87048d72e4d9a"
+  },
+  "/Volumes/KoleOPS/zlaticart/sanity/schemas/educationItem.ts": {
+    "mtime": 1788050524.4438446,
+    "ast_hash": "d06f6f27a87b273cb329f6cba0993691",
+    "semantic_hash": "d06f6f27a87b273cb329f6cba0993691"
+  },
+  "/Volumes/KoleOPS/zlaticart/sanity/schemas/exhibition.ts": {
+    "mtime": 1788050524.4443624,
+    "ast_hash": "e25796c56c8fb1d2cd9096897f1bd33d",
+    "semantic_hash": "e25796c56c8fb1d2cd9096897f1bd33d"
+  },
+  "/Volumes/KoleOPS/zlaticart/sanity/schemas/index.ts": {
+    "mtime": 1788022966.0618572,
+    "ast_hash": "f12dc8db49b12c1cfae59ee1748f3077",
+    "semantic_hash": "f12dc8db49b12c1cfae59ee1748f3077"
+  },
+  "/Volumes/KoleOPS/zlaticart/sanity/schemas/journalPost.ts": {
+    "mtime": 1788050524.4448435,
+    "ast_hash": "fd9de41ad3ca2e3cbf95ca9222115e52",
+    "semantic_hash": "fd9de41ad3ca2e3cbf95ca9222115e52"
+  },
+  "/Volumes/KoleOPS/zlaticart/sanity/schemas/medium.ts": {
+    "mtime": 1788050524.4453318,
+    "ast_hash": "c8b184cf140bbeda51a92ec306fc922f",
+    "semantic_hash": "c8b184cf140bbeda51a92ec306fc922f"
+  },
+  "/Volumes/KoleOPS/zlaticart/sanity/schemas/siteSettings.ts": {
+    "mtime": 1788038869.5982852,
+    "ast_hash": "f61101166ec85333257ec3c764931e5e",
+    "semantic_hash": "f61101166ec85333257ec3c764931e5e"
+  },
+  "/Volumes/KoleOPS/zlaticart/sanity/schemas/socialItem.ts": {
+    "mtime": 1788050524.4458096,
+    "ast_hash": "9ff83336976a95071158faeb2409dc0b",
+    "semantic_hash": "9ff83336976a95071158faeb2409dc0b"
+  },
+  "/Volumes/KoleOPS/zlaticart/sanity/theme.ts": {
+    "mtime": 1788041115.857354,
+    "ast_hash": "7873d7080bfa54ba2d5d01e2cc104ae8",
+    "semantic_hash": "7873d7080bfa54ba2d5d01e2cc104ae8"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/app/(site)/about/AboutPageContent.tsx": {
+    "mtime": 1788041979.6261153,
+    "ast_hash": "754cfc58d6b572e79a366d11cbc48c81",
+    "semantic_hash": "754cfc58d6b572e79a366d11cbc48c81"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/app/(site)/about/page.tsx": {
+    "mtime": 1788041979.6267133,
+    "ast_hash": "65ac754f911267bb9c27239cc671c94f",
+    "semantic_hash": "65ac754f911267bb9c27239cc671c94f"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/app/(site)/contact/ContactPageContent.tsx": {
+    "mtime": 1788048418.7225363,
+    "ast_hash": "9aef6efb5aa54703462ca526f5024dcb",
+    "semantic_hash": "9aef6efb5aa54703462ca526f5024dcb"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/app/(site)/contact/actions.ts": {
+    "mtime": 1788048418.7230089,
+    "ast_hash": "46a2b33669aee1a2987c19f0f95af218",
+    "semantic_hash": "46a2b33669aee1a2987c19f0f95af218"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/app/(site)/contact/page.tsx": {
+    "mtime": 1788050524.4467297,
+    "ast_hash": "5e59f9b89d4be8f721ffd45855968280",
+    "semantic_hash": "5e59f9b89d4be8f721ffd45855968280"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/app/(site)/education/EducationPageContent.tsx": {
+    "mtime": 1788041979.6272862,
+    "ast_hash": "b73d7339b3b1ed857a32801fdd794de5",
+    "semantic_hash": "b73d7339b3b1ed857a32801fdd794de5"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/app/(site)/education/page.tsx": {
+    "mtime": 1788041979.6278005,
+    "ast_hash": "8216caf0cb37a1b0550f386c12dcce38",
+    "semantic_hash": "8216caf0cb37a1b0550f386c12dcce38"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/app/(site)/exhibitions/ExhibitionsPageContent.tsx": {
+    "mtime": 1788041979.6283286,
+    "ast_hash": "5918651d8181b00c390537c87e16c76a",
+    "semantic_hash": "5918651d8181b00c390537c87e16c76a"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/app/(site)/exhibitions/page.tsx": {
+    "mtime": 1788041979.6288667,
+    "ast_hash": "30e7707aec26fe12a9bb8ee59f0eff0e",
+    "semantic_hash": "30e7707aec26fe12a9bb8ee59f0eff0e"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/app/(site)/journal/JournalPageContent.tsx": {
+    "mtime": 1788041979.6293855,
+    "ast_hash": "ab61e80061f893c797b845d18efe5283",
+    "semantic_hash": "ab61e80061f893c797b845d18efe5283"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/app/(site)/journal/[slug]/JournalArticleContent.tsx": {
+    "mtime": 1788041979.630295,
+    "ast_hash": "c3c0c2bbea3447a737f804776ce857a0",
+    "semantic_hash": "c3c0c2bbea3447a737f804776ce857a0"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/app/(site)/journal/[slug]/page.tsx": {
+    "mtime": 1788041979.6308792,
+    "ast_hash": "a41782df6f7b8d7a3fa017b7d6fa9c67",
+    "semantic_hash": "a41782df6f7b8d7a3fa017b7d6fa9c67"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/app/(site)/journal/page.tsx": {
+    "mtime": 1788041979.6314263,
+    "ast_hash": "d3911f352fdde8e48bbafcbe27cc3f7f",
+    "semantic_hash": "d3911f352fdde8e48bbafcbe27cc3f7f"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/app/(site)/layout.tsx": {
+    "mtime": 1788039505.0642788,
+    "ast_hash": "27de91ca84917318039417c291d5ecaf",
+    "semantic_hash": "27de91ca84917318039417c291d5ecaf"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/app/(site)/page.tsx": {
+    "mtime": 1788045471.9787543,
+    "ast_hash": "9c215446e7303ad0826445ad01bcab53",
+    "semantic_hash": "9c215446e7303ad0826445ad01bcab53"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/app/(site)/studio/StudioPageContent.tsx": {
+    "mtime": 1788041979.6324897,
+    "ast_hash": "4f263ff7fea145d6985969a6ef3353a1",
+    "semantic_hash": "4f263ff7fea145d6985969a6ef3353a1"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/app/(site)/studio/page.tsx": {
+    "mtime": 1788041979.633023,
+    "ast_hash": "91a139f787c7c76b7c1bc12622ada2ce",
+    "semantic_hash": "91a139f787c7c76b7c1bc12622ada2ce"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/app/(site)/works/WorksPageContent.tsx": {
+    "mtime": 1788041979.6335437,
+    "ast_hash": "f3c2303d66801fc077c581c4098e0a81",
+    "semantic_hash": "f3c2303d66801fc077c581c4098e0a81"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/app/(site)/works/[slug]/page.tsx": {
+    "mtime": 1788042043.9488983,
+    "ast_hash": "474e1ef54703c33c5c297adbb1e749d4",
+    "semantic_hash": "474e1ef54703c33c5c297adbb1e749d4"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/app/(site)/works/page.tsx": {
+    "mtime": 1788041979.6342282,
+    "ast_hash": "a89f5709cd0258550d2b82f5e926744f",
+    "semantic_hash": "a89f5709cd0258550d2b82f5e926744f"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/app/admin/[[...tool]]/page.tsx": {
+    "mtime": 1788022966.0635574,
+    "ast_hash": "b92e2200ad242c75ac628082cfc4886b",
+    "semantic_hash": "b92e2200ad242c75ac628082cfc4886b"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/app/layout.tsx": {
+    "mtime": 1788045438.8995187,
+    "ast_hash": "6a6b317e5924b4bc59feef15a2e4ab0f",
+    "semantic_hash": "6a6b317e5924b4bc59feef15a2e4ab0f"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/app/robots.ts": {
+    "mtime": 1788045433.3239958,
+    "ast_hash": "67aebfeae1f845b9fc19e2a337994d3d",
+    "semantic_hash": "67aebfeae1f845b9fc19e2a337994d3d"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/app/sitemap.ts": {
+    "mtime": 1788045434.7094128,
+    "ast_hash": "be14403433d411aa525b69bf22cb3b07",
+    "semantic_hash": "be14403433d411aa525b69bf22cb3b07"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/components/ContactForm.tsx": {
+    "mtime": 1788048418.7235305,
+    "ast_hash": "d57b63b5e80a085723f9b754b4e5844a",
+    "semantic_hash": "d57b63b5e80a085723f9b754b4e5844a"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/components/hero/GalleryPreparing.tsx": {
+    "mtime": 1788045452.3844965,
+    "ast_hash": "cc879d9f5dccfeb6c320c0d1fc917cfe",
+    "semantic_hash": "cc879d9f5dccfeb6c320c0d1fc917cfe"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/components/hero/HeroGL.tsx": {
+    "mtime": 1788050576.312076,
+    "ast_hash": "a5ee0b8eff74e94dccd5de7366470e1b",
+    "semantic_hash": "a5ee0b8eff74e94dccd5de7366470e1b"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/components/hero/LivingCanvas.tsx": {
+    "mtime": 1788022966.065464,
+    "ast_hash": "09274f564eff5a15d25c92ca2c42bc6b",
+    "semantic_hash": "09274f564eff5a15d25c92ca2c42bc6b"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/components/journal/JournalHighlights.tsx": {
+    "mtime": 1788022966.0656528,
+    "ast_hash": "2ae90299875fd60d725613635dbb36bb",
+    "semantic_hash": "2ae90299875fd60d725613635dbb36bb"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/components/nav/Navigation.tsx": {
+    "mtime": 1788022966.0657873,
+    "ast_hash": "48a4423fa127f7f494c30f631a9b5c50",
+    "semantic_hash": "48a4423fa127f7f494c30f631a9b5c50"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/components/nav/SiteFooter.tsx": {
+    "mtime": 1788022966.0658724,
+    "ast_hash": "398160621ec783a8b88dcdb93a96ced4",
+    "semantic_hash": "398160621ec783a8b88dcdb93a96ced4"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/components/providers/GrainPauser.tsx": {
+    "mtime": 1788039562.5185862,
+    "ast_hash": "782df12b8a9604c4938428ee3ca036c4",
+    "semantic_hash": "782df12b8a9604c4938428ee3ca036c4"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/components/providers/PageTransition.tsx": {
+    "mtime": 1788052001.4180312,
+    "ast_hash": "2aa1868cb23a88ec2c7ae69267978c66",
+    "semantic_hash": "2aa1868cb23a88ec2c7ae69267978c66"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/components/providers/SmoothScroll.tsx": {
+    "mtime": 1788022966.0661063,
+    "ast_hash": "cca441fdad4b59f4fa4e1be4bdd5dc37",
+    "semantic_hash": "cca441fdad4b59f4fa4e1be4bdd5dc37"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/components/sections/ArtEducationPreview.tsx": {
+    "mtime": 1788022966.0662239,
+    "ast_hash": "47c8681610dfc3e2d6dbfb74097d83cb",
+    "semantic_hash": "47c8681610dfc3e2d6dbfb74097d83cb"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/components/sections/ExhibitionsPreview.tsx": {
+    "mtime": 1788022966.0662854,
+    "ast_hash": "4b407fc6bc26e9a1f6818a79e9751975",
+    "semantic_hash": "4b407fc6bc26e9a1f6818a79e9751975"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/components/sections/MediaTransitions.tsx": {
+    "mtime": 1788022966.0663593,
+    "ast_hash": "d43c7f2a2165a391327fd39fe91137a2",
+    "semantic_hash": "d43c7f2a2165a391327fd39fe91137a2"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/components/sections/StudioPreview.tsx": {
+    "mtime": 1788049039.7118123,
+    "ast_hash": "8d22ecb09c5014c4632e585b3785b25e",
+    "semantic_hash": "8d22ecb09c5014c4632e585b3785b25e"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/components/sections/TheArtist.tsx": {
+    "mtime": 1788050524.4482675,
+    "ast_hash": "3222eaf5063029d350ed18e5de060990",
+    "semantic_hash": "3222eaf5063029d350ed18e5de060990"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/components/ui/CustomCursor.tsx": {
+    "mtime": 1788022966.0666516,
+    "ast_hash": "12b562cf3c445517e3ba15ce9c17a6c3",
+    "semantic_hash": "12b562cf3c445517e3ba15ce9c17a6c3"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/components/ui/KineticHeading.tsx": {
+    "mtime": 1788022966.0667334,
+    "ast_hash": "af72711170748b3e937d372e07366321",
+    "semantic_hash": "af72711170748b3e937d372e07366321"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/components/ui/LanguageToggle.tsx": {
+    "mtime": 1788022966.0668044,
+    "ast_hash": "f51387bd9ee59daa0b491aecec233dcb",
+    "semantic_hash": "f51387bd9ee59daa0b491aecec233dcb"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/components/ui/MarqueeTicker.tsx": {
+    "mtime": 1788022966.0668702,
+    "ast_hash": "b3254dd3ee73acca56959f2482687a62",
+    "semantic_hash": "b3254dd3ee73acca56959f2482687a62"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/components/ui/ParallaxImage.tsx": {
+    "mtime": 1788022966.0669277,
+    "ast_hash": "b3886276c70fa84cd244f14764d3037c",
+    "semantic_hash": "b3886276c70fa84cd244f14764d3037c"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/components/ui/RevealHeading.tsx": {
+    "mtime": 1788022966.0669816,
+    "ast_hash": "286cd3724aa27b72827e2c49eb2bcb21",
+    "semantic_hash": "286cd3724aa27b72827e2c49eb2bcb21"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/components/works/ArtworkCard.tsx": {
+    "mtime": 1788022966.0670888,
+    "ast_hash": "2785b3c809116b0aa55cb49004227be1",
+    "semantic_hash": "2785b3c809116b0aa55cb49004227be1"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/components/works/ArtworkDetailView.tsx": {
+    "mtime": 1788041979.6353776,
+    "ast_hash": "ab4cca01ca7c23c250b6e7caf24d78ea",
+    "semantic_hash": "ab4cca01ca7c23c250b6e7caf24d78ea"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/components/works/SelectedWorks.tsx": {
+    "mtime": 1788022966.0676563,
+    "ast_hash": "6f9a006825c13639a048a4e747943ce8",
+    "semantic_hash": "6f9a006825c13639a048a4e747943ce8"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/context/LanguageContext.tsx": {
+    "mtime": 1788022966.0677605,
+    "ast_hash": "1e5b913346507a1973e87255beba83b7",
+    "semantic_hash": "1e5b913346507a1973e87255beba83b7"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/lib/content/api.ts": {
+    "mtime": 1788041979.635944,
+    "ast_hash": "d5608fe42cb36f907c2e32eaf01625ec",
+    "semantic_hash": "d5608fe42cb36f907c2e32eaf01625ec"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/lib/content/seed.ts": {
+    "mtime": 1788038880.265585,
+    "ast_hash": "328c068b8be19c849ad9760e14b82067",
+    "semantic_hash": "328c068b8be19c849ad9760e14b82067"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/lib/content/types.ts": {
+    "mtime": 1788038875.7075422,
+    "ast_hash": "f775300e4c7e7797edd5de05ba4a9bb3",
+    "semantic_hash": "f775300e4c7e7797edd5de05ba4a9bb3"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/lib/gl/brushShader.ts": {
+    "mtime": 1788053027.448666,
+    "ast_hash": "d255d80eef02d38e39e619d0aabc4e8c",
+    "semantic_hash": "d255d80eef02d38e39e619d0aabc4e8c"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/lib/i18n/translations.ts": {
+    "mtime": 1788042059.6414976,
+    "ast_hash": "f0a12a8455534a1caa7bea884431207a",
+    "semantic_hash": "f0a12a8455534a1caa7bea884431207a"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/lib/sanity/client.ts": {
+    "mtime": 1788022966.0708055,
+    "ast_hash": "5534400b5f1c5f675a5bc7c04a0f58e3",
+    "semantic_hash": "5534400b5f1c5f675a5bc7c04a0f58e3"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/lib/sanity/queries.ts": {
+    "mtime": 1788038884.6929386,
+    "ast_hash": "adc7e3468661ea510ca5c4db18f83219",
+    "semantic_hash": "adc7e3468661ea510ca5c4db18f83219"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/lib/social/provider.ts": {
+    "mtime": 1788038893.3917725,
+    "ast_hash": "d1e7a16d6f0ef8b06692960ddb0bab11",
+    "semantic_hash": "d1e7a16d6f0ef8b06692960ddb0bab11"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/lib/social/types.ts": {
+    "mtime": 1788022966.070998,
+    "ast_hash": "ce793af76175c12a376934873f9ff58c",
+    "semantic_hash": "ce793af76175c12a376934873f9ff58c"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/lib/supabase/client.ts": {
+    "mtime": 1788048418.7240872,
+    "ast_hash": "a40479871e3bbb38d925912741a28b74",
+    "semantic_hash": "a40479871e3bbb38d925912741a28b74"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/lib/supabase/middleware.ts": {
+    "mtime": 1788048418.7245586,
+    "ast_hash": "5cb21ac5654e7747e592c35674588c01",
+    "semantic_hash": "5cb21ac5654e7747e592c35674588c01"
+  },
+  "/Volumes/KoleOPS/zlaticart/src/lib/supabase/server.ts": {
+    "mtime": 1788048418.7250273,
+    "ast_hash": "a32b89f21e39b6b6f6b6efb4743f0a25",
+    "semantic_hash": "a32b89f21e39b6b6f6b6efb4743f0a25"
+  },
+  "/Volumes/KoleOPS/zlaticart/supabase/migrations/20260829000001_create_schema.sql": {
+    "mtime": 1788048418.7255538,
+    "ast_hash": "0721ec768d592224e1261f9a9cc1376f",
+    "semantic_hash": "0721ec768d592224e1261f9a9cc1376f"
+  },
+  "/Volumes/KoleOPS/zlaticart/supabase/migrations/20260829000002_contact_submissions.sql": {
+    "mtime": 1788048418.7260938,
+    "ast_hash": "7f0be22215447da6b599bbc012a934eb",
+    "semantic_hash": "7f0be22215447da6b599bbc012a934eb"
+  },
+  "/Volumes/KoleOPS/zlaticart/tailwind.config.ts": {
+    "mtime": 1788022966.0710557,
+    "ast_hash": "83c7701a51120a2c0f08a5578c090203",
+    "semantic_hash": "83c7701a51120a2c0f08a5578c090203"
+  },
+  "/Volumes/KoleOPS/zlaticart/tsconfig.json": {
+    "mtime": 1788022966.0711071,
+    "ast_hash": "04d4424936023f5ebe39a38c92cf7e82",
+    "semantic_hash": "04d4424936023f5ebe39a38c92cf7e82"
+  },
+  "/Volumes/KoleOPS/zlaticart/.claude/agents/art-director.md": {
+    "mtime": 1788022966.009199,
+    "ast_hash": "c2543fbe4d00d7c9cba6c577ba7b181d",
+    "semantic_hash": "c2543fbe4d00d7c9cba6c577ba7b181d"
+  },
+  "/Volumes/KoleOPS/zlaticart/.claude/agents/content-cms.md": {
+    "mtime": 1788022966.009336,
+    "ast_hash": "8e2a91f08ddcd27c87314073dbae71b7",
+    "semantic_hash": "8e2a91f08ddcd27c87314073dbae71b7"
+  },
+  "/Volumes/KoleOPS/zlaticart/.claude/agents/motion-engineer.md": {
+    "mtime": 1788022966.009439,
+    "ast_hash": "21cd948887db45ad3acd7d329e6ea9a1",
+    "semantic_hash": "21cd948887db45ad3acd7d329e6ea9a1"
+  },
+  "/Volumes/KoleOPS/zlaticart/.claude/agents/qa-performance.md": {
+    "mtime": 1788022966.0096056,
+    "ast_hash": "cb3b36609bf65779e4a72132b0236f0c",
+    "semantic_hash": "cb3b36609bf65779e4a72132b0236f0c"
+  },
+  "/Volumes/KoleOPS/zlaticart/.claude/agents/social-integrations.md": {
+    "mtime": 1788022966.009891,
+    "ast_hash": "0009f31a27ef8ffa9e55f47abf712ec9",
+    "semantic_hash": "0009f31a27ef8ffa9e55f47abf712ec9"
+  },
+  "/Volumes/KoleOPS/zlaticart/.claude/commands/execute-rebirth.md": {
+    "mtime": 1788022966.010157,
+    "ast_hash": "73909b0cdb2235331067bceee0472b65",
+    "semantic_hash": "73909b0cdb2235331067bceee0472b65"
+  },
+  "/Volumes/KoleOPS/zlaticart/.claude/skills/living-canvas/SKILL.md": {
+    "mtime": 1788022966.010468,
+    "ast_hash": "8ce6c9aabae61a867ffe53521eb278f9",
+    "semantic_hash": "8ce6c9aabae61a867ffe53521eb278f9"
+  },
+  "/Volumes/KoleOPS/zlaticart/CLAUDE.md": {
+    "mtime": 1788022966.0112605,
+    "ast_hash": "07cff50dd725bb1f8e7764e3dc941472",
+    "semantic_hash": "07cff50dd725bb1f8e7764e3dc941472"
+  },
+  "/Volumes/KoleOPS/zlaticart/README.md": {
+    "mtime": 1788043831.1173756,
+    "ast_hash": "9b0994f4f34bbaf3929890a5d5523442",
+    "semantic_hash": "9b0994f4f34bbaf3929890a5d5523442"
+  },
+  "/Volumes/KoleOPS/zlaticart/_legacy/img/placeholder.txt": {
+    "mtime": 1788022966.0175853,
+    "ast_hash": "68b329da9893e34099c7d8ad5cb9c940",
+    "semantic_hash": "68b329da9893e34099c7d8ad5cb9c940"
+  },
+  "/Volumes/KoleOPS/zlaticart/_legacy/index.html": {
+    "mtime": 1788022966.0354095,
+    "ast_hash": "c667b4bbcca61d46cf9a36c35c62dfcc",
+    "semantic_hash": "c667b4bbcca61d46cf9a36c35c62dfcc"
+  },
+  "/Volumes/KoleOPS/zlaticart/docs/ADMIN_GUIDE_SR.md": {
+    "mtime": 1788038905.5760174,
+    "ast_hash": "6b15742c7343e59ba31d90c7a862c0c4",
+    "semantic_hash": "6b15742c7343e59ba31d90c7a862c0c4"
+  },
+  "/Volumes/KoleOPS/zlaticart/docs/ARTIST_ARCHIVE.md": {
+    "mtime": 1788022966.036373,
+    "ast_hash": "5c5e16e1e17c7ce46c10017ffb99dc22",
+    "semantic_hash": "5c5e16e1e17c7ce46c10017ffb99dc22"
+  },
+  "/Volumes/KoleOPS/zlaticart/docs/CONTENT_MODEL.md": {
+    "mtime": 1788022966.036533,
+    "ast_hash": "d9cd3721bf82d2fe36f3bc604581ae44",
+    "semantic_hash": "d9cd3721bf82d2fe36f3bc604581ae44"
+  },
+  "/Volumes/KoleOPS/zlaticart/docs/HERO_SPEC.md": {
+    "mtime": 1788022966.0366273,
+    "ast_hash": "47040e8ad63d904d24da674a5efe6408",
+    "semantic_hash": "47040e8ad63d904d24da674a5efe6408"
+  },
+  "/Volumes/KoleOPS/zlaticart/docs/IMPLEMENTATION_PLAN.md": {
+    "mtime": 1788022966.0366933,
+    "ast_hash": "0d6f7c0b5a1c3ada6d038ab8f39c0830",
+    "semantic_hash": "0d6f7c0b5a1c3ada6d038ab8f39c0830"
+  },
+  "/Volumes/KoleOPS/zlaticart/docs/LEGACY_BOUNDARY.md": {
+    "mtime": 1788022966.036754,
+    "ast_hash": "192f927f1e7c6e54430006c22602acd1",
+    "semantic_hash": "192f927f1e7c6e54430006c22602acd1"
+  },
+  "/Volumes/KoleOPS/zlaticart/docs/PRODUCT_SPEC.md": {
+    "mtime": 1788022966.037252,
+    "ast_hash": "23857096368e859e38948e90712b6dc1",
+    "semantic_hash": "23857096368e859e38948e90712b6dc1"
+  },
+  "/Volumes/KoleOPS/zlaticart/docs/STATUS.md": {
+    "mtime": 1788054087.1410482,
+    "ast_hash": "33ce85c1b86bc95830bf7192f85aa2a0",
+    "semantic_hash": "33ce85c1b86bc95830bf7192f85aa2a0"
+  },
+  "/Volumes/KoleOPS/zlaticart/_legacy/img/ak1.jpg": {
+    "mtime": 1788022966.0120258,
+    "ast_hash": "f7b1f23f13f5a59db852d591e010cf0c",
+    "semantic_hash": "f7b1f23f13f5a59db852d591e010cf0c"
+  },
+  "/Volumes/KoleOPS/zlaticart/_legacy/img/ak2.jpg": {
+    "mtime": 1788022966.0130513,
+    "ast_hash": "3402ea1b47413f86bbc9ad5c1b4db454",
+    "semantic_hash": "3402ea1b47413f86bbc9ad5c1b4db454"
+  },
+  "/Volumes/KoleOPS/zlaticart/_legacy/img/ak3.jpg": {
+    "mtime": 1788022966.0132887,
+    "ast_hash": "0052e02688e812f60a32bac1d3dbe500",
+    "semantic_hash": "0052e02688e812f60a32bac1d3dbe500"
+  },
+  "/Volumes/KoleOPS/zlaticart/_legacy/img/ak4.jpg": {
+    "mtime": 1788022966.0145264,
+    "ast_hash": "d3717bcea46535d4c6600779e2f08591",
+    "semantic_hash": "d3717bcea46535d4c6600779e2f08591"
+  },
+  "/Volumes/KoleOPS/zlaticart/_legacy/img/gr1.jpg": {
+    "mtime": 1788022966.0158384,
+    "ast_hash": "d7485a59faee98f627e39be695670545",
+    "semantic_hash": "d7485a59faee98f627e39be695670545"
+  },
+  "/Volumes/KoleOPS/zlaticart/_legacy/img/gr2.jpg": {
+    "mtime": 1788022966.0170252,
+    "ast_hash": "de524a2165b4bb10f05d2b3b7ca823c3",
+    "semantic_hash": "de524a2165b4bb10f05d2b3b7ca823c3"
+  },
+  "/Volumes/KoleOPS/zlaticart/_legacy/img/mz1.jpg": {
+    "mtime": 1788022966.017188,
+    "ast_hash": "bce514e3bf34ebcf682af2a2f84fd261",
+    "semantic_hash": "bce514e3bf34ebcf682af2a2f84fd261"
+  },
+  "/Volumes/KoleOPS/zlaticart/_legacy/img/mz2.jpg": {
+    "mtime": 1788022966.017336,
+    "ast_hash": "6432e46700bc371d3659f8616222f6ba",
+    "semantic_hash": "6432e46700bc371d3659f8616222f6ba"
+  },
+  "/Volumes/KoleOPS/zlaticart/_legacy/img/mz3.jpg": {
+    "mtime": 1788022966.017514,
+    "ast_hash": "09f7cdb26cc2c1ae0f48160eca9327a2",
+    "semantic_hash": "09f7cdb26cc2c1ae0f48160eca9327a2"
+  },
+  "/Volumes/KoleOPS/zlaticart/_legacy/img/up1.jpg": {
+    "mtime": 1788022966.0178542,
+    "ast_hash": "659042a09dee7d437f7dbfff5bf0ada7",
+    "semantic_hash": "659042a09dee7d437f7dbfff5bf0ada7"
+  },
+  "/Volumes/KoleOPS/zlaticart/_legacy/img/up2.jpg": {
+    "mtime": 1788022966.0191147,
+    "ast_hash": "9754f9b1a38a5b7e96fc149f44452f0b",
+    "semantic_hash": "9754f9b1a38a5b7e96fc149f44452f0b"
+  },
+  "/Volumes/KoleOPS/zlaticart/_legacy/img/up3.jpg": {
+    "mtime": 1788022966.0202363,
+    "ast_hash": "e566b90132db13e8bd2d8e00e6a82287",
+    "semantic_hash": "e566b90132db13e8bd2d8e00e6a82287"
+  },
+  "/Volumes/KoleOPS/zlaticart/_legacy/img/up4.jpg": {
+    "mtime": 1788022966.0222995,
+    "ast_hash": "303cf220a2d8e6c3ff71e014ec254fbc",
+    "semantic_hash": "303cf220a2d8e6c3ff71e014ec254fbc"
+  },
+  "/Volumes/KoleOPS/zlaticart/_legacy/img/up5.jpg": {
+    "mtime": 1788022966.0246365,
+    "ast_hash": "7527f53829cceb1d3ffe5f94bfc816fb",
+    "semantic_hash": "7527f53829cceb1d3ffe5f94bfc816fb"
+  },
+  "/Volumes/KoleOPS/zlaticart/_legacy/img/up6.jpg": {
+    "mtime": 1788022966.0270712,
+    "ast_hash": "7e3708f94d7ef15a2063943a434d0c1d",
+    "semantic_hash": "7e3708f94d7ef15a2063943a434d0c1d"
+  },
+  "/Volumes/KoleOPS/zlaticart/_legacy/img/vt1.jpg": {
+    "mtime": 1788022966.028977,
+    "ast_hash": "5017a816bb16e57533446080bfb6afe9",
+    "semantic_hash": "5017a816bb16e57533446080bfb6afe9"
+  },
+  "/Volumes/KoleOPS/zlaticart/_legacy/img/zllg.jpg": {
+    "mtime": 1788022966.0294702,
+    "ast_hash": "eef78f1bfa8795d3b61bce5d9ef88dce",
+    "semantic_hash": "eef78f1bfa8795d3b61bce5d9ef88dce"
+  },
+  "/Volumes/KoleOPS/zlaticart/_legacy/img/zllgoicl.png": {
+    "mtime": 1788022966.0305083,
+    "ast_hash": "5b9196c9d3cf3554ba3d97722808ebfb",
+    "semantic_hash": "5b9196c9d3cf3554ba3d97722808ebfb"
+  },
+  "/Volumes/KoleOPS/zlaticart/_legacy/img/zllgoil.png": {
+    "mtime": 1788022966.0348222,
+    "ast_hash": "4c27cacbe34892fd8c0415912f4f8513",
+    "semantic_hash": "4c27cacbe34892fd8c0415912f4f8513"
+  },
+  "/Volumes/KoleOPS/zlaticart/public/assets/artist-archive/zlatica-archive-01.webp": {
+    "mtime": 1788022966.0412889,
+    "ast_hash": "97b132c9099d9ea65bc31a29553b6922",
+    "semantic_hash": "97b132c9099d9ea65bc31a29553b6922"
+  },
+  "/Volumes/KoleOPS/zlaticart/public/assets/artist-archive/zlatica-archive-02.webp": {
+    "mtime": 1788022966.042092,
+    "ast_hash": "7bfbbb8860b7d9351871560734397ddd",
+    "semantic_hash": "7bfbbb8860b7d9351871560734397ddd"
+  },
+  "/Volumes/KoleOPS/zlaticart/public/assets/artist-archive/zlatica-archive-03-color.webp": {
+    "mtime": 1788022966.042253,
+    "ast_hash": "bbc6e046a11c28bfcb1670a098601663",
+    "semantic_hash": "bbc6e046a11c28bfcb1670a098601663"
+  },
+  "/Volumes/KoleOPS/zlaticart/public/assets/artist-archive/zlatica-archive-04.webp": {
+    "mtime": 1788022966.0436192,
+    "ast_hash": "1e77d9661da8dc3605cb1bc29d2b2343",
+    "semantic_hash": "1e77d9661da8dc3605cb1bc29d2b2343"
+  },
+  "/Volumes/KoleOPS/zlaticart/public/assets/brand/zllg.jpg": {
+    "mtime": 1788022966.0438752,
+    "ast_hash": "eef78f1bfa8795d3b61bce5d9ef88dce",
+    "semantic_hash": "eef78f1bfa8795d3b61bce5d9ef88dce"
+  },
+  "/Volumes/KoleOPS/zlaticart/public/assets/brand/zllgoicl.png": {
+    "mtime": 1788022966.0444775,
+    "ast_hash": "5b9196c9d3cf3554ba3d97722808ebfb",
+    "semantic_hash": "5b9196c9d3cf3554ba3d97722808ebfb"
+  },
+  "/Volumes/KoleOPS/zlaticart/public/assets/brand/zllgoil.png": {
+    "mtime": 1788022966.0473619,
+    "ast_hash": "4c27cacbe34892fd8c0415912f4f8513",
+    "semantic_hash": "4c27cacbe34892fd8c0415912f4f8513"
+  },
+  "/Volumes/KoleOPS/zlaticart/public/assets/works/acrylic/ak1.jpg": {
+    "mtime": 1788022966.0477319,
+    "ast_hash": "f7b1f23f13f5a59db852d591e010cf0c",
+    "semantic_hash": "f7b1f23f13f5a59db852d591e010cf0c"
+  },
+  "/Volumes/KoleOPS/zlaticart/public/assets/works/acrylic/ak2.jpg": {
+    "mtime": 1788022966.0479193,
+    "ast_hash": "3402ea1b47413f86bbc9ad5c1b4db454",
+    "semantic_hash": "3402ea1b47413f86bbc9ad5c1b4db454"
+  },
+  "/Volumes/KoleOPS/zlaticart/public/assets/works/acrylic/ak3.jpg": {
+    "mtime": 1788022966.0483377,
+    "ast_hash": "0052e02688e812f60a32bac1d3dbe500",
+    "semantic_hash": "0052e02688e812f60a32bac1d3dbe500"
+  },
+  "/Volumes/KoleOPS/zlaticart/public/assets/works/acrylic/ak4.jpg": {
+    "mtime": 1788022966.0490985,
+    "ast_hash": "d3717bcea46535d4c6600779e2f08591",
+    "semantic_hash": "d3717bcea46535d4c6600779e2f08591"
+  },
+  "/Volumes/KoleOPS/zlaticart/public/assets/works/graphics/gr1.jpg": {
+    "mtime": 1788022966.0498683,
+    "ast_hash": "d7485a59faee98f627e39be695670545",
+    "semantic_hash": "d7485a59faee98f627e39be695670545"
+  },
+  "/Volumes/KoleOPS/zlaticart/public/assets/works/graphics/gr2.jpg": {
+    "mtime": 1788022966.0509892,
+    "ast_hash": "de524a2165b4bb10f05d2b3b7ca823c3",
+    "semantic_hash": "de524a2165b4bb10f05d2b3b7ca823c3"
+  },
+  "/Volumes/KoleOPS/zlaticart/public/assets/works/mosaic/mz1.jpg": {
+    "mtime": 1788022966.0512521,
+    "ast_hash": "bce514e3bf34ebcf682af2a2f84fd261",
+    "semantic_hash": "bce514e3bf34ebcf682af2a2f84fd261"
+  },
+  "/Volumes/KoleOPS/zlaticart/public/assets/works/mosaic/mz2.jpg": {
+    "mtime": 1788022966.0513995,
+    "ast_hash": "6432e46700bc371d3659f8616222f6ba",
+    "semantic_hash": "6432e46700bc371d3659f8616222f6ba"
+  },
+  "/Volumes/KoleOPS/zlaticart/public/assets/works/mosaic/mz3.jpg": {
+    "mtime": 1788022966.051566,
+    "ast_hash": "09f7cdb26cc2c1ae0f48160eca9327a2",
+    "semantic_hash": "09f7cdb26cc2c1ae0f48160eca9327a2"
+  },
+  "/Volumes/KoleOPS/zlaticart/public/assets/works/oil/up1.jpg": {
+    "mtime": 1788022966.0518558,
+    "ast_hash": "659042a09dee7d437f7dbfff5bf0ada7",
+    "semantic_hash": "659042a09dee7d437f7dbfff5bf0ada7"
+  },
+  "/Volumes/KoleOPS/zlaticart/public/assets/works/oil/up2.jpg": {
+    "mtime": 1788022966.0531497,
+    "ast_hash": "9754f9b1a38a5b7e96fc149f44452f0b",
+    "semantic_hash": "9754f9b1a38a5b7e96fc149f44452f0b"
+  },
+  "/Volumes/KoleOPS/zlaticart/public/assets/works/oil/up3.jpg": {
+    "mtime": 1788022966.0541346,
+    "ast_hash": "e566b90132db13e8bd2d8e00e6a82287",
+    "semantic_hash": "e566b90132db13e8bd2d8e00e6a82287"
+  },
+  "/Volumes/KoleOPS/zlaticart/public/assets/works/oil/up4.jpg": {
+    "mtime": 1788022966.0549834,
+    "ast_hash": "303cf220a2d8e6c3ff71e014ec254fbc",
+    "semantic_hash": "303cf220a2d8e6c3ff71e014ec254fbc"
+  },
+  "/Volumes/KoleOPS/zlaticart/public/assets/works/oil/up5.jpg": {
+    "mtime": 1788022966.058634,
+    "ast_hash": "7527f53829cceb1d3ffe5f94bfc816fb",
+    "semantic_hash": "7527f53829cceb1d3ffe5f94bfc816fb"
+  },
+  "/Volumes/KoleOPS/zlaticart/public/assets/works/oil/up6.jpg": {
+    "mtime": 1788022966.0598147,
+    "ast_hash": "7e3708f94d7ef15a2063943a434d0c1d",
+    "semantic_hash": "7e3708f94d7ef15a2063943a434d0c1d"
+  },
+  "/Volumes/KoleOPS/zlaticart/public/assets/works/watercolor/vt1.jpg": {
+    "mtime": 1788022966.0609953,
+    "ast_hash": "5017a816bb16e57533446080bfb6afe9",
+    "semantic_hash": "5017a816bb16e57533446080bfb6afe9"
+  },
+  "/Volumes/KoleOPS/zlaticart/docs/PLAYBOOK.md": {
+    "mtime": 1788043804.5546088,
+    "ast_hash": "565c22f6eebbc174b1012dcbbbf313a1",
+    "semantic_hash": "565c22f6eebbc174b1012dcbbbf313a1"
+  },
+  "/Volumes/KoleOPS/zlaticart/docs/ROADMAP.md": {
+    "mtime": 1788043765.2230392,
+    "ast_hash": "e96791263ca59108355e9738aec1e160",
+    "semantic_hash": "e96791263ca59108355e9738aec1e160"
+  },
+  "/Volumes/KoleOPS/zlaticart/docs/SESSION_LOG_2026-08-30.md": {
+    "mtime": 1788054075.2171504,
+    "ast_hash": "bbe3e8998dca8b22dd0b8f76a96442ef",
+    "semantic_hash": "bbe3e8998dca8b22dd0b8f76a96442ef"
+  },
+  "/Volumes/KoleOPS/zlaticart/docs/ZLATICART_FRONTEND_AUDIT.md": {
+    "mtime": 1788044984.511622,
+    "ast_hash": "fb2d7826c9ee03219495982468c1e5b8",
+    "semantic_hash": "fb2d7826c9ee03219495982468c1e5b8"
+  },
+  "/Volumes/KoleOPS/zlaticart/docs/ZLATICART_REMEDIATION_PLAN.md": {
+    "mtime": 1788045616.78837,
+    "ast_hash": "b92e94f774c731f3feb08f54ca0a608d",
+    "semantic_hash": "b92e94f774c731f3feb08f54ca0a608d"
+  },
+  "/Volumes/KoleOPS/zlaticart/public/assets/artist-archive/zlatica-archive-05.webp": {
+    "mtime": 1788049034.4112198,
+    "ast_hash": "c72e17881f8572a791bff5a7af67f3f7",
+    "semantic_hash": "c72e17881f8572a791bff5a7af67f3f7"
+  }
+}

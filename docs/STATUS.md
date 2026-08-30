@@ -1,5 +1,7 @@
 # ZlaticArt Rebirth — Status
 
+> **2026-08-30 update:** SEO/security baseline deployed (robots.txt, sitemap.xml, security headers, homepage h1/JSON-LD/canonical), a P0 mobile-nav bug fixed on real Safari/iOS, a missing Studio-section image fixed, and a scroll-driven wet-oil/glass hero effect shipped. Full detail in `docs/SESSION_LOG_2026-08-30.md`. Remaining SEO work tracked in `docs/ZLATICART_REMEDIATION_PLAN.md` (Phases 2–6). A pre-existing uncommitted pile (Supabase contact form, Sanity schema edits) is still sitting in the working tree, unreviewed — see the session log's "What's still open" section.
+
 ## DONE
 
 ### Foundation
