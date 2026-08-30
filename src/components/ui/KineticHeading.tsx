@@ -24,6 +24,9 @@ export default function KineticHeading({
   useEffect(() => {
     if (!containerRef.current) return
     const chars = containerRef.current.querySelectorAll<HTMLElement>('[data-char]')
+    // Guards an empty heading string (no [data-char] spans rendered) —
+    // gsap.fromTo warns "target not found" when handed an empty array.
+    if (chars.length === 0) return
 
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       chars.forEach((el) => { el.style.opacity = '1' })

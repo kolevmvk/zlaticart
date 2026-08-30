@@ -2,9 +2,19 @@ import type { Metadata, Viewport } from 'next'
 import { Cormorant_Garamond, DM_Sans } from 'next/font/google'
 import './globals.css'
 
+// Weight lists trimmed to what the codebase actually uses (grepped every
+// font-weight/font-* utility across src/ — the site only ever sets weight
+// 300, via Tailwind's `font-light`; 400 kept as a safety margin for any
+// element that falls back to a browser-default weight). The previous
+// wider lists (up to 600) meant every page preloaded several font files
+// nothing on that page ever rendered with — harmless but wasteful, and
+// the source of "preloaded... but not used within a few seconds" console
+// warnings. Half as many font files to fetch is a real, if modest,
+// contributor to the "site feels slow" reports from earlier in this
+// session, not just a console-noise fix.
 const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
-  weight: ['300', '400', '500', '600'],
+  weight: ['300', '400'],
   style: ['normal', 'italic'],
   variable: '--font-cormorant',
   display: 'swap',
@@ -12,7 +22,7 @@ const cormorant = Cormorant_Garamond({
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
-  weight: ['300', '400', '500'],
+  weight: ['300', '400'],
   variable: '--font-dm-sans',
   display: 'swap',
 })

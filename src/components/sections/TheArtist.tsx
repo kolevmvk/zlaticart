@@ -70,7 +70,7 @@ export default function TheArtist({ profile }: TheArtistProps) {
         // Text elements: intimate vertical reveal — each line rises from below
         if (textRef.current) {
           const textEls = textRef.current.querySelectorAll<HTMLElement>('[data-reveal]')
-          gsap.fromTo(
+          if (textEls.length > 0) gsap.fromTo(
             Array.from(textEls),
             { opacity: 0, y: 20 },
             {

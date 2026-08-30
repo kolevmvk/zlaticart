@@ -127,41 +127,14 @@ function Wordmark({ visible, tagline, cta }: { visible: boolean; tagline: string
     )
 
     // Label at the char reveal's end time — lets the gild/glow tween below
-    // be positioned relative to *this specific point* without disturbing
-    // ART/CTA's own "-=" offsets, which are relative to the timeline's
-    // running end and would otherwise get pushed later by whatever gets
-    // added between here and there.
+    // be positioned relative to *this specific point* rather than appended
+    // sequentially, so it overlaps the tail of that reveal instead of
+    // waiting for it to fully settle first.
     tl.addLabel('charsRevealEnd')
-
-    // ART suffix — slides in from slight left with ease
-    if (art) {
-      tl.fromTo(
-        art,
-        { opacity: 0, x: -20, filter: 'blur(4px)' },
-        { opacity: 1, x: 0, filter: 'blur(0px)', duration: 1.0, ease: 'power3.out' },
-        '-=1.0'
-      )
-    }
-
-    // CTA — quiet fade
-    if (cta) {
-      tl.fromTo(
-        cta,
-        { opacity: 0, y: 8 },
-        { opacity: 1, y: 0, duration: 0.9, ease: 'power2.out' },
-        '-=0.3'
-      )
-    }
 
     // Cinematic gild + glow — a gold light-sweep passes across the letters
     // once, staggered left-to-right so it reads as a wave rather than all
     // seven letters flashing gold in sync, then the glow settles back out.
-    // Positioned relative to the 'charsRevealEnd' label (added above,
-    // right after the char stagger) rather than appended sequentially, so
-    // it overlaps the tail of that reveal — the word rises into place and
-    // catches the light in one continuous gesture — without shifting when
-    // ART/CTA appear (their own "-=" offsets above are unaffected by
-    // anything added after them, including this).
     // Background-position values here found empirically (rendering the
     // gradient at a sweep of positions): 100% is this gradient's cream
     // rest point, -100% its gold peak — a naive "outside the gold
@@ -190,6 +163,35 @@ function Wordmark({ visible, tagline, cta }: { visible: boolean; tagline: string
       ease: 'power2.out',
       stagger: { each: 0.08, from: 'start' },
     })
+
+    tl.addLabel('gildEnd')
+
+    // ART suffix — a faulty-neon-sign flicker rather than a plain fade,
+    // timed to switch on right as the "Zlatica" gild sweep finishes
+    // settling (per feedback: ART should react to the gild completing,
+    // not appear independently of it). Irregular opacity steps of
+    // deliberately uneven duration before it catches and holds, the way a
+    // real tube flickers on rather than a clean linear brighten.
+    if (art) {
+      tl.set(art, { opacity: 0, x: -20, filter: 'blur(2px)' }, 'gildEnd-=0.15')
+        .to(art, { opacity: 0.7, duration: 0.05 })
+        .to(art, { opacity: 0.05, duration: 0.06 })
+        .to(art, { opacity: 0.85, duration: 0.04 })
+        .to(art, { opacity: 0.15, duration: 0.09 })
+        .to(art, { opacity: 0.9, x: 0, filter: 'blur(0px)', duration: 0.06 })
+        .to(art, { opacity: 0.25, duration: 0.07 })
+        .to(art, { opacity: 1, duration: 0.5, ease: 'power2.out' })
+    }
+
+    // CTA — quiet fade, right after ART catches
+    if (cta) {
+      tl.fromTo(
+        cta,
+        { opacity: 0, y: 8 },
+        { opacity: 1, y: 0, duration: 0.9, ease: 'power2.out' },
+        '-=0.3'
+      )
+    }
   }, [visible])
 
   const chars = 'Zlatica'.split('')
@@ -343,7 +345,14 @@ function pigmentPullEnvelope(t: number): number {
     const c = Math.min(Math.max(x, 0), 1)
     return c * c * c * (c * (c * 6 - 15) + 10)
   }
-  return smootherstep(Math.min(t / 0.55, 1))
+  // Ramps across nearly the entire pin (was 0.55 — reached full strength
+  // barely halfway through, then just sat there unchanged for the rest of
+  // the scroll/drag, which read as the effect "finishing early" even
+  // though technically still held at max). Now the mixing keeps visibly
+  // building all the way to the end of the pin, so it's still actively
+  // changing right up until the hero scrolls out of view — not just
+  // "maintained" as a frozen final frame, but still growing.
+  return smootherstep(Math.min(t / 0.95, 1))
 }
 
 // ---------------------------------------------------------------------------

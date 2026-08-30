@@ -66,7 +66,10 @@ export default function JournalHighlights({ posts }: JournalHighlightsProps) {
         // Secondary items stagger
         if (secondaryRef.current) {
           const items = secondaryRef.current.querySelectorAll('[data-secondary]')
-          gsap.fromTo(
+          // Guards content with fewer than 2 secondary posts (no
+          // [data-secondary] rendered) — gsap.fromTo warns "target not
+          // found" when handed an empty array.
+          if (items.length > 0) gsap.fromTo(
             Array.from(items),
             { opacity: 0, y: 20 },
             {

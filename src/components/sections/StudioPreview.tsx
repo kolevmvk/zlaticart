@@ -45,19 +45,21 @@ export default function StudioPreview({ instagramUrl }: StudioPreviewProps) {
         }
 
         const images = gridRef.current!.querySelectorAll<HTMLElement>('[data-studio-img]')
-        const t2 = gsap.fromTo(
-          Array.from(images),
-          { opacity: 0, scale: 1.06 },
-          {
-            opacity: 1,
-            scale: 1,
-            duration: 1.0,
-            ease: 'power2.out',
-            stagger: { each: 0.1, from: 'start' },
-            scrollTrigger: { trigger: gridRef.current, start: 'top 82%', once: true },
-          }
-        )
-        if (t2.scrollTrigger) triggers.push(t2.scrollTrigger)
+        if (images.length > 0) {
+          const t2 = gsap.fromTo(
+            Array.from(images),
+            { opacity: 0, scale: 1.06 },
+            {
+              opacity: 1,
+              scale: 1,
+              duration: 1.0,
+              ease: 'power2.out',
+              stagger: { each: 0.1, from: 'start' },
+              scrollTrigger: { trigger: gridRef.current, start: 'top 82%', once: true },
+            }
+          )
+          if (t2.scrollTrigger) triggers.push(t2.scrollTrigger)
+        }
       }
     )
 

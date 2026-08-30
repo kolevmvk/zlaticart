@@ -28,7 +28,7 @@ export default function ArtworkDetailView({ artwork, prev, next }: ArtworkDetail
         { opacity: 1, scale: 1, duration: 1.2, ease: 'power2.out', delay: 0.15 }
       )
       const metaEls = metaRef.current!.querySelectorAll<HTMLElement>('[data-meta]')
-      gsap.fromTo(
+      if (metaEls.length > 0) gsap.fromTo(
         Array.from(metaEls),
         { opacity: 0, y: 16 },
         { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out', stagger: 0.09, delay: 0.8 }
