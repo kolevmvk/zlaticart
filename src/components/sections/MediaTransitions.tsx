@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import type { ScrollTrigger } from 'gsap/ScrollTrigger'
 import RevealHeading from '@/components/ui/RevealHeading'
 import { useLanguage } from '@/context/LanguageContext'
 import type { Artwork } from '@/lib/content/types'
@@ -12,17 +11,20 @@ interface MediaTransitionsProps {
   artworks: Artwork[]
 }
 
-// One representative work per medium. Desktop pins the section and maps
-// vertical scroll to horizontal card movement — a real left-right gallery,
-// not a static strip. Mobile keeps native horizontal scroll with snap.
+// One representative work per medium, shown as a native horizontal
+// scroll+snap strip at every breakpoint. On desktop, a wheel listener (see
+// the plain-scroll effect below) redirects vertical mouse-wheel input into
+// horizontal movement while the pointer is over the gallery — so turning
+// the wheel pans the gallery left/right, the way a carousel is expected to
+// behave, without hijacking/pinning the whole page the way an earlier
+// ScrollTrigger-pin version did (that trapped the user in a long forced
+// scroll just to get through five cards).
 export default function MediaTransitions({ artworks }: MediaTransitionsProps) {
   const { t } = useLanguage()
   const sectionRef = useRef<HTMLElement>(null)
   const stripRef = useRef<HTMLDivElement>(null)
   const railFillRef = useRef<HTMLDivElement>(null)
-  const desktopTriggerRef = useRef<ScrollTrigger | null>(null)
   const [activeIndex, setActiveIndex] = useState(0)
-  const [isDesktopActive, setIsDesktopActive] = useState(false)
 
   const mediumOrder = ['oil', 'acrylic', 'watercolor', 'graphics', 'mosaic']
 
@@ -30,77 +32,42 @@ export default function MediaTransitions({ artworks }: MediaTransitionsProps) {
     .map((slug) => artworks.find((a) => a.medium.slug === slug))
     .filter((a): a is Artwork => Boolean(a))
 
+  // GSAP: parallax on each card's inner image + a quiet entrance for the
+  // strip as a whole. Neither depends on breakpoint any more — both simply
+  // react to the section's normal position in the page.
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    if (!stripRef.current || !sectionRef.current) return
+    const strip = stripRef.current
+    const section = sectionRef.current
+    if (!strip || !section) return
 
-    let mm: gsap.MatchMedia | undefined
+    let ctx: gsap.Context | undefined
 
     Promise.all([import('gsap'), import('gsap/ScrollTrigger')]).then(
       ([{ gsap }, { ScrollTrigger }]) => {
         gsap.registerPlugin(ScrollTrigger)
-        const strip = stripRef.current
-        const section = sectionRef.current
-        if (!strip || !section) return
 
-        // Parallax on the inner image — runs at every breakpoint.
-        const cards = strip.querySelectorAll('[data-media-card]')
-        cards.forEach((card) => {
-          const inner = card.querySelector('[data-media-inner]')
-          if (!inner) return
-          gsap.fromTo(
-            inner,
-            { yPercent: 10 },
-            {
-              yPercent: -10,
-              ease: 'none',
-              scrollTrigger: {
-                trigger: card,
-                start: 'top bottom',
-                end: 'bottom top',
-                scrub: 1.5,
-              },
-            }
-          )
-        })
-
-        mm = gsap.matchMedia()
-
-        // Desktop / tablet-landscape: pin the section and translate the
-        // strip horizontally in lockstep with vertical scroll.
-        mm.add('(min-width: 768px)', () => {
-          setIsDesktopActive(true)
-          const distance = () => Math.max(0, strip.scrollWidth - section.clientWidth)
-
-          const trigger = ScrollTrigger.create({
-            trigger: section,
-            start: 'top top',
-            end: () => `+=${distance()}`,
-            pin: true,
-            pinSpacing: true,
-            scrub: 0.6,
-            anticipatePin: 1,
-            onUpdate: (self) => {
-              gsap.set(strip, { x: -distance() * self.progress })
-              if (railFillRef.current) {
-                railFillRef.current.style.transform = `scaleX(${self.progress})`
+        ctx = gsap.context(() => {
+          const cards = strip.querySelectorAll('[data-media-card]')
+          cards.forEach((card) => {
+            const inner = card.querySelector('[data-media-inner]')
+            if (!inner) return
+            gsap.fromTo(
+              inner,
+              { yPercent: 10 },
+              {
+                yPercent: -10,
+                ease: 'none',
+                scrollTrigger: {
+                  trigger: card,
+                  start: 'top bottom',
+                  end: 'bottom top',
+                  scrub: 1.5,
+                },
               }
-              const idx = Math.round(self.progress * (byMedium.length - 1))
-              setActiveIndex((prev) => (prev === idx ? prev : idx))
-            },
+            )
           })
-          desktopTriggerRef.current = trigger
 
-          return () => {
-            trigger.kill()
-            desktopTriggerRef.current = null
-            gsap.set(strip, { x: 0 })
-            setIsDesktopActive(false)
-          }
-        })
-
-        // Mobile: quiet entrance only, native horizontal scroll handles the rest.
-        mm.add('(max-width: 767px)', () => {
           gsap.fromTo(
             strip,
             { opacity: 0, x: 40 },
@@ -112,27 +79,85 @@ export default function MediaTransitions({ artworks }: MediaTransitionsProps) {
               scrollTrigger: { trigger: strip, start: 'top 85%', once: true },
             }
           )
-          return () => {}
-        })
+        }, section)
       }
     )
 
-    return () => {
-      mm?.revert()
+    return () => ctx?.revert()
+  }, [])
+
+  // Plain DOM scroll/wheel handling — the strip is a normal native
+  // horizontal scroll container (overflow-x-auto + scroll-snap) at every
+  // breakpoint, so touch/trackpad horizontal swipes and keyboard arrow
+  // scrolling already work for free. This effect adds two things on top:
+  // the progress rail (driven off real scrollLeft, not a GSAP timeline),
+  // and the desktop wheel→horizontal redirect described above.
+  useEffect(() => {
+    const strip = stripRef.current
+    if (!strip) return
+
+    const updateProgress = () => {
+      const max = strip.scrollWidth - strip.clientWidth
+      const progress = max > 0 ? strip.scrollLeft / max : 0
+      if (railFillRef.current) {
+        railFillRef.current.style.transform = `scaleX(${progress})`
+      }
+      const idx = Math.round(progress * (byMedium.length - 1))
+      setActiveIndex((prev) => (prev === idx ? prev : idx))
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    updateProgress()
+    strip.addEventListener('scroll', updateProgress, { passive: true })
+
+    // Desktop-only (coarse pointers already get native touch scrolling,
+    // which a wheel handler would only interfere with). Redirects vertical
+    // wheel input into horizontal movement while hovering the strip, but
+    // only while the strip actually has room left to move in that
+    // direction — once it's scrolled fully to either end, the event is
+    // left alone so normal page scroll continues seamlessly. That boundary
+    // check is what makes this feel practical rather than like a trap.
+    //
+    // Advances one full card per "notch" via scrollBy(), not a 1:1 pixel
+    // drag via `strip.scrollLeft +=`. That's a deliberate response to how
+    // `scroll-snap-type: x mandatory` actually behaves in Chromium: a
+    // direct `scrollLeft` assignment gets silently re-snapped back to the
+    // nearest snap point (effectively 0) the instant it's set, because it
+    // isn't part of a scroll gesture the browser's own pipeline recognises
+    // — only scrollBy()/scrollTo() correctly resolve against snap points.
+    // A small isAnimatingRef cooldown stops a single fast wheel gesture
+    // from queuing several overlapping smooth-scrolls at once.
+    let isAnimating = false
+    const onWheel = (e: WheelEvent) => {
+      if (window.matchMedia('(pointer: coarse)').matches) return
+      const delta = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX
+      if (Math.abs(delta) < 2) return
+      const max = strip.scrollWidth - strip.clientWidth
+      const atStart = strip.scrollLeft <= 0
+      const atEnd = strip.scrollLeft >= max - 1
+      if ((delta < 0 && atStart) || (delta > 0 && atEnd)) return
+      e.preventDefault()
+      if (isAnimating) return
+      isAnimating = true
+      const cardEl = strip.querySelector('[data-media-card]')
+      const step = (cardEl?.getBoundingClientRect().width ?? 360) + 1 // +1 for the gap-px between cards
+      strip.scrollBy({ left: delta > 0 ? step : -step, behavior: 'smooth' })
+      window.setTimeout(() => { isAnimating = false }, 500)
+    }
+    strip.addEventListener('wheel', onWheel, { passive: false })
+
+    return () => {
+      strip.removeEventListener('scroll', updateProgress)
+      strip.removeEventListener('wheel', onWheel)
+    }
   }, [byMedium.length])
 
-  // Keyboard focus on a card jumps the pinned scroll position so the card
-  // is brought fully into view — otherwise a tabbing keyboard user could
-  // focus a card that is transformed off screen.
+  // Keyboard focus on a card scrolls it into view within the strip — plain
+  // native scrollIntoView now that the strip is a normal scroll container
+  // at every breakpoint, not a GSAP-transformed one on desktop.
   const handleCardFocus = (index: number) => {
-    const trigger = desktopTriggerRef.current
-    if (!trigger) return
-    const total = byMedium.length - 1 || 1
-    const progress = index / total
-    const target = trigger.start + (trigger.end - trigger.start) * progress
-    window.scrollTo({ top: target, behavior: 'smooth' })
+    const strip = stripRef.current
+    if (!strip) return
+    const card = strip.querySelectorAll('[data-media-card]')[index]
+    card?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
   }
 
   if (byMedium.length === 0) return null
@@ -157,32 +182,41 @@ export default function MediaTransitions({ artworks }: MediaTransitionsProps) {
             {t.media.heading}
           </RevealHeading>
 
-          {/* Progress rail / index — desktop-only affordance signalling the
-              strip below is an interactive horizontal gallery, not a static row. */}
-          {isDesktopActive && (
-            <div className="hidden md:flex items-center gap-4 shrink-0" aria-hidden="true">
-              <span className="text-label text-canvas/40 text-[0.65rem] tabular-nums whitespace-nowrap">
-                {String(activeIndex + 1).padStart(2, '0')} / {String(byMedium.length).padStart(2, '0')}
-              </span>
-              <div className="relative w-24 lg:w-32 h-px bg-canvas/15 overflow-hidden">
-                <div
-                  ref={railFillRef}
-                  className="absolute inset-y-0 left-0 w-full bg-canvas/70 origin-left"
-                  style={{ transform: 'scaleX(0)' }}
-                />
-              </div>
+          {/* Progress rail / index — desktop-only affordance (hidden below
+              md purely via CSS) signalling the strip is an interactive
+              horizontal gallery, not a static row. */}
+          <div className="hidden md:flex items-center gap-4 shrink-0" aria-hidden="true">
+            <span className="text-label text-canvas/40 text-[0.65rem] tabular-nums whitespace-nowrap">
+              {String(activeIndex + 1).padStart(2, '0')} / {String(byMedium.length).padStart(2, '0')}
+            </span>
+            <div className="relative w-24 lg:w-32 h-px bg-canvas/15 overflow-hidden">
+              <div
+                ref={railFillRef}
+                className="absolute inset-y-0 left-0 w-full bg-canvas/70 origin-left"
+                style={{ transform: 'scaleX(0)' }}
+              />
             </div>
-          )}
+          </div>
         </div>
       </div>
 
-      {/* Horizontal strip — native scroll+snap on mobile, GSAP-transform
-          driven on desktop (see the ScrollTrigger above); overflow-hidden
-          on the section itself prevents any accidental page-level
-          horizontal overflow either way. */}
+      {/* Horizontal strip — a genuine native scroll+snap container at every
+          breakpoint (see the wheel-redirect effect above for how desktop's
+          mouse wheel drives it left/right); overflow-hidden on the section
+          itself prevents any accidental page-level horizontal overflow. */}
       <div
         ref={stripRef}
-        className="flex gap-px overflow-x-auto md:overflow-visible pb-0"
+        // data-lenis-prevent: Lenis (SmoothScroll.tsx) intercepts wheel
+        // events globally to drive its own virtual page scroll, and does so
+        // independently of event.preventDefault() — a child's
+        // preventDefault doesn't stop Lenis, because Lenis isn't relying on
+        // native scroll being allowed in the first place. This attribute is
+        // Lenis's own documented escape hatch: it tells Lenis to ignore
+        // wheel events whose target is inside this element entirely, which
+        // is what lets our own wheel handler below (and native scroll
+        // generally) actually control this element instead of the page.
+        data-lenis-prevent
+        className="no-scrollbar flex gap-px overflow-x-auto pb-0"
         style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}
         role="list"
         aria-label="Artwork media"
