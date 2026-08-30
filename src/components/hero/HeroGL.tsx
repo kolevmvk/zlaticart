@@ -303,6 +303,11 @@ export default function HeroGL({ artwork }: HeroGLProps) {
   // entirely separate.
   const scrollSmearProgressRef = useRef(0)
   const pigmentPullDeviceScaleRef = useRef(1)
+  // Cursor position (-1..1, lerped smooth in the mouse-parallax effect
+  // below), fed to the shader purely to relight the impasto surface — the
+  // paint visibly catches/loses light as the pointer moves. Stays (0,0) on
+  // touch and reduced-motion, where that effect never runs.
+  const pointerTiltRef = useRef({ x: 0, y: 0 })
 
   // Render one WebGL frame
   const render = useCallback(() => {
@@ -328,6 +333,8 @@ export default function HeroGL({ artwork }: HeroGLProps) {
       u.uPigmentPullStrength,
       pigmentPullEnvelope(scrollSmearProgressRef.current) * pigmentPullDeviceScaleRef.current
     )
+    gl.uniform1f(u.uPointerTiltX, pointerTiltRef.current.x)
+    gl.uniform1f(u.uPointerTiltY, pointerTiltRef.current.y)
 
     gl.activeTexture(gl.TEXTURE0)
     gl.bindTexture(gl.TEXTURE_2D, tex)
@@ -422,6 +429,8 @@ export default function HeroGL({ artwork }: HeroGLProps) {
       uArtworkAspect: gl.getUniformLocation(prog, 'uArtworkAspect'),
       uScrollSmearProgress: gl.getUniformLocation(prog, 'uScrollSmearProgress'),
       uPigmentPullStrength: gl.getUniformLocation(prog, 'uPigmentPullStrength'),
+      uPointerTiltX: gl.getUniformLocation(prog, 'uPointerTiltX'),
+      uPointerTiltY: gl.getUniformLocation(prog, 'uPointerTiltY'),
     }
 
     startTimeRef.current = performance.now()
@@ -506,8 +515,12 @@ export default function HeroGL({ artwork }: HeroGLProps) {
     }
   }, [])
 
-  // Mouse parallax — gentle canvas tilt that responds to pointer position.
-  // Uses rAF lerp for smoothness. Skipped on touch and reduced-motion.
+  // Mouse parallax — gentle canvas tilt that responds to pointer position,
+  // and (same lerped pointer position) relights the shader's impasto
+  // surface via pointerTiltRef so the paint's own texture visibly catches
+  // light as the cursor moves. Uses rAF lerp for smoothness. Skipped on
+  // touch and reduced-motion — pointerTiltRef then simply stays at (0,0),
+  // leaving the shader's constant idle light-drift as the only motion.
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     if (window.matchMedia('(pointer: coarse)').matches) return
@@ -516,6 +529,8 @@ export default function HeroGL({ artwork }: HeroGLProps) {
 
     let targetX = 0, targetY = 0
     let currentX = 0, currentY = 0
+    let targetLightX = 0, targetLightY = 0
+    let currentLightX = 0, currentLightY = 0
     let raf = 0
 
     const onMove = (e: MouseEvent) => {
@@ -523,12 +538,19 @@ export default function HeroGL({ artwork }: HeroGLProps) {
       const ny = (e.clientY / window.innerHeight - 0.5) * 2
       targetX = ny * -5   // rotateX: positive up = tilt back
       targetY = nx * 6    // rotateY: positive right = tilt right
+      targetLightX = nx
+      targetLightY = ny
     }
 
     const tick = () => {
       currentX += (targetX - currentX) * 0.05
       currentY += (targetY - currentY) * 0.05
       tilt.style.transform = `perspective(1100px) rotateX(${currentX.toFixed(3)}deg) rotateY(${currentY.toFixed(3)}deg)`
+
+      currentLightX += (targetLightX - currentLightX) * 0.05
+      currentLightY += (targetLightY - currentLightY) * 0.05
+      pointerTiltRef.current = { x: currentLightX, y: currentLightY }
+
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
@@ -538,6 +560,7 @@ export default function HeroGL({ artwork }: HeroGLProps) {
       window.removeEventListener('mousemove', onMove)
       cancelAnimationFrame(raf)
       tilt.style.transform = ''
+      pointerTiltRef.current = { x: 0, y: 0 }
     }
   }, [])
 

@@ -1,5 +1,7 @@
 # ZlaticArt Rebirth — Status
 
+> **2026-08-30 update (4):** Strengthened the oil-paint texture/impasto on the hero artwork so it reads as raised, tactile paint rather than a flat photo, and made the surface "alive": lighting now reacts to the cursor (desktop) plus a constant subtle idle drift (touch/no-input fallback), so paint thickness visibly catches and loses light like real oil under gallery light. New `uPointerTiltX`/`uPointerTiltY` uniforms, three-octave `paintRelief()` (was two), stronger diffuse/specular response, added a broader soft sheen term. No new effect/state — purely enriches the existing "initial brush reveal" relief shading (effect 1) — verified the scroll-smear (effect 2) is unchanged and layers correctly on top. Build/typecheck pass; verified desktop (cursor-reactive), mobile/touch, and reduced-motion (idle-drift-only, no jank). See "Hero pigment pull" → "Paint texture / 3D relief" below.
+>
 > **2026-08-30 update (3):** Audited the hero on `feat/animation-gallery-upgrade` to confirm the initial brush reveal and the scroll oil-smear are genuinely two independent effects, not one replacing the other. They were already functionally separate (separate uniforms, separate JS-side drivers) but the naming didn't make that obvious, so everything was renamed to `uInitialRevealProgress` / `uScrollSmearProgress` / `uPigmentPullStrength` (shader) and `initialRevealRef` / `scrollSmearProgressRef` / `pigmentPullEnvelope()` (JS), with explicit "two independent effects" doc comments added at both uniform declarations and the two driving `useEffect`s. Verified via Playwright: the reveal plays fully with `scrollY` pinned at 0 (proves it's independent of scroll), reduced-motion snaps straight to the fully-revealed static state, and the scroll smear band is still visible and unchanged after the rename. Build/typecheck pass. See "Animation & Gallery Upgrade" → "Hero pigment pull" below for the full breakdown.
 >
 > **2026-08-30 update (2):** Premium animation/gallery upgrade shipped on `feat/animation-gallery-upgrade` (branched off `main`, not merged yet — see "Animation & Gallery Upgrade" section below): hero scroll effect redesigned from a subtle "glass sweep" into an unmistakable oil-pigment pull (renamed uniforms/semantics, short controlled hero pin, chromatic bleed, bristle-fray edges), the desktop `MediaTransitions` strip is now a real pinned horizontal-scroll gallery with a progress rail and keyboard support, `SelectedWorks`' first card settles out of a blur/scale as a continuation of the hero, and nav/language-toggle touch targets + safe-area padding were fixed. Build/typecheck pass; see details below.
@@ -26,6 +28,22 @@ Shader/visual tuning (unchanged from the prior pass, carried over): wider band (
 - Playwright with `reducedMotion: 'reduce'`: hero shows the fully-revealed artwork immediately (no animation), and never pins on scroll (`position` stays `relative`).
 - Playwright scroll-step screenshots after the rename: the scroll-smear band (bright, chromatically-fringed sweep) is still visible mid-scroll, pixel-identical in character to before the rename — confirms the rename was a pure naming/documentation change, not a behavior change.
 - `npm run typecheck` and `npm run build` both pass after the rename.
+
+### Paint texture / 3D relief (2026-08-30, update 4)
+
+Belongs entirely to effect (1)'s relief shading — no new uniform besides the pointer tilt, no new scroll/state coupling:
+
+- `paintRelief()` now sums three FBM octaves (macro brush ridges, mid-scale strokes, fine canvas-tooth grain — was two) for texture that reads at both a glance and up close.
+- Normal-map `z` lowered 0.08 → 0.06 (steeper apparent bump); diffuse contribution 0.55 → 0.85 and its color range widened; specular 0.12 → 0.16; added a second, broader "soft sheen" specular term (exponent 3.5 vs the tight highlight's 16) so glossy oil reads across the whole surface, not just as a pinpoint highlight.
+- New `uPointerTiltX`/`uPointerTiltY` uniforms (JS: `pointerTiltRef`, fed by the existing rAF-lerped mouse-parallax effect — no new listener) tilt the shader's light direction with the cursor on desktop pointer devices, so paint thickness visibly catches/loses light as the viewer moves — the requested "as if alive" quality. On touch or reduced-motion, that JS effect never runs, so the ref stays `(0, 0)`.
+- A small constant idle drift (`sin`/`cos` of `uTime`, gated by the same `breathe` flag as the existing post-reveal micro-warp) keeps the light gently in motion even with zero input, so the surface never looks perfectly static/flat even on touch devices. Same imperceptible-but-alive precedent as the pre-existing UV breathing warp, which was also nudged up slightly (0.0022/0.0018 → 0.0028/0.0024) to match.
+- Deliberately did **not** add true parallax-mapped UV displacement (bump-driven pixel offset) — evaluated but skipped as unnecessary risk/complexity; lighting-only relief already reads convincingly as raised paint and is the established technique already in this shader.
+
+**Verification (update 4):**
+- Playwright: zero console/page errors on desktop, mobile/touch, and `reducedMotion: 'reduce'`.
+- Screenshots with the cursor moved to opposite corners show the sheen/highlight pattern visibly shifting — confirms the pointer-reactive lighting works.
+- Screenshot after a scroll-smear pass confirms the two effects still layer correctly (smear band + relief texture both visible together, no fighting).
+- `npm run typecheck` and `npm run build` both pass.
 
 ### Desktop horizontal gallery (`src/components/sections/MediaTransitions.tsx`)
 - Rewritten with `gsap.matchMedia()`: desktop/tablet (`min-width: 768px`) pins the section and maps vertical scroll to horizontal strip translation (`ScrollTrigger` with `pin: true`, distance = strip scrollWidth − viewport width); mobile keeps the original native `overflow-x-auto` + scroll-snap untouched.

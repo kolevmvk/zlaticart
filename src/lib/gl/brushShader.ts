@@ -32,6 +32,13 @@ uniform float uAspect;
 uniform float uArtworkAspect;
 uniform float uScrollSmearProgress;
 uniform float uPigmentPullStrength;
+/* Cursor position (-1..1, lerped/smoothed in JS), used only to relight the
+   impasto surface — paint catches/loses light as the viewer's "light
+   source" moves, the way real oil paint does under gallery light. Stays at
+   (0,0) on touch/reduced-motion (that JS effect never runs there), leaving
+   just the constant idle drift below. */
+uniform float uPointerTiltX;
+uniform float uPointerTiltY;
 
 varying vec2 vUv;
 
@@ -82,11 +89,15 @@ float canvasWeave(vec2 uv) {
 }
 
 /* ─── impasto surface normal (faked from FBM) ─────────────────────────── */
-/* Returns a pseudo-height representing paint thickness variation */
+/* Returns a pseudo-height representing paint thickness variation. Three
+   octaves at distinct scales so the relief reads as real paint texture at
+   any viewing distance: macro ridges where the brush loaded/unloaded
+   pigment, mid-scale strokes, and fine tooth-of-the-canvas grain. */
 float paintRelief(vec2 uv, float rev) {
-  float coarse = fbm(uv * 4.5 + vec2(3.1, 7.7));
-  float fine   = fbm(uv * 22.0 + vec2(8.3, 1.2)) * 0.35;
-  return (coarse + fine) * rev * rev;
+  float macro = fbm(uv * 4.5 + vec2(3.1, 7.7));
+  float mid   = fbm(uv * 12.0 + vec2(5.4, 2.9)) * 0.5;
+  float fine  = fbm(uv * 28.0 + vec2(8.3, 1.2)) * 0.3;
+  return (macro + mid + fine) * rev * rev;
 }
 
 /* ─── smooth step curve ────────────────────────────────────────────────── */
@@ -147,8 +158,8 @@ void main() {
   vec2 baseUv = vec2(vUv.x, 1.0 - vUv.y);
   float breathe = step(0.999, uInitialRevealProgress);
   /* Subtle organic breathing — paint shifts infinitesimally on canvas */
-  float warpX = (fbm(vUv * 3.1 + vec2(uTime * 0.11, 1.7)) - 0.5) * 0.0022 * breathe;
-  float warpY = (fbm(vUv * 3.1 + vec2(2.3, uTime * 0.09)) - 0.5) * 0.0018 * breathe;
+  float warpX = (fbm(vUv * 3.1 + vec2(uTime * 0.11, 1.7)) - 0.5) * 0.0028 * breathe;
+  float warpY = (fbm(vUv * 3.1 + vec2(2.3, uTime * 0.09)) - 0.5) * 0.0024 * breathe;
   baseUv += vec2(warpX, warpY);
 
   vec2 artUv = coverCrop(baseUv, uAspect, uArtworkAspect);
@@ -245,26 +256,40 @@ void main() {
   leadE   = clamp(leadE, 0.0, 1.0);
   edgeAcc = clamp(edgeAcc, 0.0, 1.0);
 
-  /* ── impasto relief shading ── */
-  /* Fake directional light from top-left reveals paint texture thickness */
+  /* ── impasto relief shading — the paint's own texture, lit like a real
+     3D surface so it reads as raised, tactile oil rather than a flat
+     photo. Light direction has two parts: a cursor-driven tilt (desktop
+     pointer only — 0 on touch/reduced-motion) so the paint visibly catches
+     and loses light as the viewer moves, plus a constant slow idle drift
+     so it never looks perfectly static even without input — the "as if
+     alive" quality, at a scale subtle enough to stay a material property,
+     not a distracting animation. ── */
   float relief = paintRelief(vUv, rev);
-  /* Light direction: top-left = (-1, -1) normalized */
-  vec2 eps = vec2(0.004, 0.004);
+  vec2 eps = vec2(0.0035, 0.0035);
   float dX = paintRelief(vUv + vec2(eps.x, 0.0), rev) - paintRelief(vUv - vec2(eps.x, 0.0), rev);
   float dY = paintRelief(vUv + vec2(0.0, eps.y), rev) - paintRelief(vUv - vec2(0.0, eps.y), rev);
-  vec3 normal = normalize(vec3(-dX, -dY, 0.08));
-  vec3 lightDir = normalize(vec3(-0.6, -0.55, 1.0));
+  /* Lower z (was 0.08) = steeper apparent normal = more pronounced bump */
+  vec3 normal = normalize(vec3(-dX, -dY, 0.06));
+  vec2 idleDrift = vec2(sin(uTime * 0.17), cos(uTime * 0.13)) * 0.05 * breathe;
+  vec2 lightTilt = clamp(vec2(uPointerTiltX, uPointerTiltY), -1.0, 1.0) * 0.3 + idleDrift;
+  vec3 lightDir = normalize(vec3(-0.6 + lightTilt.x, -0.55 + lightTilt.y, 1.0));
   float diffuse = max(dot(normal, lightDir), 0.0);
-  float specPaint = pow(max(dot(reflect(-lightDir, normal), vec3(0,0,1)), 0.0), 18.0);
+  float specPaint = pow(max(dot(reflect(-lightDir, normal), vec3(0,0,1)), 0.0), 16.0);
+  /* Broader, softer sheen — ambient studio light glancing off the whole
+     glossy surface, not just the tight highlight above */
+  float softSheen = pow(max(dot(reflect(-lightDir, normal), vec3(0,0,1)), 0.0), 3.5);
 
   /* ── base colour mix: linen → oil painting ── */
   vec3 col = mix(linen, artFinal, rev);
 
-  /* Impasto thickness: slightly brightens peaks, darkens valleys */
-  col += vec3(0.06, 0.05, 0.03) * (diffuse - 0.5) * rev * 0.55;
+  /* Impasto thickness: brightens peaks, darkens valleys — this is the main
+     "raised paint" cue, so it's pushed noticeably harder than a flat photo
+     would ever need */
+  col += vec3(0.075, 0.065, 0.04) * (diffuse - 0.5) * rev * 0.85;
 
   /* Specular sheen — oil paint is semi-glossy */
-  col += vec3(1.0, 0.98, 0.92) * specPaint * rev * 0.12;
+  col += vec3(1.0, 0.98, 0.92) * specPaint * rev * 0.16;
+  col += vec3(0.92, 0.93, 0.86) * softSheen * rev * 0.05;
 
   /* Canvas weave shows through thin paint areas */
   float paintThick = rev * (0.8 + relief * 0.2);
