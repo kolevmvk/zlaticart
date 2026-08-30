@@ -156,6 +156,45 @@ body[data-grain].grain-paused::after { animation-play-state: paused; }
   }
 }
 
+/* ---- Hero title gilding sweep ---- */
+/* A one-shot cinematic gold light-sweep + glow that passes across the
+   "Zlatica" letters right after they rise into place (see the GSAP
+   timeline in HeroGL.tsx's Wordmark component), then settles back to the
+   plain cream title colour — like a premiere title catching studio light
+   once, not a looping shimmer. Applied per-letter (.hc-inner) rather than
+   on the parent heading, because background-clip:text only clips against
+   an element's own direct text — the heading itself has none, all
+   characters live in these nested spans. At rest (background-position
+   100% 0, set here) the visible slice falls outside the gold stops
+   entirely, so before the GSAP tween runs the letters simply show the
+   plain cream colour, unchanged from before this effect existed. The
+   100%/300% numbers here aren't arbitrary — background-position on a
+   300%-sized image repeats every 300%, and 100% was found empirically
+   (by rendering the gradient at a sweep of positions) to be where this
+   particular gradient's cream stops land; a naive "outside the gold
+   percentages" calculation gave 200%, which actually lands on a full
+   gold peak instead. */
+.hc-inner.hero-gild {
+  background-image: linear-gradient(
+    100deg,
+    #F0EDE6 20%,
+    #E0A93E 40%,
+    #FFF6DC 50%,
+    #E0A93E 60%,
+    #F0EDE6 80%
+  );
+  background-size: 300% 100%;
+  background-position: 100% 0;
+}
+
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .hc-inner.hero-gild {
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
 /* Hides the scrollbar on an otherwise-native scroll container (used by the
    "Across Media" horizontal gallery) — scroll/snap/keyboard behaviour stays
    fully native, only the visual scrollbar chrome is removed for a cleaner

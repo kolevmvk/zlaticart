@@ -126,6 +126,13 @@ function Wordmark({ visible, tagline, cta }: { visible: boolean; tagline: string
       '-=0.4'
     )
 
+    // Label at the char reveal's end time — lets the gild/glow tween below
+    // be positioned relative to *this specific point* without disturbing
+    // ART/CTA's own "-=" offsets, which are relative to the timeline's
+    // running end and would otherwise get pushed later by whatever gets
+    // added between here and there.
+    tl.addLabel('charsRevealEnd')
+
     // ART suffix — slides in from slight left with ease
     if (art) {
       tl.fromTo(
@@ -145,6 +152,44 @@ function Wordmark({ visible, tagline, cta }: { visible: boolean; tagline: string
         '-=0.3'
       )
     }
+
+    // Cinematic gild + glow — a gold light-sweep passes across the letters
+    // once, staggered left-to-right so it reads as a wave rather than all
+    // seven letters flashing gold in sync, then the glow settles back out.
+    // Positioned relative to the 'charsRevealEnd' label (added above,
+    // right after the char stagger) rather than appended sequentially, so
+    // it overlaps the tail of that reveal — the word rises into place and
+    // catches the light in one continuous gesture — without shifting when
+    // ART/CTA appear (their own "-=" offsets above are unaffected by
+    // anything added after them, including this).
+    // Background-position values here found empirically (rendering the
+    // gradient at a sweep of positions): 100% is this gradient's cream
+    // rest point, -100% its gold peak — a naive "outside the gold
+    // percentage stops" calculation suggested 200%/-100% instead, which
+    // are actually two equivalent gold peaks one full 300%-tile apart
+    // (an earlier version of this animation swept between those two,
+    // which is why it appeared to do nothing: same gold phase at both
+    // ends). Two sequential tweens, cream→gold then gold→cream, so the
+    // glow peaks exactly when the colour does, at the midpoint — a single
+    // fromTo can't do that since it only has two keyframes.
+    tl.fromTo(
+      Array.from(chars),
+      { backgroundPosition: '100% 0', textShadow: '0 0 0px rgba(224,169,62,0)' },
+      {
+        backgroundPosition: '-100% 0',
+        textShadow: '0 0 32px rgba(224,169,62,0.85)',
+        duration: 0.9,
+        ease: 'power2.inOut',
+        stagger: { each: 0.08, from: 'start' },
+      },
+      'charsRevealEnd-=0.6'
+    ).to(Array.from(chars), {
+      backgroundPosition: '100% 0',
+      textShadow: '0 0 0px rgba(224,169,62,0)',
+      duration: 1.1,
+      ease: 'power2.out',
+      stagger: { each: 0.08, from: 'start' },
+    })
   }, [visible])
 
   const chars = 'Zlatica'.split('')
@@ -173,7 +218,7 @@ function Wordmark({ visible, tagline, cta }: { visible: boolean; tagline: string
               style={{ overflow: 'hidden', display: 'inline-block', verticalAlign: 'bottom' }}
             >
               <span
-                className="hc-inner"
+                className="hc-inner hero-gild"
                 style={{ display: 'inline-block', willChange: 'transform', opacity: 0 }}
               >
                 {ch}
@@ -667,7 +712,11 @@ export default function HeroGL({ artwork }: HeroGLProps) {
     // (less scroll commitment on a small screen) but a strength close to
     // desktop so the pigment pull still reads clearly.
     pigmentPullDeviceScaleRef.current = isSmallOrTouch ? 0.85 : 1
-    const pinFraction = isSmallOrTouch ? 0.42 : 0.62
+    // Per feedback, the pin previously resolved too quickly — a small
+    // wheel tick or a short finger drag was enough to run through the
+    // whole effect. Lengthened so it demands a more deliberate scroll/drag
+    // commitment (was 0.42 / 0.62 of one viewport height).
+    const pinFraction = isSmallOrTouch ? 0.65 : 1.0
 
     const ctx = gsap.context(() => {
       ScrollTrigger.create({
