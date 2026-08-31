@@ -1,0 +1,52 @@
+{
+  "expo": {
+    "name": "ZlaticArt Admin",
+    "slug": "zlaticart-admin",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "zlaticart-admin",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "icon": "./assets/icon.png",
+    "backgroundColor": "#F0EDE6",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.zlaticart.admin"
+    },
+    "android": {
+      "package": "com.zlaticart.admin",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#F0EDE6"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "backgroundColor": "#0A0A09"
+        }
+      ],
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "ZlaticArt Admin koristi galeriju da doda fotografije radova.",
+          "cameraPermission": "ZlaticArt Admin koristi kameru da fotografise radove direktno u aplikaciji."
+        }
+      ],
+      "expo-web-browser"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

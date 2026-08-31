@@ -9,7 +9,10 @@ const ARTWORK_FIELDS = `
   "slug": slug.current,
   status,
   year,
-  "medium": medium->{title, "slug": slug.current, description, motionLanguage, order},
+  "medium": select(
+    defined(medium) => medium->{title, "slug": slug.current, description, motionLanguage, order},
+    {"title": "Tehnika nije navedena", "slug": "", "description": "", "motionLanguage": "neutral", "order": 0}
+  ),
   dimensions,
   "primaryImage": primaryImage{
     "src": asset->url,
@@ -60,6 +63,20 @@ export async function sanityGetArtworkBySlug(slug: string): Promise<Artwork | nu
   const results: Artwork[] = await sanityClient.fetch(
     `*[_type == "artwork" && slug.current == $slug][0..0] {${ARTWORK_FIELDS}}`,
     { slug }
+  )
+  return results[0] ?? null
+}
+
+// Za Draft Mode pregled (addmin-app Faza 4) — useCdn:false, uvek najsvezije
+// stanje, ne cekano na CDN propagaciju. Nema poseban Sanity "drafts"
+// perspective jer ova sema ne koristi Sanity-jev ugradjeni draft/publish
+// mehanizam (status je obicno polje) — svaki artwork je vec citljiv po
+// slug-u nezavisno od statusa, samo ovde bez CDN keširanja.
+export async function sanityGetArtworkBySlugFresh(slug: string): Promise<Artwork | null> {
+  const results: Artwork[] = await sanityClient.fetch(
+    `*[_type == "artwork" && slug.current == $slug][0..0] {${ARTWORK_FIELDS}}`,
+    { slug },
+    { useCdn: false }
   )
   return results[0] ?? null
 }

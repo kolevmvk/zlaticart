@@ -1,0 +1,17 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E8C077"/>
+      <stop offset="45%" stop-color="#F4D89A"/>
+      <stop offset="100%" stop-color="#C9975B"/>
+    </linearGradient>
+  </defs>
+  <!-- transparent background: Android adaptive icon system supplies its own
+       background layer (see app.json adaptiveIcon.backgroundColor); content
+       kept within the centre ~66% safe zone so it survives circle/rounded-
+       square/squircle masking on different launchers. -->
+  <text x="512" y="610" text-anchor="middle"
+        font-family="Georgia, 'Times New Roman', serif"
+        font-size="420" font-style="italic" font-weight="400"
+        fill="url(#gold)">Z</text>
+</svg>

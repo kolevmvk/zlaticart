@@ -6,6 +6,18 @@ const nextConfig: NextConfig = {
     deviceSizes: [375, 430, 768, 1024, 1280, 1920, 2560],
     imageSizes: [320, 640, 960, 1280],
     qualities: [75, 80, 85, 90, 95],
+    // Never previously needed: the live Sanity dataset was empty until the
+    // addmin-app Faza 3 testing, so every rendered artwork so far has used
+    // local /img/ seed assets, not real cdn.sanity.io URLs — next/image
+    // rejects unconfigured remote hosts, which only surfaces once real
+    // Sanity-hosted images are actually pushed through the site.
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'cdn.sanity.io',
+        pathname: '/images/**',
+      },
+    ],
   },
   experimental: {
     optimizeCss: false,
