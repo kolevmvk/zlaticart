@@ -18,6 +18,31 @@ Postoje Expo/React Native Android aplikacija, PIN prijava, lokalno čuvanje sesi
 
 Provere 2026-09-10: mobilni typecheck i lint prolaze; typecheck glavnog projekta prolazi. Nije ponovljen Android build, test na telefonu ni provera produkcije. Ranija evidencija beleži API i delimične fizičke Android testove, ali kompletan UI submit i preview nisu potvrđeni. Postojanje koda nije dokaz spremnosti za predaju.
 
+## Segmenti izvršenja P0–P13
+
+Ovo je operativna mapa prihvaćenog plana. Raniji ID-jevi ostaju za praćenje pojedinačnih zadataka. Status U TOKU znači da implementacija ili obavezna provera još nije završena.
+
+| Segment / vlasnik | Status | Cilj | Tok rada | Provera / proizvod |
+|---|---|---|---|---|
+| P0 / koordinator | U TOKU | Zajednički početak i pravila | Proveri stanje, učitaj skillove, utvrdi uređaje, dodeli fajlove | Jedinstven plan, baza 56390cb, dostupni test uslovi; postojeće nekomitovane izmene se čuvaju |
+| P1 / UI | U TOKU | Dosledan sistem dizajna (UI1) | Tokeni → zajedničke kontrole → referentni prikaz | Android mali ekran/veći tekst/kontrast; proizvod: komponente i snimci |
+| P2 / API + koordinator | U TOKU | Tačno čuvanje Radova (R1–R3) | Alt-only → null/omitted semantika → publish validacija → integracija | Testovi mutacija i ponovno učitavanje; proizvod: API i mobilni ugovor |
+| P3 / API + UI | TODO | Nacrti bez promene javne verzije (N1–N3) | Sanity draft → sačuvaj pre pregleda → objavi | Novi/postojeći rad, bez duplikata; proizvod: ceo preview/publish tok |
+| P4 / UI + koordinator | U TOKU | Početna, lista i forma (UI2/R4/R5) | Dizajn → named status actions → dirty guard → API integracija | Tastatura, Back, prazno/greška/uspeh; proizvod: referentni ekrani |
+| P5 / API + UI | TODO | Sesije i mrežna pouzdanost (A1–A5) | Lockout/opoziv → istek → timeout/retry → upload | Neuspešni tokovi bez tihog gubitka/duplikata; proizvod: robusna aplikacija |
+| P6 / QA + koordinator | TODO | Android isporuka A (D1–D5) | Produkcioni API → potpis → APK → instalacija/nadogradnja | Fizički telefon bez Metro, Wi-Fi i mobilni internet; proizvod: APK Radovi i uputstvo |
+| P7 / UI + CMS | TODO | Dnevnik (C1) | Lista/editor/slike/reference → nacrt/pregled/objava | Persistencija formatiranja i web prikaz; proizvod: modul Dnevnik |
+| P8 / UI + CMS | TODO | Izložbe (C2) | Lista/status/datum → forma/multi-upload → objava | Redosled slika i prekid uploada; proizvod: modul Izložbe |
+| P9 / UI + API | TODO | Poruke (C3) | Zaštićeno čitanje → detalji → mailto | Primalac/naslov/bez mail aplikacije; proizvod: kontakt i upiti |
+| P10 / UI + CMS | TODO | Ostali sadržaj (C4) | O meni → Edukacija → Tehnike → Social | Polja i reference po šemi; proizvod: četiri modula |
+| P11 / UI + CMS | TODO | Napredni Radovi (C5) | Dodatne slike/priča/redosled/Instagram link | Sačuvani sadržaj i osnovna polja; proizvod: puna forma |
+| P12 / UI + CMS | TODO | Podešavanja (C6) | Učitaj → izmeni → sačuvaj → proveri sajt | Kontakt/reference/napomena za neaktivna polja; proizvod: podešavanja |
+| P13 / QA + koordinator | TODO | Isporuka B (Q1–Q5) | Regresija → release → instalacija → dokumentacija | Svi moduli + web admin i sajt; proizvod: kompletan APK i evidencija |
+
+Prvi paralelni krug: P1, P2 i priprema QA. P4 se integriše na dogovorenim ugovorima; P3 i P5 ostaju preduslovi isporuke A. P7–P12 koriste završene obrasce, P13 čeka sve module. Koordinator sam menja plan/status, zajedničke API ugovore i integriše promene. U ovom krugu koristi se postojeći checkout sa strogo nepoklopljenim fajlovima da se sačuvaju prethodne lokalne izmene; git/build mutacije se serijalizuju.
+
+Početna provera 2026-09-10: fizički Android nije povezan (adb devices prazan); QA priprema emulator. Testovi sa izolovanim fixture API-jem nisu dokaz produkcione CMS integracije.
+
 ## Isporuke
 
 - **Prva upotrebljiva Android verzija:** etape 1–4, upravljanje Radovima.
@@ -97,9 +122,19 @@ Redosled C1–C6. Svaka oblast završava proverom na Androidu i proverom odgovar
 
 Instagram automatizacija/metrike, push obaveštenja, potpuni offline rad, biometrija i distribucija kroz prodavnice. Nisu odbačeni; zahtevaju zaseban obim. iOS ostaje buduća isporuka, bez blokiranja Androida.
 
+## Dizajn i koordinacija
+
+| ID | Status | Zadatak | Kriterijum / dokaz |
+|---|---|---|---|
+| S1 | REALIZOVANO | Skillovi za mobilni dizajn i paralelan rad; proširen Android QA playbook | Kanonski SKILL.md fajlovi u `.agents/skills/`, Claude veze i eksplicitno učitavanje kroz projektna uputstva |
+| UI1 | TODO | Zajednički tokeni i minimalne UI komponente | Usaglašeni interfejsi i provera komponenti na Androidu |
+| UI2 | TODO | Referentna Početna, Lista radova i Forma | Vizuelno provereni normalni i neuspešni tokovi, tastatura i veći tekst |
+
+UI1 može napredovati nezavisno od serverskih ispravki. UI2 i R1/R2/R4 dele ekrane: koordinator mora serijalizovati izmene ili eksplicitno podeliti vlasništvo. Skillovi su dodati; komponente i redizajn još nisu implementirani. Aktuelni skill protokol dozvoljava nezavisan paralelan rad bez preskakanja zavisnih kriterijuma prihvatanja.
+
 ## Tačan sledeći korak
 
-**R1:** pregledati tok postojećeg image asset-a i alt opisa, omogućiti samostalnu izmenu alt opisa, proveriti čuvanje i ponovno učitavanje. Zatim R2 i R3. Nema potvrđene spoljne blokade za početak; dostupnost uređaja i produkcije proverava se kada bude potrebna.
+**Presek posle prekida agenata:** UI primitivi postoje, ali redizajn ekrana još nije integrisan. P2 kod i 9 izolovanih testova postoje; realni CMS/Android tok nije potvrđen. Mobilni alt-only payload i dirty guard su dodati. Sledeće: integrisati UI1/UI2 i proveriti emulator, pa P3 nacrti. P1/P2/P4 ostaju U TOKU; fizički telefon potreban za P6.
 
 ## Dnevnik odluka i izmena
 
@@ -107,5 +142,6 @@ Instagram automatizacija/metrike, push obaveštenja, potpuni offline rad, biomet
 |---|---|---|---|
 | 2026-09-10 | Codex, po zahtevu vlasnika | REALIZOVANO | Sačuvan zajednički plan i povezana uputstva za nastavak rada. Ovo označava dokumentovanje, ne realizaciju aplikacije. |
 | 2026-09-10 | Vlasnik + Codex | IZMENJENO | Prioritet isporuke: prvo pouzdani Radovi i Android APK (1–4), zatim puni admin (5–6); raniji roadmap ostaje referenca obima. |
+| 2026-09-10 | Codex, po zahtevu vlasnika | REALIZOVANO | S1: dodata dva projektna skilla i Android QA; povezana Codex/Claude uputstva. Redizajn ostaje TODO (UI1/UI2). |
 
 Za naredni zapis: datum | agent | status | ID zadatka, promena, razlog, testovi, preostalo i commit/fajl.

@@ -92,6 +92,7 @@ export type ArtworkFormInput = {
   heroCandidate: boolean
   mediumId: string | null
   primaryImage: { assetId: string; alt: string } | null
+  primaryImageAlt?: string
 }
 
 export async function fetchArtwork(session: AdminSession, id: string): Promise<AdminArtworkDetail> {

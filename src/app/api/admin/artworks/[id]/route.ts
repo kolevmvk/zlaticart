@@ -1,3 +1,4 @@
+import { ArtworkMutationError } from '@/lib/admin-api/artwork-mutation'
 import { AdminAuthError, verifyAdminRequest } from '@/lib/admin-api/auth'
 import { adminAuthError, adminError, adminOk } from '@/lib/admin-api/responses'
 import { adminGetArtwork, adminUpdateArtwork, adminWriteConfigured } from '@/lib/admin-api/sanity'
@@ -59,7 +60,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   try {
     await adminUpdateArtwork(id, parsed.data)
     return adminOk({ _id: id })
-  } catch {
+  } catch (error) {
+    if (error instanceof ArtworkMutationError) return adminError(error.message, error.status)
     return adminError('Could not update artwork in Sanity.', 502)
   }
 }

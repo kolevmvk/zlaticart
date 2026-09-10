@@ -1,3 +1,4 @@
+import { ArtworkMutationError } from '@/lib/admin-api/artwork-mutation'
 import { AdminAuthError, verifyAdminRequest } from '@/lib/admin-api/auth'
 import { adminAuthError, adminError, adminOk } from '@/lib/admin-api/responses'
 import { adminCreateArtwork, adminListArtworks, adminWriteConfigured } from '@/lib/admin-api/sanity'
@@ -52,7 +53,8 @@ export async function POST(request: Request) {
   try {
     const created = await adminCreateArtwork(parsed.data)
     return adminOk({ _id: created._id }, { status: 201 })
-  } catch {
+  } catch (error) {
+    if (error instanceof ArtworkMutationError) return adminError(error.message, error.status)
     return adminError('Could not create artwork in Sanity.', 502)
   }
 }

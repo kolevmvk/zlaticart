@@ -18,12 +18,9 @@ export function adminWriteConfigured() {
   return Boolean(process.env.SANITY_API_WRITE_TOKEN)
 }
 
-export const ARTWORK_STATUSES = ['draft', 'published', 'archived'] as const
-export type ArtworkStatus = (typeof ARTWORK_STATUSES)[number]
-
-export function isArtworkStatus(value: unknown): value is ArtworkStatus {
-  return typeof value === 'string' && (ARTWORK_STATUSES as readonly string[]).includes(value)
-}
+export { ARTWORK_STATUSES, isArtworkStatus } from './artwork-mutation'
+export type { ArtworkStatus, ArtworkFormInput } from './artwork-mutation'
+import { ArtworkMutationError, assertArtworkDocument, assertPublishableArtwork, artworkUpdateFields, type ArtworkStatus, type ArtworkFormInput, type ArtworkDocument } from './artwork-mutation'
 
 export type AdminArtworkListItem = {
   _id: string
@@ -104,18 +101,6 @@ function slugify(title: string) {
     .slice(0, 96)
 }
 
-export type ArtworkFormInput = {
-  title: string
-  year: number | null
-  dimensions: string | null
-  shortDescription: string | null
-  status: ArtworkStatus
-  featured: boolean
-  heroCandidate: boolean
-  mediumId: string | null
-  primaryImage: { assetId: string; alt: string } | null
-}
-
 export async function adminCreateArtwork(input: ArtworkFormInput) {
   const doc: { _type: 'artwork'; [key: string]: unknown } = {
     _type: 'artwork',
@@ -141,36 +126,42 @@ export async function adminCreateArtwork(input: ArtworkFormInput) {
     }
   }
 
+  assertPublishableArtwork(doc)
   return adminSanityClient.create(doc)
 }
 
+async function readArtworkForMutation(id: string): Promise<ArtworkDocument> {
+  const document = await adminSanityClient.fetch<ArtworkDocument | null>(
+    '*[_id == $id][0]', { id }, { perspective: 'raw' }
+  )
+  assertArtworkDocument(document)
+  return document
+}
+
 export async function adminUpdateArtwork(id: string, input: ArtworkFormInput) {
-  const patch: Record<string, unknown> = {
-    title: input.title,
-    status: input.status,
-    year: input.year,
-    dimensions: input.dimensions,
-    shortDescription: input.shortDescription,
-    featured: input.featured,
-    heroCandidate: input.heroCandidate,
-  }
+  const current = await readArtworkForMutation(id)
+  const { set, unset } = artworkUpdateFields(current, input)
+  let patch = adminSanityClient.patch(id).ifRevisionId(current._rev).set(set)
+  if (unset.length) patch = patch.unset(unset)
+  return commitArtworkPatch(() => patch.commit())
+}
 
-  if (input.mediumId) {
-    patch.medium = { _type: 'reference', _ref: input.mediumId }
-  }
+export async function adminSetArtworkStatus(id: string, status: ArtworkStatus) {
+  const current = await readArtworkForMutation(id)
+  assertPublishableArtwork({ ...current, status })
+  return commitArtworkPatch(() => adminSanityClient.patch(id)
+    .ifRevisionId(current._rev).set({ status }).commit())
+}
 
-  if (input.primaryImage) {
-    patch.primaryImage = {
-      _type: 'image',
-      alt: input.primaryImage.alt,
-      asset: { _type: 'reference', _ref: input.primaryImage.assetId },
+async function commitArtworkPatch<T>(commit: () => Promise<T>): Promise<T> {
+  try {
+    return await commit()
+  } catch (error) {
+    if (error && typeof error === 'object' && 'statusCode' in error && error.statusCode === 409) {
+      throw new ArtworkMutationError('Artwork changed. Reload it before saving again.', 409)
     }
+    throw error
   }
-
-  // Parcijalna mutacija (samo poznata polja) — nepoznata polja (detailImages,
-  // story, featuredOrder, instagramUrl...) ostaju netaknuta, po
-  // sanity-proxy-mutation skill-u.
-  return adminSanityClient.patch(id).set(patch).commit()
 }
 
 export async function adminUploadArtworkImage(buffer: Buffer, filename: string) {

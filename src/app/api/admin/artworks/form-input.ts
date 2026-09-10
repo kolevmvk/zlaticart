@@ -1,6 +1,4 @@
-import 'server-only'
-
-import { ARTWORK_STATUSES, isArtworkStatus, type ArtworkFormInput } from '@/lib/admin-api/sanity'
+import { ARTWORK_STATUSES, isArtworkStatus, type ArtworkFormInput } from '../../../../lib/admin-api/artwork-mutation'
 
 type ParseResult =
   | { ok: true; data: ArtworkFormInput }
@@ -33,15 +31,25 @@ export function parseArtworkFormInput(body: unknown): ParseResult {
 
   const dimensions = normalizeOptionalString(b.dimensions)
   const shortDescription = normalizeOptionalString(b.shortDescription)
-  const mediumId = normalizeOptionalString(b.mediumId)
+  if (b.mediumId !== undefined && b.mediumId !== null && typeof b.mediumId !== 'string') {
+    return { ok: false, error: 'mediumId must be a string or null.' }
+  }
+  const mediumId = b.mediumId === undefined ? undefined : normalizeOptionalString(b.mediumId)
+  if (b.primaryImageAlt !== undefined && typeof b.primaryImageAlt !== 'string') {
+    return { ok: false, error: 'primaryImageAlt must be a string.' }
+  }
+  const primaryImageAlt = typeof b.primaryImageAlt === 'string' ? b.primaryImageAlt.trim() : undefined
 
   const featured = Boolean(b.featured)
   const heroCandidate = Boolean(b.heroCandidate)
 
   let primaryImage: ArtworkFormInput['primaryImage'] = null
-  if (b.primaryImage && typeof b.primaryImage === 'object') {
+  if (b.primaryImage !== null && b.primaryImage !== undefined) {
+    if (typeof b.primaryImage !== 'object' || Array.isArray(b.primaryImage)) {
+      return { ok: false, error: 'primaryImage must be an image object or null.' }
+    }
     const img = b.primaryImage as Record<string, unknown>
-    const assetId = typeof img.assetId === 'string' ? img.assetId : ''
+    const assetId = typeof img.assetId === 'string' ? img.assetId.trim() : ''
     const alt = typeof img.alt === 'string' ? img.alt.trim() : ''
     if (!assetId || !alt) {
       return { ok: false, error: 'primaryImage requires assetId and a non-empty alt.' }
@@ -51,7 +59,7 @@ export function parseArtworkFormInput(body: unknown): ParseResult {
 
   return {
     ok: true,
-    data: { title, status, year, dimensions, shortDescription, featured, heroCandidate, mediumId, primaryImage },
+    data: { title, status, year, dimensions, shortDescription, featured, heroCandidate, mediumId, primaryImage, primaryImageAlt },
   }
 }
 

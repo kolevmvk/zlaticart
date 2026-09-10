@@ -89,3 +89,15 @@ Provereno: root `npm run typecheck` ✓ / `npm run lint` ✓ / `npm run build` �
 Na fizickom telefonu: dev-client rebuild-ovan zbog novog native modula `expo-web-browser` (`expo prebuild` + `assembleDebug`, isti proveren tok kao ranije), instaliran, cist login ekran radi (screenshot potvrdjen). Dugme "Pregledaj na sajtu" NIJE live-tap-testirano na uredjaju u ovoj sesiji (isti razlog kao Faza 3 zapis — ScrollView/tastatura cine `adb input tap` koordinate nepouzdanim za visestruke sekvencijalne interakcije); server-side mehanizam koji to dugme poziva je u potpunosti uzivo proveren preko curl-a iznad.
 Sledece: (a) live UI tap test za "Pregledaj na sajtu" dugme u buducoj sesiji; (b) prosiriti Draft Mode pristup na `journalPost` kad Faza 5 (Dnevnik) stigne na red, ponovnom upotrebom istog mehanizma (`preview-link`/`/api/preview` vec generisani da prime `type` parametar, trenutno hardkodovano tumaceni kao artwork — treba grananje po `type` kad se journal doda); (c) i dalje otvoreno: `medium` CRUD (Faza 8) bi popunio "Tehnika nije navedena" fallback stvarnim tehnikama.
 CEKA VLASNIKA: Nema blokade.
+
+## 2026-09-10 — Skillovi za dizajn i paralelan rad (S1)
+Urađeno: Dva kanonska skilla u `.agents/skills/`, Claude simboličke veze, eksplicitne ulazne instrukcije i proširen Android verification checklist. Usklađen operativni prioritet uputstava: nezavisni agenti i više proverenih koraka su dozvoljeni; kriterijumi zavisnih etapa ostaju. UI1/UI2 dodati kao TODO; kod aplikacije nije menjan.
+Provereno: git diff --check prolazi. YAML frontmatter, nazivi/opisi i Claude veze provereni preko postojećeg Node YAML parsera. Bundled quick_validate.py nije mogao da radi jer lokalni Python nema PyYAML; korišćena je navedena alternativna provera. Android build i UI test nisu deo ove dokumentacione izmene.
+Sledeće: R1 po živom planu; nezavisno može UI1 uz dodeljeno vlasništvo. Redizajn tek predstoji.
+ČEKA VLASNIKA: Nema blokade.
+
+## 2026-09-10 — P0/P1/P2/P4: razvojni presek pre commita
+Urađeno: Sačuvana mapa segmenata P0–P13 i skillovi. Dodati UI primitivi i tokeni (još nisu integrisani u redizajnirane ekrane). API podržava alt-only izmenu, uklanjanje tehnike, proveru tipa dokumenta, validaciju objave i zaštitu od paralelne izmene preko revizije. Mobilna forma šalje alt-only podatak i upozorava na nesačuvane izmene; pregled trenutno prikazuje samo sačuvanu verziju.
+Provereno: 9 izolovanih serverskih testova prolazi; root i mobile typecheck prolaze. React lint nalaz praćenja početnog stanja forme ispravljen pre završne ponovljene provere. Testovi koriste lažni Sanity klijent, ne produkciju.
+Nije završeno: integracija UI komponenti, redizajn Početne/Liste/Forme, pravi draft/preview tok i Android UI prihvatanje. Agenti su prekinuti limitom korišćenja; nijedan njihov nepotvrđen rezultat nije označen kao završen.
+Sledeće: završiti P1/P4 referentne ekrane, pokrenuti Android UI proveru, zatim P3; stvarna CMS integracija i fizički uređaj ostaju neprovereni.

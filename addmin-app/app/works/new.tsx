@@ -12,6 +12,7 @@ import {
 import { useAuth } from '@/auth/AuthProvider'
 import { ArtworkForm, type ArtworkFormValues, type PendingImage } from '@/components/ArtworkForm'
 import { colors } from '@/theme/colors'
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges'
 
 const EMPTY_VALUES: ArtworkFormValues = {
   title: '',
@@ -68,9 +69,14 @@ export default function NewArtworkScreen() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-artworks'] })
+      allowLeave()
       router.back()
     },
   })
+
+  const [initialForm] = useState(() => JSON.stringify({ values: EMPTY_VALUES, image: EMPTY_IMAGE }))
+  const dirty = JSON.stringify({ values, image }) !== initialForm
+  const allowLeave = useUnsavedChanges(dirty, mutation.isPending)
 
   if (loading) {
     return (

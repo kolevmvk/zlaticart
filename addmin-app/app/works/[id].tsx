@@ -18,6 +18,7 @@ import { useAuth } from '@/auth/AuthProvider'
 import type { AdminSession } from '@/auth/session'
 import { ArtworkForm, type ArtworkFormValues, type PendingImage } from '@/components/ArtworkForm'
 import { colors } from '@/theme/colors'
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges'
 
 export default function EditArtworkScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -119,7 +120,7 @@ function EditForm({
   const [previewError, setPreviewError] = useState<string | null>(null)
 
   async function openPreview() {
-    if (!artwork.slug) return
+    if (!artwork.slug || dirty || mutation.isPending) return
     setPreviewError(null)
     setPreviewLoading(true)
     try {
@@ -142,9 +143,6 @@ function EditForm({
         const uploaded = await uploadArtworkImage(session, image.localUri, 'artwork.jpg')
         primaryImage = { assetId: uploaded.assetId, alt: image.alt.trim() }
       }
-      // Ako lokalna slika nije izabrana, primaryImage ostaje null i patch je
-      // parcijalan — postojeca Sanity slika/alt se ne dira (vidi
-      // skills/sanity-proxy-mutation.md).
 
       await updateArtwork(session, id, {
         title: values.title.trim(),
@@ -156,6 +154,7 @@ function EditForm({
         heroCandidate: values.heroCandidate,
         mediumId: values.mediumId,
         primaryImage,
+        ...(image.remoteUrl && !image.localUri ? { primaryImageAlt: image.alt.trim() } : {}),
       })
     },
     onError: (error) => {
@@ -166,18 +165,23 @@ function EditForm({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-artworks'] })
       queryClient.invalidateQueries({ queryKey: ['admin-artwork', id] })
+      allowLeave()
       router.back()
     },
   })
 
+  const [initialForm] = useState(() => JSON.stringify({ values, image }))
+  const dirty = JSON.stringify({ values, image }) !== initialForm
+  const allowLeave = useUnsavedChanges(dirty, mutation.isPending)
+
   return (
     <View style={styles.screen}>
       {artwork.slug && (
-        <Pressable disabled={previewLoading} onPress={openPreview} style={styles.previewButton}>
+        <Pressable disabled={previewLoading || dirty || mutation.isPending} onPress={openPreview} style={styles.previewButton}>
           {previewLoading ? (
             <ActivityIndicator color={colors.ink} size="small" />
           ) : (
-            <Text style={styles.previewButtonText}>Pregledaj na sajtu</Text>
+            <Text style={styles.previewButtonText}>{dirty ? 'Sačuvajte izmene pre pregleda' : 'Pregledaj sačuvani rad'}</Text>
           )}
         </Pressable>
       )}
