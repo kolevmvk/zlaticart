@@ -101,3 +101,15 @@ Urađeno: Sačuvana mapa segmenata P0–P13 i skillovi. Dodati UI primitivi i to
 Provereno: 9 izolovanih serverskih testova prolazi; root i mobile typecheck prolaze. React lint nalaz praćenja početnog stanja forme ispravljen pre završne ponovljene provere. Testovi koriste lažni Sanity klijent, ne produkciju.
 Nije završeno: integracija UI komponenti, redizajn Početne/Liste/Forme, pravi draft/preview tok i Android UI prihvatanje. Agenti su prekinuti limitom korišćenja; nijedan njihov nepotvrđen rezultat nije označen kao završen.
 Sledeće: završiti P1/P4 referentne ekrane, pokrenuti Android UI proveru, zatim P3; stvarna CMS integracija i fizički uređaj ostaju neprovereni.
+
+## 2026-09-11 — P1/P4 integracija i prvi samostalni test APK
+Urađeno: Novi dashboard, lista sa pretragom/filterima i imenovanim status akcijama, login i zajednička forma. Dodati selektori, čitljive kontrole, galerija/kamera sa obradom greške, dodatni detalji i potvrda čuvanja. Test varijanta com.zlaticart.admin.test ostavlja postojeću aplikaciju netaknutom.
+Provereno: internalTest build PASS; instalacija na Android 35 emulator PASS; fixture login/dashboard/dirty Back/save naziva i alt opisa/uklanjanje tehnike/povratak na listu/restart PASS; veći tekst 1.3 na dashboardu vizuelno pregledan. Mobile typecheck/lint i 9 server testova PASS. Detalji i snimci u docs/12-ANDROID_TEST.md.
+Ograničenja: APK cilja loopback test API uz adb reverse; nije produkciona verzija. Pravi CMS preview/publish, upload, fizički telefon i kompletan mrežni QA nisu potvrđeni. P1/P4 ostaju U TOKU dok relevantni scenariji nisu zatvoreni.
+Sledeće: test na telefonu preko USB-a ili izbor dostupnog API URL-a za novi build; zatim P3 i P5 po planu. Izmene ove sesije nisu komitovane/pushovane.
+
+## 2026-09-12 — Git presek i nastavak ka produkciji
+Urađeno: Pripremljen commit završenog mobilnog UI-ja, ponovljivog internalTest builda i QA evidencije. Vlasnik odobrio rad sa stvarnim podacima na produkcionom serveru.
+Provereno: root i mobile typecheck PASS; mobile lint PASS; svih 9 izolovanih serverskih testova PASS; git diff --check PASS.
+Preostalo: P3 pravi Sanity nacrti i P5 zaštita prijave/opoziv sesije pre produkcione integracije. Prazna lokalna migracija admin_auth_store nije implementirana niti uključena u ovaj commit; lokalni graphify/Supabase keš takođe je izostavljen. Produkciona isporuka nije završena; trenutni APK koristi fixture API.
+Sledeće: implementirati i proveriti P3/P5, zatim proveriti server, postaviti potrebnu produkcionu konfiguraciju i izgraditi APK sa HTTPS API adresom.

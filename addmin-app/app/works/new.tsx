@@ -70,7 +70,7 @@ export default function NewArtworkScreen() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-artworks'] })
       allowLeave()
-      router.back()
+      router.replace({ pathname: '/works', params: { saved: mutation.variables } })
     },
   })
 
@@ -96,13 +96,15 @@ export default function NewArtworkScreen() {
         image={image}
         mediums={mediumsQuery.data ?? []}
         mediumsLoading={mediumsQuery.isLoading}
+        mediumsError={mediumsQuery.isError}
+        onRetryMediums={() => mediumsQuery.refetch()}
         onChange={setValues}
         onImageChange={setImage}
         onSubmit={(status) => {
           setSubmitError(null)
           mutation.mutate(status)
         }}
-        submitLabel={{ draft: 'Sacuvaj kao nacrt', publish: 'Objavi' }}
+        submitLabel={{ draft: 'Sačuvaj nacrt', publish: 'Objavi' }}
         submitting={mutation.isPending}
         values={values}
       />

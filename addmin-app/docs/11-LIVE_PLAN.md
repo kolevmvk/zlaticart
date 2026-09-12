@@ -134,7 +134,7 @@ UI1 može napredovati nezavisno od serverskih ispravki. UI2 i R1/R2/R4 dele ekra
 
 ## Tačan sledeći korak
 
-**Presek posle prekida agenata:** UI primitivi postoje, ali redizajn ekrana još nije integrisan. P2 kod i 9 izolovanih testova postoje; realni CMS/Android tok nije potvrđen. Mobilni alt-only payload i dirty guard su dodati. Sledeće: integrisati UI1/UI2 i proveriti emulator, pa P3 nacrti. P1/P2/P4 ostaju U TOKU; fizički telefon potreban za P6.
+**Presek 2026-09-11:** UI komponente integrisane u dashboard, listu, login i formu. Napravljen samostalan internalTest APK; Android 35 fixture testovi login/Back/save/restart prolaze. Detalji i ograničenja u `12-ANDROID_TEST.md`. P1/P4 ostaju U TOKU zbog preostalog QA, P2 nije potvrđen na stvarnom CMS-u. Vlasnik je odobrio nastavak ka stvarnim podacima na produkcionom serveru. Sledeće: P3 (odvojeni Sanity nacrti) i P5 (zaštita prijave i opoziv sesije), zatim serverska konfiguracija i novi APK sa HTTPS API adresom. Test APK sada koristi loopback API preko adb reverse, ne javnu produkciju.
 
 ## Dnevnik odluka i izmena
 

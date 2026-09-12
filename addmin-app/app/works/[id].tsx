@@ -80,6 +80,8 @@ export default function EditArtworkScreen() {
       id={id}
       mediums={mediumsQuery.data ?? []}
       mediumsLoading={mediumsQuery.isLoading}
+      mediumsError={mediumsQuery.isError}
+      onRetryMediums={() => mediumsQuery.refetch()}
       session={session}
     />
   )
@@ -90,12 +92,16 @@ function EditForm({
   id,
   mediums,
   mediumsLoading,
+  mediumsError,
+  onRetryMediums,
   session,
 }: {
   artwork: AdminArtworkDetail
   id: string
   mediums: AdminMediumOption[]
   mediumsLoading: boolean
+  mediumsError: boolean
+  onRetryMediums: () => void
   session: AdminSession
 }) {
   const router = useRouter()
@@ -166,7 +172,7 @@ function EditForm({
       queryClient.invalidateQueries({ queryKey: ['admin-artworks'] })
       queryClient.invalidateQueries({ queryKey: ['admin-artwork', id] })
       allowLeave()
-      router.back()
+      router.replace({ pathname: '/works', params: { saved: mutation.variables } })
     },
   })
 
@@ -194,13 +200,15 @@ function EditForm({
         image={image}
         mediums={mediums}
         mediumsLoading={mediumsLoading}
+        mediumsError={mediumsError}
+        onRetryMediums={onRetryMediums}
         onChange={setValues}
         onImageChange={setImage}
         onSubmit={(status) => {
           setSubmitError(null)
           mutation.mutate(status)
         }}
-        submitLabel={{ draft: 'Sacuvaj kao nacrt', publish: 'Objavi' }}
+        submitLabel={{ draft: 'Sačuvaj nacrt', publish: 'Objavi' }}
         submitting={mutation.isPending}
         values={values}
       />
