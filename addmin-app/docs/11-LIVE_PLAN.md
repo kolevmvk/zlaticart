@@ -1,6 +1,6 @@
 # ZlaticArt Admin — živi plan realizacije
 
-Ažurirano: 2026-09-10. Zajednički plan za Codex, Claude i vlasnika projekta.
+Ažurirano: 2026-09-12. Zajednički plan za Codex, Claude i vlasnika projekta.
 
 ## Pravila nastavka rada
 
@@ -29,7 +29,7 @@ Ovo je operativna mapa prihvaćenog plana. Raniji ID-jevi ostaju za praćenje po
 | P2 / API + koordinator | U TOKU | Tačno čuvanje Radova (R1–R3) | Alt-only → null/omitted semantika → publish validacija → integracija | Testovi mutacija i ponovno učitavanje; proizvod: API i mobilni ugovor |
 | P3 / API + UI | TODO | Nacrti bez promene javne verzije (N1–N3) | Sanity draft → sačuvaj pre pregleda → objavi | Novi/postojeći rad, bez duplikata; proizvod: ceo preview/publish tok |
 | P4 / UI + koordinator | U TOKU | Početna, lista i forma (UI2/R4/R5) | Dizajn → named status actions → dirty guard → API integracija | Tastatura, Back, prazno/greška/uspeh; proizvod: referentni ekrani |
-| P5 / API + UI | TODO | Sesije i mrežna pouzdanost (A1–A5) | Lockout/opoziv → istek → timeout/retry → upload | Neuspešni tokovi bez tihog gubitka/duplikata; proizvod: robusna aplikacija |
+| P5 / API + UI | U TOKU | Sesije i mrežna pouzdanost (A1–A5) | Lockout/opoziv → istek → timeout/retry → upload | Neuspešni tokovi bez tihog gubitka/duplikata; proizvod: robusna aplikacija |
 | P6 / QA + koordinator | TODO | Android isporuka A (D1–D5) | Produkcioni API → potpis → APK → instalacija/nadogradnja | Fizički telefon bez Metro, Wi-Fi i mobilni internet; proizvod: APK Radovi i uputstvo |
 | P7 / UI + CMS | TODO | Dnevnik (C1) | Lista/editor/slike/reference → nacrt/pregled/objava | Persistencija formatiranja i web prikaz; proizvod: modul Dnevnik |
 | P8 / UI + CMS | TODO | Izložbe (C2) | Lista/status/datum → forma/multi-upload → objava | Redosled slika i prekid uploada; proizvod: modul Izložbe |
@@ -145,3 +145,6 @@ UI1 može napredovati nezavisno od serverskih ispravki. UI2 i R1/R2/R4 dele ekra
 | 2026-09-10 | Codex, po zahtevu vlasnika | REALIZOVANO | S1: dodata dva projektna skilla i Android QA; povezana Codex/Claude uputstva. Redizajn ostaje TODO (UI1/UI2). |
 
 Za naredni zapis: datum | agent | status | ID zadatka, promena, razlog, testovi, preostalo i commit/fajl.
+
+### 2026-09-12 — P5, validacija tokena
+REALIZOVANO: stroga provera tri JWT segmenta, HS256/JWT zaglavlja, numeričkih vremena, budućeg izdavanja, isteka i maksimalnog trajanja 24h. Regresioni test pokriva neispravne i izmenjene tokene; ukupno 10 serverskih testova, root typecheck i lint prolaze. Ovo ne završava P5: limiter prijave, opoziv sesije i namenski preview token tek slede. UI/Android presek poslat u commitu 31b1192.

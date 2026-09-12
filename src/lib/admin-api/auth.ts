@@ -50,9 +50,10 @@ export function createAdminSessionToken(now = currentUnixSeconds()) {
 
 export function verifyAdminSessionToken(token: string, now = currentUnixSeconds()) {
   const secret = readSessionSecret()
-  const [header, payload, signature] = token.split('.')
+  const parts = token.split('.')
+  const [header, payload, signature] = parts
 
-  if (!header || !payload || !signature) {
+  if (parts.length !== 3 || parts.some(part => !/^[A-Za-z0-9_-]+$/.test(part))) {
     throw new AdminAuthError('invalid_token')
   }
 
@@ -61,8 +62,15 @@ export function verifyAdminSessionToken(token: string, now = currentUnixSeconds(
     throw new AdminAuthError('invalid_token')
   }
 
+  const tokenHeader = parseJsonPart<Record<string, unknown>>(header)
   const claims = parseJsonPart<SessionClaims>(payload)
-  if (claims.sub !== TOKEN_SUBJECT || claims.exp <= now) {
+  if (
+    !tokenHeader || tokenHeader.alg !== 'HS256' || tokenHeader.typ !== 'JWT' ||
+    !claims || claims.sub !== TOKEN_SUBJECT ||
+    !Number.isSafeInteger(claims.iat) || !Number.isSafeInteger(claims.exp) ||
+    claims.iat > now || claims.exp <= now || claims.exp <= claims.iat ||
+    claims.exp - claims.iat > SESSION_TTL_SECONDS
+  ) {
     throw new AdminAuthError('invalid_token')
   }
 

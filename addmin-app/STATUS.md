@@ -113,3 +113,8 @@ Urađeno: Pripremljen commit završenog mobilnog UI-ja, ponovljivog internalTest
 Provereno: root i mobile typecheck PASS; mobile lint PASS; svih 9 izolovanih serverskih testova PASS; git diff --check PASS.
 Preostalo: P3 pravi Sanity nacrti i P5 zaštita prijave/opoziv sesije pre produkcione integracije. Prazna lokalna migracija admin_auth_store nije implementirana niti uključena u ovaj commit; lokalni graphify/Supabase keš takođe je izostavljen. Produkciona isporuka nije završena; trenutni APK koristi fixture API.
 Sledeće: implementirati i proveriti P3/P5, zatim proveriti server, postaviti potrebnu produkcionu konfiguraciju i izgraditi APK sa HTTPS API adresom.
+
+## 2026-09-12 — P5, stroža validacija tokena
+Urađeno (uloga Auth/Security Engineer): odbačeni tokeni sa dodatnim segmentima, pogrešnim zaglavljem, nedostajućim/nebrojčanim vremenima, budućim izdavanjem i trajanjem iznad 24h. Dodata izolovana regresiona provera; postojeći CommonJS test harness usklađen sa lint pravilima.
+Provereno: svih 10 serverskih testova PASS, root lint i typecheck PASS. Nema promene produkcionih podataka niti deploya. Prethodni mobilni presek 31b1192 uspešno pushovan na docs/admin-live-plan.
+Sledeće: deljeni limiter pokušaja PIN-a, serverski opoziv sesije i namenski preview token; zatim P3 i produkciona integracija. P5 ostaje U TOKU.

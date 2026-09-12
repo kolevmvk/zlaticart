@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- Node CommonJS test harness loads transpiled TypeScript. */
 // Run: node --test src/lib/admin-api/artwork-mutation.test.cjs
 // Transpile the actual TS sources with the repo's existing compiler. No service,
 // credentials, Next runtime or additional test dependency is needed.
@@ -31,8 +32,8 @@ const client = {
 function load(filename) {
   filename = path.resolve(filename)
   if (modules.has(filename)) return modules.get(filename).exports
-  const module = { exports: {} }
-  modules.set(filename, module)
+  const loaded = { exports: {} }
+  modules.set(filename, loaded)
   const compiled = ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
   }).outputText
@@ -42,8 +43,8 @@ function load(filename) {
     if (name.startsWith('.')) return load(path.resolve(path.dirname(filename), `${name}.ts`))
     throw new Error(`Unexpected dependency: ${name}`)
   }
-  new Function('require', 'module', 'exports', compiled)(localRequire, module, module.exports)
-  return module.exports
+  new Function('require', 'module', 'exports', compiled)(localRequire, loaded, loaded.exports)
+  return loaded.exports
 }
 const api = load(path.join(__dirname, 'sanity.ts'))
 const { ArtworkMutationError } = load(path.join(__dirname, 'artwork-mutation.ts'))
