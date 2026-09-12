@@ -1,4 +1,4 @@
-import { AdminAuthError, verifyAdminRequest } from '@/lib/admin-api/auth'
+import { AdminAuthError, verifyAdminRequestWithSession } from '@/lib/admin-api/auth'
 import { adminAuthError, adminError, adminOk } from '@/lib/admin-api/responses'
 
 export const runtime = 'nodejs'
@@ -12,7 +12,7 @@ export const runtime = 'nodejs'
 export async function POST(request: Request) {
   let claims
   try {
-    claims = verifyAdminRequest(request)
+    claims = await verifyAdminRequestWithSession(request)
   } catch (error) {
     if (error instanceof AdminAuthError) {
       return adminAuthError(error)

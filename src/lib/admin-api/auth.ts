@@ -2,11 +2,18 @@ import 'server-only'
 
 import { createHmac, pbkdf2Sync, randomBytes, timingSafeEqual } from 'node:crypto'
 
+import { isSessionActive } from './auth-store'
+
 const SESSION_TTL_SECONDS = 24 * 60 * 60
 const TOKEN_SUBJECT = 'zlaticart-admin'
 
 type SessionClaims = {
   sub: typeof TOKEN_SUBJECT
+  /**
+   * Identifikator sesije. Bez njega opoziv nije moguć — potpisan token bi
+   * važio do isteka bez obzira na logout. Evidentira se u admin_sessions.
+   */
+  jti: string
   iat: number
   exp: number
 }
@@ -17,7 +24,16 @@ type PinHashParts = {
   hash: Buffer
 }
 
-export type AdminAuthErrorCode = 'missing_config' | 'invalid_credentials' | 'invalid_token'
+export type AdminAuthErrorCode =
+  | 'missing_config'
+  | 'invalid_credentials'
+  | 'invalid_token'
+  /** Sesija je opozvana logout-om ili nije evidentirana u store-u. */
+  | 'session_revoked'
+  /** Previše neuspelih pokušaja prijave u prozoru. */
+  | 'too_many_attempts'
+  /** Store nije dostupan — fail closed, pristup se ODBIJA. */
+  | 'store_unavailable'
 
 export class AdminAuthError extends Error {
   constructor(public readonly code: AdminAuthErrorCode) {
@@ -33,10 +49,11 @@ export function adminAuthConfigured() {
   return Boolean(process.env.ADMIN_PIN_HASH && process.env.ADMIN_SESSION_SECRET)
 }
 
-export function createAdminSessionToken(now = currentUnixSeconds()) {
+export function createAdminSessionToken(now = currentUnixSeconds(), jti = randomBytes(16).toString('base64url')) {
   const secret = readSessionSecret()
   const claims: SessionClaims = {
     sub: TOKEN_SUBJECT,
+    jti,
     iat: now,
     exp: now + SESSION_TTL_SECONDS,
   }
@@ -67,6 +84,7 @@ export function verifyAdminSessionToken(token: string, now = currentUnixSeconds(
   if (
     !tokenHeader || tokenHeader.alg !== 'HS256' || tokenHeader.typ !== 'JWT' ||
     !claims || claims.sub !== TOKEN_SUBJECT ||
+    typeof claims.jti !== 'string' || !/^[A-Za-z0-9_-]{16,64}$/.test(claims.jti) ||
     !Number.isSafeInteger(claims.iat) || !Number.isSafeInteger(claims.exp) ||
     claims.iat > now || claims.exp <= now || claims.exp <= claims.iat ||
     claims.exp - claims.iat > SESSION_TTL_SECONDS
@@ -88,6 +106,13 @@ export function getBearerToken(request: Request) {
   return authorization.slice(prefix.length).trim() || null
 }
 
+/**
+ * Sinhrona provera: potpis, oblik i vreme važenja. NE proverava opoziv.
+ *
+ * Za rute koje menjaju podatke koristi [verifyAdminRequestWithSession] — ona
+ * dodatno proverava da sesija nije opozvana. Ova varijanta postoji za mesta
+ * gde je asinhroni poziv nemoguć i gde je opoziv prihvatljivo proveriti kasnije.
+ */
 export function verifyAdminRequest(request: Request) {
   const token = getBearerToken(request)
   if (!token) {
@@ -95,6 +120,29 @@ export function verifyAdminRequest(request: Request) {
   }
 
   return verifyAdminSessionToken(token)
+}
+
+/**
+ * Puna provera: potpis + oblik + vreme + da sesija nije opozvana.
+ *
+ * FAIL CLOSED — ako store nije dostupan, pristup se odbija. Greška store-a ne
+ * sme da otvori pristup.
+ */
+export async function verifyAdminRequestWithSession(request: Request) {
+  const claims = verifyAdminRequest(request)
+
+  let active: boolean
+  try {
+    active = await isSessionActive(claims.jti)
+  } catch {
+    throw new AdminAuthError('store_unavailable')
+  }
+
+  if (!active) {
+    throw new AdminAuthError('session_revoked')
+  }
+
+  return claims
 }
 
 export function verifyAdminPin(pin: string) {

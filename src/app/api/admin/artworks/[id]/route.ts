@@ -1,5 +1,5 @@
 import { ArtworkMutationError } from '@/lib/admin-api/artwork-mutation'
-import { AdminAuthError, verifyAdminRequest } from '@/lib/admin-api/auth'
+import { AdminAuthError, verifyAdminRequestWithSession } from '@/lib/admin-api/auth'
 import { adminAuthError, adminError, adminOk } from '@/lib/admin-api/responses'
 import { adminGetArtwork, adminUpdateArtwork, adminWriteConfigured } from '@/lib/admin-api/sanity'
 import { parseArtworkFormInput } from '../form-input'
@@ -8,7 +8,7 @@ export const runtime = 'nodejs'
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    verifyAdminRequest(request)
+    await verifyAdminRequestWithSession(request)
   } catch (error) {
     if (error instanceof AdminAuthError) {
       return adminAuthError(error)
@@ -31,7 +31,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    verifyAdminRequest(request)
+    await verifyAdminRequestWithSession(request)
   } catch (error) {
     if (error instanceof AdminAuthError) {
       return adminAuthError(error)
