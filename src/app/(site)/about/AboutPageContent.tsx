@@ -1,5 +1,7 @@
 'use client'
 
+import ContentRichText from '@/components/ui/ContentRichText'
+
 import Image from 'next/image'
 import { useLanguage } from '@/context/LanguageContext'
 import type { ArtistProfile } from '@/lib/content/types'
@@ -62,9 +64,9 @@ export default function AboutPageContent({ profile }: AboutPageContentProps) {
           </div>
           <div className="md:col-span-7">
             {profile.biography || profile.shortBio ? (
-              <p className="font-sans text-ink/70 leading-loose text-[0.9375rem]">
-                {profile.biography ?? profile.shortBio}
-              </p>
+              <div className="font-sans text-ink/70 leading-loose text-[0.9375rem]">
+                <ContentRichText value={profile.biography ?? profile.shortBio} />
+              </div>
             ) : (
               <p className="text-gallery-meta italic text-ink/30">
                 {t.about.bioComingSoon}

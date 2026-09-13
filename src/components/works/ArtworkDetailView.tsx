@@ -1,5 +1,7 @@
 'use client'
 
+import ContentRichText from '@/components/ui/ContentRichText'
+
 import { useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -106,7 +108,7 @@ export default function ArtworkDetailView({ artwork, prev, next }: ArtworkDetail
 
           {artwork.story && (
             <div data-meta style={{ opacity: 0 }} className="mt-8">
-              <p className="font-sans text-ink/70 leading-relaxed text-base">{artwork.story}</p>
+              <div className="font-sans text-ink/70 leading-relaxed text-base"><ContentRichText value={artwork.story} /></div>
             </div>
           )}
 

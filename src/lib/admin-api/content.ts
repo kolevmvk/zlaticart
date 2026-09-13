@@ -82,8 +82,11 @@ function apply(current: Record<string, unknown>, fields: Record<string, unknown>
   }
   return next
 }
+// Revizijska brava kao u Sanity Studio-u: patch mora imati operaciju da bi
+// Sanity proverio `ifRevisionID`; unset nepostojećeg pseudo-polja ne menja sadržaj.
+export const REVISION_LOCK_FIELD = '_revision_lock_pseudo_field_'
 function guard(document: ContentDocument) {
-  return { patch: { id: document._id, ifRevisionID: document._rev } }
+  return { patch: { id: document._id, ifRevisionID: document._rev, unset: [REVISION_LOCK_FIELD] } }
 }
 async function commit(mutations: Record<string, unknown>[]) {
   try {
@@ -164,7 +167,41 @@ export async function publishContent(type: ContentType, id: string, baseRevision
   await commit(mutations)
   return getContent(type, id)
 }
-export async function removeContent(type: ContentType, id: string, baseRevision: unknown, discard: boolean) {
+export type ContentUsage = { _id: string; type: string; typeTitle: string; title: string; fields: string[]; unlinkable: boolean }
+
+function refersTo(value: unknown, id: string) {
+  const list = Array.isArray(value) ? value : value ? [value] : []
+  return list.some(item => item && typeof item === 'object' && (item as { _ref?: unknown })._ref === id)
+}
+// Gde se dokument koristi: polja poznatih tipova koja ga referenciraju. Referenca
+// na nepoznatom mestu ili u obaveznom polju ne može se ukloniti automatski.
+function usageOf(document: ContentDocument, targetType: ContentType, id: string) {
+  const owner = getContentType(document._type)
+  const fields = owner?.fields.filter(field => field.referenceType === targetType.name && refersTo(document[field.name], id)) ?? []
+  const required = fields.some(field => field.required)
+  return { owner, fields, unlinkable: Boolean(owner) && fields.length > 0 && !required }
+}
+async function referencingDocuments(id: string) {
+  return adminSanityClient.fetch<ContentDocument[]>('*[!(_id in $ids) && references($ids) && !(_id in path("versions.**"))]', { ids: [id, draftIdOf(id)] })
+}
+export async function contentUsage(type: ContentType, id: string): Promise<ContentUsage[]> {
+  assertId(id)
+  const grouped = new Map<string, ContentUsage>()
+  for (const document of await referencingDocuments(id)) {
+    const { owner, fields, unlinkable } = usageOf(document, type, id)
+    const baseId = baseIdOf(document._id)
+    const previous = grouped.get(baseId)
+    const titles = fields.map(field => field.title)
+    grouped.set(baseId, {
+      _id: baseId, type: document._type, typeTitle: owner?.title ?? document._type,
+      title: String((owner && document[owner.titleField]) ?? owner?.title ?? 'Bez naslova'),
+      fields: [...new Set([...(previous?.fields ?? []), ...titles])],
+      unlinkable: (previous?.unlinkable ?? true) && unlinkable,
+    })
+  }
+  return [...grouped.values()]
+}
+export async function removeContent(type: ContentType, id: string, baseRevision: unknown, discard: boolean, unlinkReferences = false) {
   const { published, draft } = await versions(type, id)
   const current = draft ?? published
   if (!current) throw new ContentError('Dokument nije pronađen.', 404)
@@ -172,8 +209,20 @@ export async function removeContent(type: ContentType, id: string, baseRevision:
   const targets = discard ? draft ? [draft] : [] : [draft, published].filter((d): d is ContentDocument => Boolean(d))
   if (!targets.length) throw new ContentError('Nema nacrta za odbacivanje.', 400)
   const ids = targets.map(d => d._id)
-  const references = await adminSanityClient.fetch<{ _id: string }[]>('*[!(_id in $ids) && references($ids)]{_id}', { ids })
-  if (references.length) throw new ContentError('Dokument se koristi u drugom sadržaju. Najpre uklonite povezivanja.', 409)
-  await commit([...targets.map(guard), ...targets.map(doc => ({ delete: { id: doc._id } }))])
-  return { _id: id, deleted: !discard || !published }
+  const references = discard
+    ? await adminSanityClient.fetch<ContentDocument[]>('*[!(_id in $ids) && references($ids)]', { ids })
+    : await referencingDocuments(id)
+  const unlink: Record<string, unknown>[] = []
+  if (references.length) {
+    if (discard || !unlinkReferences) throw new ContentError('Dokument se koristi u drugom sadržaju. Najpre uklonite povezivanja.', 409)
+    for (const document of references) {
+      const { fields, unlinkable } = usageOf(document, type, id)
+      if (!unlinkable) throw new ContentError('Dokument se koristi u obaveznom ili nepoznatom polju. Uklonite povezivanje ručno.', 409)
+      // JSONMatch filter uklanja samo stavke koje pokazuju na ovaj dokument; ID je već proveren (bez navodnika i tačaka).
+      const paths = fields.map(field => field.kind === 'references' ? `${field.name}[_ref=="${id}"]` : field.name)
+      unlink.push({ patch: { id: document._id, ifRevisionID: document._rev, unset: paths } })
+    }
+  }
+  await commit([...unlink, ...targets.map(guard), ...targets.map(doc => ({ delete: { id: doc._id } }))])
+  return { _id: id, deleted: !discard || !published, unlinked: references.map(doc => baseIdOf(doc._id)) }
 }

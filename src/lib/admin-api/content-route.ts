@@ -2,7 +2,7 @@ import 'server-only'
 import { AdminAuthError, verifyAdminRequestWithSession } from './auth'
 import { adminAuthError, adminError, adminOk } from './responses'
 import { adminWriteConfigured } from './sanity'
-import { ContentError, contentType, createContent, getContent, listContent, publishContent, removeContent, saveContent } from './content'
+import { ContentError, contentType, contentUsage, createContent, getContent, listContent, publishContent, removeContent, saveContent } from './content'
 import { contentTypes } from './content-types'
 
 type Params = { type?: string; id?: string }
@@ -12,6 +12,7 @@ export async function contentRoute(request: Request, params: Params = {}, action
     if (action === 'schema') return adminOk({ types: contentTypes })
     const type = contentType(params.type ?? '')
     if (request.method === 'GET') {
+      if (params.id && new URL(request.url).searchParams.get('usage') === '1') return adminOk({ usage: await contentUsage(type, params.id) })
       return adminOk(params.id ? { content: await getContent(type, params.id) } : { contents: await listContent(type) })
     }
     if (!adminWriteConfigured()) return adminError('Čuvanje trenutno nije dostupno.', 503)
@@ -25,7 +26,7 @@ export async function contentRoute(request: Request, params: Params = {}, action
     if (action === 'publish') return adminOk({ content: await publishContent(type, params.id, body.baseRevision) })
     if (action === 'discard' || request.method === 'DELETE') {
       if (body.confirm !== true) return adminError('Potvrdite brisanje ili odbacivanje nacrta.', 400)
-      return adminOk(await removeContent(type, params.id, body.baseRevision, action === 'discard'))
+      return adminOk(await removeContent(type, params.id, body.baseRevision, action === 'discard', body.unlinkReferences === true))
     }
     return adminOk({ content: await saveContent(type, params.id, body.fields, body.baseRevision) })
   } catch (error) {

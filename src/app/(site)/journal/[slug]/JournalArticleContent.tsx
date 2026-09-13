@@ -1,5 +1,7 @@
 'use client'
 
+import ContentRichText from '@/components/ui/ContentRichText'
+
 import Image from 'next/image'
 import Link from 'next/link'
 import { useLanguage } from '@/context/LanguageContext'
@@ -24,7 +26,7 @@ export default function JournalArticleContent({ post, relatedArtworks }: Journal
   return (
     <>
       {/* Hero cover */}
-      <div className="relative w-full" style={{ height: 'clamp(50vh, 65vh, 75vh)' }}>
+      {post.coverImage?.src ? <div className="relative w-full" style={{ height: 'clamp(50vh, 65vh, 75vh)' }}>
         <Image
           src={post.coverImage.src}
           alt={post.coverImage.alt}
@@ -40,6 +42,8 @@ export default function JournalArticleContent({ post, relatedArtworks }: Journal
           aria-hidden="true"
         />
       </div>
+
+      : null}
 
       {/* Article header */}
       <div className="section-gutter pt-10 md:pt-14 pb-8 border-b border-canvas-deep">
@@ -69,7 +73,7 @@ export default function JournalArticleContent({ post, relatedArtworks }: Journal
             className="font-sans text-ink/80 leading-loose"
             style={{ fontSize: '1rem', whiteSpace: 'pre-line' }}
           >
-            {post.body}
+            <ContentRichText value={post.body} />
           </div>
         </div>
       </div>

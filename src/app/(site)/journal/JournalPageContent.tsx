@@ -75,14 +75,14 @@ export default function JournalPageContent({ posts, activeCategory }: JournalPag
               >
                 {/* Cover image */}
                 <div className="md:col-span-4 relative overflow-hidden bg-canvas-warm aspect-[4/3]">
-                  <Image
+                  {post.coverImage?.src ? <Image
                     src={post.coverImage.src}
                     alt={post.coverImage.alt}
                     fill
                     quality={75}
                     sizes="(max-width: 768px) 100vw, 33vw"
                     className="object-cover transition-transform duration-700 group-hover:scale-[1.025]"
-                  />
+                  /> : null}
                 </div>
 
                 {/* Text */}

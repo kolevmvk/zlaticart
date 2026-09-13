@@ -19,7 +19,10 @@ export const ARTWORK_FIELDS = `
     alt,
     "width": asset->metadata.dimensions.width,
     "height": asset->metadata.dimensions.height,
-    hotspot
+    hotspot,
+    // Studio hotspot = žarište kadriranja, isto kao seed desktop/mobile focal point.
+    "desktopFocalPoint": hotspot{x, y},
+    "mobileFocalPoint": hotspot{x, y}
   },
   detailImages[]{
     "src": asset->url,
@@ -35,7 +38,7 @@ export const ARTWORK_FIELDS = `
   instagramUrl
 `
 
-const JOURNAL_FIELDS = `
+export const JOURNAL_FIELDS = `
   _id,
   title,
   "slug": slug.current,

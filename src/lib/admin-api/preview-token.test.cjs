@@ -58,7 +58,7 @@ test('rok duži od dozvoljenog se ne izdaje', () => withSecret(() => {
   const auth = loadAuth({ isSessionActive: async () => true })
   assert.throws(() => auth.createPreviewToken(scope, 24 * 60 * 60, now))
   assert.throws(() => auth.createPreviewToken({ ...scope, slug: '../admin' }, 60, now), invalid)
-  assert.throws(() => auth.createPreviewToken({ ...scope, type: 'journalPost' }, 60, now), invalid)
+  assert.throws(() => auth.createPreviewToken({ ...scope, type: 'siteSettings' }, 60, now), invalid)
 }))
 
 test('sesijski token nije preview token, a preview token nije sesijski', () => withSecret(() => {
@@ -98,4 +98,14 @@ test('nedostupan store ODBIJA pregled (fail closed)', () => withSecret(async () 
   const token = auth.createPreviewToken(scope, 60)
   await assert.rejects(auth.verifyPreviewTokenWithSession(token), { code: 'store_unavailable' })
   assert.equal(await auth.hasArtworkPreviewAccess(token, scope.slug), false)
+}))
+
+test('journal scope cannot unlock artwork with the same slug, and vice versa', () => withSecret(async () => {
+ const auth=loadAuth({isSessionActive:async()=>true})
+ const journal=auth.createPreviewToken({...scope,type:'journalPost'},60)
+ const artwork=auth.createPreviewToken(scope,60)
+ assert.equal(await auth.hasContentPreviewAccess(journal,'journalPost',scope.slug),true)
+ assert.equal(await auth.hasArtworkPreviewAccess(journal,scope.slug),false)
+ assert.equal(await auth.hasContentPreviewAccess(artwork,'journalPost',scope.slug),false)
+ assert.equal(await auth.hasContentPreviewAccess(journal,'journalPost','other'),false)
 }))
