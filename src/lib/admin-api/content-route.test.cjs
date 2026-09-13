@@ -37,6 +37,7 @@ function harness({ authError, configured = true, operationError } = {}) {
       if (id === './auth') return auth
       if (id === './sanity') return { adminWriteConfigured() { events.push(['configured']); return configured } }
       if (id === './content') return content
+      if (id === './site-revalidate') return { revalidateSite() { events.push(['revalidate']) } }
       if (id === '@/lib/admin-api/content-route') return load(path.join(__dirname, 'content-route.ts'))
       if (id === './responses' || id === './content-types') return load(path.join(__dirname, `${id.slice(2)}.ts`))
       throw new Error(`Unexpected dependency ${id}`)
@@ -71,7 +72,7 @@ test('all eight content entrypoints verify the session before reading schema or 
     assert.equal(h.events.filter(event => event[0] === 'auth').length, 1)
     const body = await response.json()
     assert.equal(body.ok, true)
-    if (scenario.operation) assert.equal(h.events.at(-1)[0], scenario.operation)
+    if (scenario.operation) assert.equal(h.events.filter(event => event[0] !== 'revalidate').at(-1)[0], scenario.operation)
     else { assert.equal(body.data.types.length, 8); assert.equal(h.events.length, 1) }
   }
 })
@@ -111,7 +112,8 @@ test('discard and delete require literal confirmation and forward revisions and 
     }
     const h = harness()
     assert.equal((await call(h, scenario)).status, 200)
-    assert.deepEqual(h.events.at(-1), ['removeContent', { name: 'artwork' }, 'art-1', 'rev-1', scenario.file.endsWith('/discard'), false])
+    assert.deepEqual(h.events.find(event => event[0] === 'removeContent'), ['removeContent', { name: 'artwork' }, 'art-1', 'rev-1', scenario.file.endsWith('/discard'), false])
+    assert.equal(h.events.some(event => event[0] === 'revalidate'), !scenario.file.endsWith('/discard'))
   }
 })
 test('unknown types return 404 after authentication and stale content errors map to 409', async () => {
@@ -134,6 +136,7 @@ test('create, save and publish route through the correct service with unmodified
   for (const scenario of cases.filter(item => item.operation in expected)) {
     const h = harness()
     await call(h, scenario)
-    assert.deepEqual(h.events.at(-1), expected[scenario.operation])
+    assert.deepEqual(h.events.filter(event => event[0] !== 'revalidate').at(-1), expected[scenario.operation])
+    assert.equal(h.events.some(event => event[0] === 'revalidate'), scenario.operation === 'publishContent')
   }
 })

@@ -2,6 +2,7 @@ import { ArtworkMutationError } from '@/lib/admin-api/artwork-mutation'
 import { AdminAuthError, verifyAdminRequestWithSession } from '@/lib/admin-api/auth'
 import { adminAuthError, adminError, adminOk } from '@/lib/admin-api/responses'
 import { adminPublishArtwork, adminWriteConfigured, isArtworkBaseId } from '@/lib/admin-api/sanity'
+import { revalidateSite } from '@/lib/admin-api/site-revalidate'
 import { readBaseRevision } from '../../form-input'
 
 export const runtime = 'nodejs'
@@ -48,6 +49,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   try {
     const published = await adminPublishArtwork(id, parsed.value)
+    revalidateSite()
     return adminOk({ ...published, status: 'published' })
   } catch (error) {
     if (error instanceof ArtworkMutationError) return adminError(error.message, error.status)

@@ -133,14 +133,26 @@ async function live() {
   delete process.env.ZLATICART_PIN
   if (!/^\d{6}$/.test(pin ?? '')) throw new Error('PIN nije prosleđen (koristi import-seed.sh).')
 
+  // Prolazne greške servera (Supabase/Sanity kratko ne odgovara) ponavljaju se do 5 puta.
+  // 503 znači da zahtev nije ništa promenio (provera sesije/konfiguracije pre upisa), pa je ponavljanje bezbedno;
+  // za objavu posle 502/504 ishod je nepoznat — ensureDraft/publish ponovo čitaju stanje pre sledećeg pokušaja.
   async function call(method, pathname, { token, json, form } = {}) {
-    const response = await fetch(`${BASE}${pathname}`, {
-      method,
-      headers: { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(json ? { 'Content-Type': 'application/json' } : {}) },
-      body: json ? JSON.stringify(json) : form,
-    })
-    const body = await response.json().catch(() => null)
-    return { status: response.status, body }
+    for (let attempt = 1; ; attempt += 1) {
+      let status = 0, body = null
+      try {
+        const response = await fetch(`${BASE}${pathname}`, {
+          method,
+          headers: { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(json ? { 'Content-Type': 'application/json' } : {}) },
+          body: json ? JSON.stringify(json) : form,
+        })
+        status = response.status
+        body = await response.json().catch(() => null)
+      } catch { status = 0 }
+      const retryable = status === 0 || status === 503 || (method === 'GET' && status >= 500)
+      if (!retryable || attempt >= 5) return { status, body }
+      console.log(`  ponavljam (${status || 'bez veze'}) ${method} ${pathname}`)
+      await new Promise(resolve => setTimeout(resolve, 1500 * attempt))
+    }
   }
 
   const login = await call('POST', '/api/admin/login', { json: { pin } })
@@ -177,7 +189,10 @@ async function live() {
       return created.body.data.content
     }
 
-    async function publish(entry, content) {
+    async function publish(entry, previous) {
+      // Sveže stanje: raniji pokušaj je možda već objavio (nepoznat ishod posle 502/504).
+      const fresh = await call('GET', `/api/admin/content/${entry.type}/${entry.id}`, { token })
+      const content = fresh.status === 200 ? fresh.body.data.content : previous
       if (!content.hasDraft) {
         console.log(`  objavljeno ranije  ${entry.type}/${entry.id}`)
         return
