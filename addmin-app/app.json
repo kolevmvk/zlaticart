@@ -46,7 +46,8 @@
       ],
       "expo-web-browser",
       "./plugins/withInternalTest.cjs",
-      "./plugins/withReleaseSigning.cjs"
+      "./plugins/withReleaseSigning.cjs",
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true

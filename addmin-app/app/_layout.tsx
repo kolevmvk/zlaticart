@@ -60,6 +60,7 @@ export default function RootLayout() {
           <Stack.Screen name="index" options={{ title: 'ZlaticArt Admin' }} />
           <Stack.Screen name="login" options={{ title: 'Prijava' }} />
           <Stack.Screen name="works" options={{ headerShown: false }} />
+          <Stack.Screen name="content" options={{ headerShown: false }} />
         </Stack>
         <SessionExpiredModal />
       </AuthProvider>

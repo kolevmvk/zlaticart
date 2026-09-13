@@ -227,10 +227,10 @@ export async function uploadArtworkImage(
   })
 }
 
-async function adminFetch<T>(
+export async function adminFetch<T>(
   path: string,
   init: {
-    method: 'GET' | 'POST' | 'PATCH'
+    method: 'GET' | 'POST' | 'PATCH' | 'DELETE'
     body?: string
     token?: string
   },
@@ -245,7 +245,7 @@ async function adminFetch<T>(
 async function adminRequest<T>(
   path: string,
   init: {
-    method: 'GET' | 'POST' | 'PATCH'
+    method: 'GET' | 'POST' | 'PATCH' | 'DELETE'
     body?: string | FormData
     token?: string
     headers?: Record<string, string>
@@ -301,7 +301,7 @@ async function adminRequest<T>(
 
 function httpMessage(status: number, serverError: string | null) {
   if (status === 429) return 'Previše pokušaja. Sačekajte nekoliko minuta pa pokušajte ponovo.'
-  if (status === 409) return 'Rad je u međuvremenu izmenjen. Otvorite ga ponovo pre čuvanja.'
+  if (status === 409) return serverError ?? 'Sadržaj je izmenjen. Učitajte ponovo pre čuvanja.'
   if (status === 413) return 'Fotografija je prevelika. Izaberite manju fotografiju.'
   if (status === 415) return 'Format fotografije nije podržan. Koristite JPEG ili PNG.'
   if (status === 503) return 'Server je trenutno nedostupan. Pokušajte ponovo za nekoliko minuta.'

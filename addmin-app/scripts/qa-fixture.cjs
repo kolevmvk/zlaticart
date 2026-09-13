@@ -4,6 +4,7 @@
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
+const qaContent = require('./qa-content.cjs');
 
 let revisionCounter = 0;
 const nextRevision = () => `qa-rev-${++revisionCounter}`;
@@ -53,6 +54,8 @@ http.createServer(async (req, res) => {
   if (url.pathname === '/api/admin/media') return ok({ mediums: [medium] });
   if (url.pathname === '/api/admin/upload-image') return ok({ assetId: `image-qa-${Date.now()}`, url: 'http://127.0.0.1:4317/qa-image.png' });
   if (url.pathname === '/api/admin/preview-link') return ok({ url: 'http://127.0.0.1:4317/qa-preview' });
+
+  if (qaContent(req, url, input, ok, fail)) return;
 
   if (url.pathname === '/api/admin/artworks') {
     if (req.method === 'GET') return ok({ artworks });
