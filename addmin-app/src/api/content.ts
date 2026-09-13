@@ -32,17 +32,37 @@ export async function saveContent(session: AdminSession, type: string, id: strin
 export async function publishContent(session: AdminSession, type: string, id: string, baseRevision: string) {
   return (await adminFetch<{content: ContentItem}>(`${path(type,id)}/publish`, {method:'POST',token:session.token,body:JSON.stringify({baseRevision})})).content
 }
-export async function removeContent(session: AdminSession, type: string, id: string, baseRevision: string, discard: boolean) {
-  return adminFetch<{deleted:boolean}>(`${path(type,id)}${discard ? '/discard' : ''}`, {method:discard ? 'POST' : 'DELETE',token:session.token,body:JSON.stringify({baseRevision,confirm:true})})
+export async function removeContent(session: AdminSession, type: string, id: string, baseRevision: string, discard: boolean, unlinkReferences = false) {
+  return adminFetch<{deleted:boolean}>(`${path(type,id)}${discard ? '/discard' : ''}`, {method:discard ? 'POST' : 'DELETE',token:session.token,body:JSON.stringify({baseRevision,confirm:true,...(unlinkReferences ? {unlinkReferences:true} : {})})})
+}
+/** Gde se dokument koristi (izdvojeni radovi, naslovni rad, povezani radovi…) — prikazuje se pre brisanja. */
+export type ContentUsage = { _id: string; type: string; typeTitle: string; title: string; fields: string[]; unlinkable: boolean }
+export async function fetchContentUsage(session: AdminSession, type: string, id: string) {
+  return (await adminFetch<{usage: ContentUsage[]}>(`${path(type,id)}?usage=1`, {method:'GET',token:session.token})).usage
 }
 export function newContentId(type: string) { return `${type}-${newClientArtworkId().slice(8)}` }
-export function contentImageUrl(value: unknown): string | null {
+export function contentImageUrl(value: unknown, width = 800): string | null {
   if (!value || typeof value !== 'object') return null
+  // Već razrešen asset (npr. izolovani QA server) ima direktan URL.
+  const direct = (value as {asset?:{url?:unknown}}).asset?.url
+  if (typeof direct === 'string' && /^https?:\/\//.test(direct)) return direct
   const asset = (value as {asset?:{_ref?:string}}).asset?._ref
   const match = asset?.match(/^image-([a-zA-Z0-9]+)-(\d+x\d+)-(jpg|jpeg|png|webp|gif|avif)$/)
-  return match ? `https://cdn.sanity.io/images/qm16j7ru/production/${match[1]}-${match[2]}.${match[3]}?w=800&fit=max&auto=format` : null
+  return match ? `https://cdn.sanity.io/images/qm16j7ru/production/${match[1]}-${match[2]}.${match[3]}?w=${width}&fit=max&auto=format` : null
 }
 
 export async function getContentPreviewUrl(session: AdminSession, type: 'artwork' | 'journalPost', slug: string) {
   return (await adminFetch<{url:string}>('/api/admin/preview-link', {method:'POST',token:session.token,body:JSON.stringify({type,slug})})).url
+}
+
+/** Naslovna slika unosa: glavna slika tipa, inače prva fotografija iz galerije (izložbe, edukacija). */
+export function contentCover(type: ContentType | undefined, document: Record<string, unknown> | undefined, width = 800): string | null {
+  if (!type || !document) return null
+  if (type.imageField) {
+    const main = contentImageUrl(document[type.imageField], width)
+    if (main) return main
+  }
+  const gallery = type.fields.find(field => field.kind === 'images')
+  const first = gallery && Array.isArray(document[gallery.name]) ? (document[gallery.name] as unknown[])[0] : null
+  return contentImageUrl(first, width)
 }

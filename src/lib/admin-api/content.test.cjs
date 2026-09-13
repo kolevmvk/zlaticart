@@ -34,7 +34,12 @@ const client = {
         const doc = next.get(body.id)
         if (!doc || body.ifRevisionID && doc._rev !== body.ifRevisionID) throw conflict()
         Object.assign(doc, structuredClone(body.set ?? {}))
-        for (const key of body.unset ?? []) delete doc[key]
+        for (const key of body.unset ?? []) {
+          // JSONMatch filter `field[_ref=="id"]` kao u Sanity-ju; inače celo polje.
+          const match = key.match(/^(\w+)\[_ref=="([^"]+)"\]$/)
+          if (match) doc[match[1]] = (doc[match[1]] ?? []).filter(item => item._ref !== match[2])
+          else delete doc[key]
+        }
         doc._rev = transactionId
       } else if (operation === 'delete') next.delete(body.id)
       else throw new Error(`Unexpected operation: ${operation}`)
@@ -154,6 +159,39 @@ test('reference preflight and racing strong references both block deletion atomi
   await reject(api.removeContent(medium, 'example', 'draft', false), 409)
   assert.equal(store.get('example')._rev, 'original')
   assert.equal(store.get('drafts.example')._rev, 'draft')
+})
+test('usage lists where a document is used; delete can unlink those references atomically', async () => {
+  const artwork = getContentType('artwork')
+  const settings = doc(getContentType('siteSettings'), { _id: 'siteSettings', _rev: 'settings-rev',
+    heroArtwork: { _type: 'reference', _ref: 'example' },
+    featuredArtworks: [{ _key: 'a', _type: 'reference', _ref: 'example' }, { _key: 'b', _type: 'reference', _ref: 'keep' }] })
+  const post = doc(getContentType('journalPost'), { _id: 'drafts.post', _rev: 'post-rev', title: 'Zapis', relatedArtworks: [{ _key: 'r', _type: 'reference', _ref: 'example' }] })
+  reset(doc(artwork, { _id: 'example' }), settings, post)
+  const usage = await api.contentUsage(artwork, 'example')
+  assert.deepEqual(usage.map(item => [item._id, item.fields.sort(), item.unlinkable]).sort(), [
+    ['post', ['Povezani radovi'], true],
+    ['siteSettings', ['Izdvojeni radovi', 'Naslovni rad (početna strana)'], true],
+  ])
+  await reject(api.removeContent(artwork, 'example', 'original', false), 409)
+  const result = await api.removeContent(artwork, 'example', 'original', false, true)
+  assert.equal(result.deleted, true)
+  assert.equal(store.has('example'), false)
+  assert.equal(store.get('siteSettings').heroArtwork, undefined)
+  assert.deepEqual(store.get('siteSettings').featuredArtworks.map(item => item._ref), ['keep'])
+  assert.deepEqual(store.get('drafts.post').relatedArtworks, [])
+})
+test('unlink refuses stale referencing documents and required references without partial writes', async () => {
+  const artwork = getContentType('artwork')
+  const settings = doc(getContentType('siteSettings'), { _id: 'siteSettings', _rev: 'settings-rev', heroArtwork: { _type: 'reference', _ref: 'example' } })
+  reset(doc(artwork, { _id: 'example' }), settings)
+  beforeMutate = () => { store.get('siteSettings')._rev = 'edited-in-studio' }
+  await reject(api.removeContent(artwork, 'example', 'original', false, true), 409)
+  assert.equal(store.has('example'), true)
+  assert.equal(store.get('siteSettings').heroArtwork._ref, 'example')
+  const unknownOwner = { _id: 'mystery', _type: 'legacyType', _rev: 'm', target: { _type: 'reference', _ref: 'example' } }
+  reset(doc(artwork, { _id: 'example' }), unknownOwner)
+  await reject(api.removeContent(artwork, 'example', 'original', false, true), 409)
+  assert.equal(store.has('example'), true)
 })
 test('publication rejects missing and wrong-type references and duplicate slugs', async () => {
   const artwork = getContentType('artwork')

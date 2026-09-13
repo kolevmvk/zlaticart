@@ -2,11 +2,7 @@ import { Stack } from 'expo-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { StatusBar } from 'expo-status-bar'
 import { useState } from 'react'
-import {
-  CormorantGaramond_400Regular,
-  CormorantGaramond_400Regular_Italic,
-  CormorantGaramond_500Medium,
-} from '@expo-google-fonts/cormorant-garamond'
+import { EBGaramond_400Regular, EBGaramond_400Regular_Italic, EBGaramond_500Medium } from '@expo-google-fonts/eb-garamond'
 import { DMSans_400Regular, DMSans_500Medium, DMSans_700Bold } from '@expo-google-fonts/dm-sans'
 import { useFonts } from 'expo-font'
 import { ActivityIndicator, View } from 'react-native'
@@ -29,9 +25,9 @@ export default function RootLayout() {
     },
   }))
   const [fontsLoaded] = useFonts({
-    CormorantGaramond_400Regular,
-    CormorantGaramond_400Regular_Italic,
-    CormorantGaramond_500Medium,
+    EBGaramond_400Regular,
+    EBGaramond_400Regular_Italic,
+    EBGaramond_500Medium,
     DMSans_400Regular,
     DMSans_500Medium,
     DMSans_700Bold,
@@ -57,8 +53,9 @@ export default function RootLayout() {
             contentStyle: { backgroundColor: colors.canvas },
           } as const}
         >
-          <Stack.Screen name="index" options={{ title: 'ZlaticArt Admin' }} />
-          <Stack.Screen name="login" options={{ title: 'Prijava' }} />
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="login" options={{ headerShown: false }} />
+          <Stack.Screen name="messages" options={{ headerShown: false }} />
           <Stack.Screen name="works" options={{ headerShown: false }} />
           <Stack.Screen name="content" options={{ headerShown: false }} />
         </Stack>

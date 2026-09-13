@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-require-imports -- Node CommonJS script loads the actual TypeScript seed. */
+/* global __dirname */
 // Uvoz STVARNOG seed sadržaja u Sanity kroz produkcioni admin API, pre prve prave objave.
 //
 //   bash addmin-app/scripts/import-seed.sh [https://www.zlaticart.com]   (PIN se unosi skriveno)

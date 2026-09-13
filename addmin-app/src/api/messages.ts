@@ -10,3 +10,11 @@ export function replyUrl(message:Message,kind:MessageKind){
  // Adresa je već proverena regexom (bez razmaka, ?, <, >); `@` ostaje nekodiran jer ga neke mejl aplikacije ne dekodiraju.
  return `mailto:${message.email}?subject=${encodeURIComponent(kind==='commission'?'Re: Porudžbina rada — ZlaticArt':'Re: Upit sa sajta — ZlaticArt')}`
 }
+
+/** Datum poruke: danas samo vreme, inače kratak datum; `long` za detalj. */
+export function messageDate(value: string, long = false) {
+  const date = new Date(value)
+  const today = new Date()
+  if (!long && date.toDateString() === today.toDateString()) return date.toLocaleTimeString('sr-Latn', { hour: '2-digit', minute: '2-digit' })
+  return date.toLocaleDateString('sr-Latn', long ? { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short' })
+}

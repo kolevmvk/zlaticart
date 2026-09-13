@@ -1,59 +1,136 @@
 import { useState } from 'react'
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native'
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 import type { ContentField } from '@/api/content'
-import { Button, Feedback, Field } from '@/components/ui'
-import { ImageField } from './ImageField'
+import { Banner, Icon, MenuSheet, PrimaryButton, Sheet } from '@/components/atelier'
 import { blockText, editableBlock, markSelection, newBlock, removeLinks, replaceBlockText, textKey, type Block } from '@/lib/portable-text'
 import { colors } from '@/theme/colors'
-import { spacing } from '@/theme/spacing'
-import { textStyles } from '@/theme/typography'
-const stylesList = [['normal','Pasus'],['h1','Naslov 1'],['h2','Naslov 2'],['h3','Naslov 3'],['h4','Naslov 4'],['h5','Naslov 5'],['h6','Naslov 6'],['blockquote','Citat']]
-const marks = [['strong','Podebljano'],['em','Kurziv'],['underline','Podvučeno'],['strike-through','Precrtano'],['code','Kod']]
-function BlockEditor({block,onChange,disabled,index}:{block:Block;onChange:(block:Block)=>void;disabled?:boolean;index:number}) {
-  const [selection,setSelection]=useState({start:0,end:0})
-  const [link,setLink]=useState('')
-  const [linkOpen,setLinkOpen]=useState(false)
-  const [formatOpen,setFormatOpen]=useState(false)
-  const [error,setError]=useState('')
-  function decorate(mark:string) {
-    if(selection.start===selection.end) {setError('Najpre označite deo teksta dugim pritiskom.');return}
-    setError('');onChange(markSelection(block,selection.start,selection.end,mark))
+import { fonts, textStyles } from '@/theme/typography'
+import { ImageField } from './ImageField'
+
+// Pisanje kao na papiru (Atelje UI): pasusi bez okvira, traka ispod pasusa koji se uređuje.
+const styleCycle = ['normal', 'h2', 'h3', 'blockquote'] as const
+const styleNames: Record<string, string> = { normal: 'Pasus', h1: 'Naslov', h2: 'Naslov', h3: 'Podnaslov', h4: 'Podnaslov', h5: 'Podnaslov', h6: 'Podnaslov', blockquote: 'Citat' }
+
+function Tool({ label, onPress, active, children, disabled, testID }: { label: string; onPress: () => void; active?: boolean; children: React.ReactNode; disabled?: boolean; testID?: string }) {
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: Boolean(active), disabled }} disabled={disabled} onPress={onPress} testID={testID}
+    style={({ pressed }) => [styles.tool, active && styles.toolActive, pressed && styles.pressed]}>{children}</Pressable>
+}
+
+function BlockEditor({ block, onChange, onRemove, onMove, onAddImage, allowImages, disabled, focused, onFocus, index, count }: {
+  block: Block; onChange: (block: Block) => void; onRemove: () => void; onMove: (by: number) => void; onAddImage: () => void; allowImages?: boolean
+  disabled?: boolean; focused: boolean; onFocus: () => void; index: number; count: number
+}) {
+  const [selection, setSelection] = useState({ start: 0, end: 0 })
+  const [linkOpen, setLinkOpen] = useState(false)
+  const [more, setMore] = useState(false)
+  const [link, setLink] = useState('')
+  const [error, setError] = useState('')
+  const style = block.style ?? 'normal'
+  const selectionMarks = new Set((block.children ?? []).flatMap(span => span.marks ?? []))
+  const hasFormatting = (block.children ?? []).some(span => (span.marks ?? []).length > 0)
+  function decorate(mark: string) {
+    if (selection.start === selection.end) { setError('Označite reči dugim pritiskom, pa izaberite oznaku.'); return }
+    setError(''); onChange(markSelection(block, selection.start, selection.end, mark))
   }
-  function addLink() {
-    if(selection.start===selection.end) {setError('Označite tekst koji postaje link.');return}
-    if(!/^(https?:\/\/|mailto:|tel:|\/[^/]|#)/i.test(link.trim())) {setError('Unesite https://, mailto: ili internu adresu.');return}
-    onChange(markSelection(removeLinks(block,selection.start,selection.end),selection.start,selection.end,textKey(),{_type:'link',href:link.trim()}));setLinkOpen(false);setLink('');setError('')
+  function saveLink() {
+    if (selection.start === selection.end) { setError('Označite tekst koji postaje link.'); setLinkOpen(false); return }
+    if (!/^(https?:\/\/|mailto:|tel:|\/[^/]|#)/i.test(link.trim())) { setError('Link počinje sa https:// ili mailto:'); return }
+    onChange(markSelection(removeLinks(block, selection.start, selection.end), selection.start, selection.end, textKey(), { _type: 'link', href: link.trim() }))
+    setLinkOpen(false); setLink(''); setError('')
   }
-  return <View style={styles.group}>
-    <Field label={`Tekst ${index+1}`} multiline value={blockText(block)} editable={!disabled} onChangeText={text=>onChange(replaceBlockText(block,text))} onSelectionChange={event=>setSelection(event.nativeEvent.selection)} style={styles.input} testID={`rich-text-${block._key}`} />
-    <View accessibilityLabel="Prikaz formatiranja" style={styles.preview}>{(block.children??[]).map(span=><Text key={span._key} style={[styles.text,(span.marks??[]).includes('strong')&&styles.bold,(span.marks??[]).includes('em')&&styles.italic,(span.marks??[]).some(m=>m==='underline'||(block.markDefs??[]).some(d=>d._key===m&&d._type==='link'))&&styles.underline,(span.marks??[]).includes('strike-through')&&styles.strike]}>{span.text}</Text>)}</View>
-    <Button label={formatOpen?'Zatvori formatiranje':'Formatiranje teksta'} variant="secondary" disabled={disabled} onPress={()=>setFormatOpen(!formatOpen)} />
-    {formatOpen?<View style={styles.group}>
-      <Text style={styles.text}>Označite reči u polju iznad, pa izaberite oznaku. Ponovni pritisak je uklanja.</Text>
-      <View style={styles.tools}>{marks.map(([mark,label])=><Button key={mark} label={label} variant="secondary" disabled={disabled} onPress={()=>decorate(mark)} testID={`rich-${mark}`} />)}</View>
-      <View style={styles.tools}>{stylesList.map(([value,label])=><Pressable key={value} accessibilityRole="radio" accessibilityLabel={label} accessibilityState={{checked:(block.style??'normal')===value,disabled}} disabled={disabled} onPress={()=>onChange({...block,style:value})} style={styles.option}><Text style={styles.text}>{(block.style??'normal')===value?'● ':''}{label}</Text></Pressable>)}</View>
-      <View style={styles.tools}>{[['','Bez liste'],['bullet','Lista sa tačkama'],['number','Numerisana lista']].map(([value,label])=><Button key={value} label={label} variant="secondary" disabled={disabled} onPress={()=>onChange({...block,listItem:value||null,level:value?(block.level??1):null})} />)}</View>
-      {block.listItem?<><Button label="Uvuci listu" variant="quiet" disabled={disabled||(block.level??1)>=6} onPress={()=>onChange({...block,level:(block.level??1)+1})}/><Button label="Izvuci listu" variant="quiet" disabled={disabled||(block.level??1)<=1} onPress={()=>onChange({...block,level:(block.level??1)-1})}/></>:null}
-      <Button label="Dodaj link označenom tekstu" variant="secondary" disabled={disabled} onPress={()=>setLinkOpen(!linkOpen)} />
-      <Button label="Ukloni link iz označenog teksta" variant="quiet" disabled={disabled} onPress={()=>onChange(removeLinks(block,selection.start,selection.end))} />
-      {linkOpen?<><Field label="Adresa linka" value={link} onChangeText={setLink} autoCapitalize="none" keyboardType="url" editable={!disabled}/><Button label="Sačuvaj link" disabled={disabled} onPress={addLink}/></>:null}
-      {(block.markDefs??[]).filter(def=>def._type==='link').map(def=><Text key={String(def._key)} style={styles.text}>Link: {String(def.href)}</Text>)}
-    </View>:null}
-    {error?<Feedback title={error} tone="error"/>:null}
+  const inputStyle = [styles.paragraph, style.startsWith('h') && (style === 'h1' || style === 'h2' ? styles.h2 : styles.h3), style === 'blockquote' && styles.quote]
+  return <View style={[styles.block, focused && styles.blockFocused]}>
+    <View style={styles.blockRow}>
+      {block.listItem ? <Text style={styles.bullet}>{block.listItem === 'number' ? `${index + 1}.` : '•'}</Text> : null}
+      <TextInput multiline value={blockText(block)} editable={!disabled} onFocus={onFocus} placeholder={index === 0 ? 'Počnite da pišete…' : 'Nastavite…'} placeholderTextColor={colors.inkFaint}
+        onChangeText={text => onChange(replaceBlockText(block, text))} onSelectionChange={event => setSelection(event.nativeEvent.selection)}
+        style={inputStyle} testID={`rich-text-${block._key}`} accessibilityLabel={`${styleNames[style] ?? 'Pasus'} ${index + 1}`} />
+    </View>
+    {hasFormatting ? <Text style={styles.preview} accessibilityLabel="Prikaz formatiranja">
+      {(block.children ?? []).map(span => {
+        const marks = span.marks ?? []
+        const linked = marks.some(mark => (block.markDefs ?? []).some(def => def._key === mark && def._type === 'link'))
+        return <Text key={span._key} style={[marks.includes('strong') && styles.bold, marks.includes('em') && styles.italic, (marks.includes('underline') || linked) && styles.underline, marks.includes('strike-through') && styles.strike]}>{span.text}</Text>
+      })}
+    </Text> : null}
+    {focused ? <View style={styles.toolbar} accessibilityRole="toolbar">
+      <Tool label={`Stil: ${styleNames[style] ?? 'Pasus'}`} disabled={disabled} onPress={() => onChange({ ...block, style: styleCycle[(styleCycle.indexOf(style as typeof styleCycle[number]) + 1) % styleCycle.length] })} testID="rich-style"><Text style={styles.toolSerif}>Aa</Text></Tool>
+      <Tool label="Podebljano" active={selectionMarks.has('strong')} disabled={disabled} onPress={() => decorate('strong')} testID="rich-strong"><Text style={styles.toolBold}>B</Text></Tool>
+      <Tool label="Kurziv" active={selectionMarks.has('em')} disabled={disabled} onPress={() => decorate('em')} testID="rich-em"><Text style={styles.toolItalic}>I</Text></Tool>
+      <Tool label="Lista" active={Boolean(block.listItem)} disabled={disabled} onPress={() => onChange({ ...block, listItem: block.listItem === 'bullet' ? 'number' : block.listItem === 'number' ? null : 'bullet', level: block.listItem === 'number' ? null : 1 })} testID="rich-list"><Icon name="list" size={20} /></Tool>
+      <Tool label="Link" disabled={disabled} onPress={() => setLinkOpen(true)} testID="rich-link"><Icon name="link" size={20} /></Tool>
+      {allowImages ? <Tool label="Dodaj fotografiju posle ovog pasusa" disabled={disabled} onPress={onAddImage} testID="rich-image"><Icon name="image" size={20} /></Tool> : null}
+      <Tool label="Još" disabled={disabled} onPress={() => setMore(true)} testID="rich-more"><Icon name="more" size={20} /></Tool>
+    </View> : null}
+    {error ? <Text style={styles.error}>{error}</Text> : null}
+    <Sheet visible={linkOpen} onClose={() => setLinkOpen(false)}>
+      <Text style={styles.sheetTitle}>Link u tekstu</Text>
+      <Text style={styles.muted}>{selection.start === selection.end ? 'Najpre označite reči u pasusu.' : `„${blockText(block).slice(selection.start, selection.end)}“`}</Text>
+      <TextInput value={link} onChangeText={setLink} autoCapitalize="none" keyboardType="url" placeholder="https://" placeholderTextColor={colors.inkFaint} style={styles.linkInput} />
+      <PrimaryButton label="Sačuvaj link" onPress={saveLink} />
+      <PrimaryButton tone="outline" label="Ukloni link sa označenog teksta" onPress={() => { onChange(removeLinks(block, selection.start, selection.end)); setLinkOpen(false) }} />
+    </Sheet>
+    <MenuSheet visible={more} onClose={() => setMore(false)} title={styleNames[style] ?? 'Pasus'} items={[
+      { label: 'Podvučeno', onPress: () => decorate('underline') },
+      { label: 'Precrtano', onPress: () => decorate('strike-through') },
+      { label: 'Pomeri gore', icon: 'left', disabled: index === 0, onPress: () => onMove(-1) },
+      { label: 'Pomeri dole', icon: 'right', disabled: index === count - 1, onPress: () => onMove(1) },
+      { label: 'Ukloni pasus', icon: 'trash', destructive: true, onPress: onRemove },
+    ]} />
   </View>
 }
-export function PortableTextEditor({field,value,onChange,disabled,onBusyChange}:{field:ContentField;value:unknown;onChange:(value:unknown)=>void;disabled?:boolean;onBusyChange:(busy:boolean)=>void}) {
-  const blocks=(Array.isArray(value)?value:[]) as Block[]
-  function update(index:number,block:Block){onChange(blocks.map((old,i)=>i===index?block:old))}
-  function move(index:number,by:number){const next=[...blocks];[next[index],next[index+by]]=[next[index+by],next[index]];onChange(next)}
-  function remove(index:number){Alert.alert('Ukloni blok?','Tekst ili fotografija u ovom bloku biće uklonjeni iz forme.',[{text:'Odustani',style:'cancel'},{text:'Ukloni',style:'destructive',onPress:()=>onChange(blocks.filter((_,i)=>i!==index))}])}
-  return <View style={styles.group}>
-    {blocks.map((block,index)=><View key={block._key} style={styles.card}>
-      {block._type==='image'&&field.allowImages?<ImageField field={{...field,kind:'image'}} value={block} disabled={disabled} onBusyChange={onBusyChange} onChange={next=>{if(next)update(index,{...next as Block,_key:block._key});else onChange(blocks.filter((_,i)=>i!==index))}}/>:editableBlock(block)?<BlockEditor block={block} index={index} disabled={disabled} onChange={next=>update(index,next)}/>:<Feedback title="Poseban blok je zaštićen" message="Sadržaj i formatiranje ostaju sačuvani. Ovaj format se uređuje u Studio-u."/>}
-      <View style={styles.tools}><Button label={`Blok ${index+1}: gore`} variant="quiet" disabled={disabled||index===0} onPress={()=>move(index,-1)}/><Button label={`Blok ${index+1}: dole`} variant="quiet" disabled={disabled||index===blocks.length-1} onPress={()=>move(index,1)}/><Button label={`Ukloni blok ${index+1}`} variant="quiet" disabled={disabled} onPress={()=>remove(index)}/></View>
+
+export function PortableTextEditor({ field, value, onChange, disabled, onBusyChange }: { field: ContentField; value: unknown; onChange: (value: unknown) => void; disabled?: boolean; onBusyChange: (busy: boolean) => void }) {
+  const blocks = (Array.isArray(value) ? value : []) as Block[]
+  const [focusedKey, setFocusedKey] = useState<string | null>(null)
+  const update = (index: number, block: Block) => onChange(blocks.map((old, i) => i === index ? block : old))
+  const move = (index: number, by: number) => { const next = [...blocks]; [next[index], next[index + by]] = [next[index + by], next[index]]; onChange(next) }
+  const insertAfter = (index: number, block: Block) => onChange([...blocks.slice(0, index + 1), block, ...blocks.slice(index + 1)])
+  return <View style={styles.editor}>
+    {!blocks.length ? <Pressable accessibilityRole="button" disabled={disabled} onPress={() => { const block = newBlock(); onChange([block]); setFocusedKey(block._key) }} style={styles.startWriting} testID={`field-${field.name}-paragraph`}>
+      <Text style={styles.placeholderWriting}>Počnite da pišete…</Text>
+    </Pressable> : null}
+    {blocks.map((block, index) => <View key={block._key}>
+      {block._type === 'image' && field.allowImages ? <View style={styles.imageBlock}>
+        <ImageField field={{ ...field, kind: 'image', title: 'Fotografija u tekstu' }} value={block} disabled={disabled} onBusyChange={onBusyChange}
+          onChange={next => { if (next) update(index, { ...(next as Block), _key: block._key }); else onChange(blocks.filter((_, i) => i !== index)) }} />
+      </View> : editableBlock(block) ? <BlockEditor block={block} index={index} count={blocks.length} allowImages={field.allowImages} disabled={disabled}
+        focused={focusedKey === block._key} onFocus={() => setFocusedKey(block._key)} onChange={next => update(index, next)}
+        onRemove={() => onChange(blocks.filter((_, i) => i !== index))} onMove={by => move(index, by)}
+        onAddImage={() => insertAfter(index, { _type: 'image', _key: textKey() })} />
+        : <Banner title="Poseban blok je sačuvan" message="Ovaj format se uređuje u web panelu; ovde ostaje netaknut." />}
     </View>)}
-    <Button label="Dodaj pasus" testID={`field-${field.name}-paragraph`} variant="secondary" disabled={disabled} onPress={()=>onChange([...blocks,newBlock()])}/>
-    {field.allowImages?<Button label="Dodaj fotografiju u tekst" testID={`field-${field.name}-image`} variant="secondary" disabled={disabled} onPress={()=>onChange([...blocks,{_type:'image',_key:textKey()}])}/>:null}
+    {blocks.length ? <Pressable accessibilityRole="button" disabled={disabled} onPress={() => { const block = newBlock(); onChange([...blocks, block]); setFocusedKey(block._key) }} style={styles.addParagraph} testID={`field-${field.name}-paragraph`}>
+      <Icon name="plus" size={18} color={colors.inkMuted} /><Text style={styles.muted}>Nov pasus</Text>
+    </Pressable> : null}
   </View>
 }
-const styles=StyleSheet.create({group:{gap:spacing.sm},card:{padding:spacing.md,gap:spacing.md,borderWidth:1,borderColor:colors.canvasDeep},tools:{flexDirection:'row',flexWrap:'wrap',gap:spacing.sm},input:{minHeight:130,textAlignVertical:'top'},text:{...textStyles.body,color:colors.ink},preview:{flexDirection:'row',flexWrap:'wrap'},bold:{fontWeight:'700'},italic:{fontStyle:'italic'},underline:{textDecorationLine:'underline'},strike:{textDecorationLine:'line-through'},option:{minHeight:48,padding:spacing.md,justifyContent:'center',backgroundColor:colors.canvasWarm}})
+
+const styles = StyleSheet.create({
+  pressed: { opacity: 0.7 },
+  editor: { gap: 6 },
+  block: { paddingVertical: 2, gap: 6 },
+  blockFocused: { paddingBottom: 6 },
+  blockRow: { flexDirection: 'row', gap: 8 },
+  bullet: { ...textStyles.writing, color: colors.inkMuted, paddingTop: 8 },
+  paragraph: { ...textStyles.writing, color: colors.ink, flex: 1, paddingVertical: 6, paddingHorizontal: 0, textAlignVertical: 'top' },
+  h2: { fontFamily: fonts.serif, fontSize: 28, lineHeight: 34 },
+  h3: { fontFamily: fonts.serifMedium, fontSize: 23, lineHeight: 30 },
+  quote: { fontFamily: fonts.serifItalic, borderLeftWidth: 2, borderColor: colors.gold, paddingLeft: 14 },
+  preview: { ...textStyles.caption, fontSize: 14, color: colors.inkMuted },
+  bold: { fontFamily: fonts.sansBold }, italic: { fontStyle: 'italic' }, underline: { textDecorationLine: 'underline' }, strike: { textDecorationLine: 'line-through' },
+  toolbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: colors.canvasWarm, borderRadius: 12, paddingHorizontal: 4 },
+  tool: { minWidth: 44, height: 44, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  toolActive: { backgroundColor: colors.canvasDeep },
+  toolSerif: { fontFamily: fonts.serif, fontSize: 19, color: colors.ink },
+  toolBold: { fontFamily: fonts.sansBold, fontSize: 17, color: colors.ink },
+  toolItalic: { fontFamily: fonts.serifItalic, fontSize: 20, color: colors.ink },
+  error: { ...textStyles.caption, color: colors.error },
+  muted: { ...textStyles.caption, color: colors.inkMuted },
+  sheetTitle: { ...textStyles.title, color: colors.ink },
+  linkInput: { ...textStyles.body, color: colors.ink, minHeight: 48, borderBottomWidth: 1, borderColor: colors.ink },
+  imageBlock: { paddingVertical: 8 },
+  startWriting: { minHeight: 64, justifyContent: 'center', borderBottomWidth: 1, borderColor: colors.canvasDeep },
+  placeholderWriting: { ...textStyles.writing, color: colors.inkFaint },
+  addParagraph: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44 },
+})

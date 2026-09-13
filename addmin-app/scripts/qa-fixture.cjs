@@ -49,6 +49,14 @@ http.createServer(async (req, res) => {
     fs.createReadStream(path.join(__dirname, '../assets/icon.png')).pipe(res);
     return;
   }
+  if (url.pathname.startsWith('/qa-art/')) {
+    const file = path.normalize(url.pathname.slice('/qa-art/'.length)).replace(/^(\.\.[/\\])+/, '');
+    const full = path.join(__dirname, '../../public/assets/works', file);
+    if (!full.startsWith(path.join(__dirname, '../../public/assets/works')) || !fs.existsSync(full)) return fail(404, 'Nema slike.');
+    res.writeHead(200, { 'Content-Type': 'image/jpeg' });
+    fs.createReadStream(full).pipe(res);
+    return;
+  }
   if (url.pathname === '/qa-preview') {
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end('<h1>Izolovani QA pregled</h1><p>Nije povezan sa CMS-om.</p>');

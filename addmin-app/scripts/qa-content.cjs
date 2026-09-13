@@ -26,6 +26,25 @@ for (const type of contentTypes) {
   if(doc.hasPublished) doc.published=structuredClone(doc.document);
   documents.set(id,doc);
 }
+// Sintetički radovi sa pravim seed fotografijama (servira qa-fixture sa /qa-art/), da se vidi izgled.
+const art = (file, alt) => ({_type:'image',alt,asset:{_type:'reference',_ref:`image-qa${file.replace(/\W/g,'')}-800x800-jpg`,url:`http://127.0.0.1:4317/qa-art/${file}`}});
+[['qa-art-1','oil/up5.jpg',true,'changed'],['qa-art-2','acrylic/ak1.jpg',true,'published'],['qa-art-3','watercolor/vt1.jpg',true,'published'],['qa-art-4','mosaic/mz1.jpg',false,'draft']].forEach(([id,file,published,state],index)=>{
+  const fields={title:`QA rad ${index+1}`,slug:{_type:'slug',current:id},status:published?'published':'draft',primaryImage:art(file,'Sintetički opis slike'),featured:index<2,heroCandidate:index===0};
+  const doc=entry('artwork',id,fields,published);
+  if(published) {doc.published=structuredClone(doc.document); if(state==='changed'){Object.assign(doc,{hasDraft:true,publicationStatus:'changed'});}}
+  documents.set(id,doc);
+});
+documents.get('qa-exhibition').document.images=[{...art('graphics/gr1.jpg','Postavka'),_key:'ex1'},{...art('oil/up2.jpg','Detalj'),_key:'ex2'}];
+documents.get('artistProfile').document.portrait=art('oil/up4.jpg','Portret');
+documents.get('siteSettings').document.featuredArtworks=[{_type:'reference',_ref:'qa-art-2',_key:'f1'},{_type:'reference',_ref:'qa-art-1',_key:'f2'}];
+documents.get('siteSettings').document.heroArtwork={_type:'reference',_ref:'qa-art-2'};
+function usageOf(id) {
+  return [...documents.values()].filter(d=>d._id!==id).map(d=>{
+    const owner=contentTypes.find(t=>t.name===d.document._type);
+    const fields=(owner?.fields??[]).filter(f=>f.referenceType&&[].concat(d.document[f.name]??[]).some(r=>r&&r._ref===id));
+    return fields.length?{_id:d._id,type:owner.name,typeTitle:owner.title,title:String(d.document[owner.titleField]??owner.title),fields:fields.map(f=>f.title),unlinkable:!fields.some(f=>f.required),names:fields.map(f=>[f.name,f.kind])}:null;
+  }).filter(Boolean);
+}
 function clean(doc) {const {published,...value}=doc;return {...value,title:String(doc.document.title||doc.document.name||doc.document.siteTitle||doc.document.captionExcerpt||'Bez naslova')};}
 module.exports = function qaContent(req, url, input, ok, fail) {
   if(!url.pathname.startsWith('/api/admin/content/')) return false;
@@ -44,10 +63,13 @@ module.exports = function qaContent(req, url, input, ok, fail) {
   }
   const doc=documents.get(id);
   if(!doc) {fail(404,'Dokument nije pronađen.');return true;}
-  if(req.method==='GET') {ok({content:clean(doc)});return true;}
+  if(req.method==='GET') {if(url.searchParams.get('usage')==='1') ok({usage:usageOf(id).map(({names,...u})=>u)}); else ok({content:clean(doc)});return true;}
   if(input.baseRevision!==doc.revision) {fail(409,'Sadržaj je izmenjen. Učitajte ponovo.');return true;}
   if(action==='discard'||req.method==='DELETE') {
     if(!input.confirm) {fail(400,'Potvrdite brisanje.');return true;}
+    const usage=action==='discard'?[]:usageOf(id);
+    if(usage.length&&!input.unlinkReferences) {fail(409,'Dokument se koristi u drugom sadržaju. Najpre uklonite povezivanja.');return true;}
+    for(const u of usage) {const owner=documents.get(u._id); for(const [name,kind] of u.names) {if(kind==='references') owner.document[name]=owner.document[name].filter(r=>r._ref!==id); else delete owner.document[name];}}
     if(action==='discard'&&doc.published) Object.assign(doc,{document:structuredClone(doc.published),hasDraft:false,publicationStatus:'published',revision:revise()});
     else documents.delete(id);
     ok({_id:id,deleted:!documents.has(id)});return true;

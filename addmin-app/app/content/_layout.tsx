@@ -1,3 +1,4 @@
 import { Stack } from 'expo-router'
 import { colors } from '@/theme/colors'
-export default function ContentLayout() { return <Stack screenOptions={{headerStyle:{backgroundColor:colors.canvas},headerTintColor:colors.ink,headerTitleStyle:{fontFamily:'DMSans_700Bold'}}} /> }
+// Ekrani sadržaja crtaju sopstveno zaglavlje (Atelje UI).
+export default function ContentLayout() { return <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.canvas } }} /> }

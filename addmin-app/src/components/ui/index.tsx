@@ -19,7 +19,7 @@ export function Button({ label, onPress, variant = 'primary', disabled = false, 
 export function Field({ label, error, hint, style, ...props }: TextInputProps & { label: string; error?: string; hint?: string }) {
   const [focused, setFocused] = useState(false)
   return <View style={styles.field}>
-    <Text style={styles.label}>{label}</Text>
+    <Text style={styles.label}>{label.toLocaleUpperCase('sr')}</Text>
     <TextInput {...props} accessibilityLabel={props.accessibilityLabel ?? label} placeholderTextColor={colors.inkFaint} onFocus={(event) => { setFocused(true); props.onFocus?.(event) }} onBlur={(event) => { setFocused(false); props.onBlur?.(event) }} style={[styles.input, focused && styles.inputFocused, Boolean(error) && styles.inputError, style]} />
     {error || hint ? <Text accessibilityLiveRegion={error ? 'polite' : 'none'} style={[styles.caption, Boolean(error) && styles.error]}>{error || hint}</Text> : null}
   </View>
@@ -67,13 +67,14 @@ export function ArtworkCard({ artwork, onPress, children }: { artwork: AdminArtw
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.canvas },
-  content: { padding: spacing.xl, gap: spacing.xl, paddingBottom: spacing.xxl },
-  button: { minHeight: shape.touchTarget, paddingHorizontal: spacing.lg, paddingVertical: spacing.md, borderRadius: shape.radius, justifyContent: 'center', alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  primary: { backgroundColor: colors.ink }, secondary: { borderColor: colors.inkFaint, borderWidth: 1 }, danger: { backgroundColor: colors.error },
+  content: { padding: 20, gap: spacing.xl, paddingBottom: spacing.xxl },
+  button: { minHeight: 50, paddingHorizontal: spacing.lg, paddingVertical: spacing.md, borderRadius: 14, justifyContent: 'center', alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  primary: { backgroundColor: colors.ink }, secondary: { borderColor: colors.canvasDeep, borderWidth: 1 }, danger: { backgroundColor: colors.error },
   disabled: { opacity: 0.5 }, pressed: { opacity: 0.72 }, buttonText: { ...textStyles.label, color: colors.ink, textAlign: 'center', flexShrink: 1 }, inverse: { color: colors.canvas },
-  field: { gap: spacing.sm }, label: { ...textStyles.label, color: colors.ink },
-  input: { ...textStyles.body, color: colors.ink, backgroundColor: colors.canvasWarm, borderWidth: 1, borderColor: colors.inkFaint, borderRadius: shape.radius, minHeight: shape.touchTarget, paddingHorizontal: spacing.md, paddingVertical: spacing.md },
-  inputFocused: { borderColor: colors.ink, backgroundColor: colors.canvas }, inputError: { borderColor: colors.error },
+  field: { gap: 2 }, label: { ...textStyles.eyebrow, color: colors.inkFaint },
+  // Atelje UI: polje je red sa tankom linijom, ne siva kutija.
+  input: { ...textStyles.body, color: colors.ink, borderBottomWidth: 1, borderColor: colors.canvasDeep, minHeight: shape.touchTarget, paddingHorizontal: 0, paddingVertical: spacing.sm },
+  inputFocused: { borderColor: colors.ink }, inputError: { borderColor: colors.error },
   caption: { ...textStyles.caption, color: colors.inkMuted }, body: { ...textStyles.body, color: colors.inkMuted }, error: { color: colors.error },
   feedback: { backgroundColor: colors.canvasWarm, borderRadius: shape.cardRadius, padding: spacing.lg, gap: spacing.md },
   badge: { alignSelf: 'flex-start', backgroundColor: colors.canvasDeep, paddingHorizontal: spacing.sm, paddingVertical: spacing.xs, borderRadius: shape.radius }, badgeText: { ...textStyles.caption, color: colors.ink },

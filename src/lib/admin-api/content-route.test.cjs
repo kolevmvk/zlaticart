@@ -111,7 +111,7 @@ test('discard and delete require literal confirmation and forward revisions and 
     }
     const h = harness()
     assert.equal((await call(h, scenario)).status, 200)
-    assert.deepEqual(h.events.at(-1), ['removeContent', { name: 'artwork' }, 'art-1', 'rev-1', scenario.file.endsWith('/discard')])
+    assert.deepEqual(h.events.at(-1), ['removeContent', { name: 'artwork' }, 'art-1', 'rev-1', scenario.file.endsWith('/discard'), false])
   }
 })
 test('unknown types return 404 after authentication and stale content errors map to 409', async () => {
