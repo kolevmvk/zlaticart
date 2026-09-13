@@ -132,6 +132,18 @@ Instagram automatizacija/metrike, push obaveštenja, potpuni offline rad, biomet
 
 UI1 može napredovati nezavisno od serverskih ispravki. UI2 i R1/R2/R4 dele ekrane: koordinator mora serijalizovati izmene ili eksplicitno podeliti vlasništvo. Skillovi su dodati; komponente i redizajn još nisu implementirani. Aktuelni skill protokol dozvoljava nezavisan paralelan rad bez preskakanja zavisnih kriterijuma prihvatanja.
 
+## Aktivna isporuka — potpuni Studio na Androidu (2026-09-13)
+
+| Slice | Status | Dokaz / sledeće |
+|---|---|---|
+| Full S1 | REALIZOVANO | Generički API i šema svih osam tipova; 21 test mutacija + 7 ruta/autorizacije + 5 validacije/šema. Sve postojeće test datoteke prolaze (9/9), root typecheck/lint/build exit 0, mobile Node 22 typecheck/lint exit 0. Izolovane provere; produkcioni smoke čeka merge vlasnika. |
+| Full S2 | U TOKU | Mobilni API ugovor, navigacija i polja se implementiraju iz završene S1 šeme; sledeće integracija i Android provere. |
+| Full S3 | TODO | Portable Text editor i pregled dnevnika. |
+| Full S4 | TODO | Kontakt poruke i porudžbine. |
+| Full S5 | TODO | Uvoz postojećeg seed-a, font, release, fizički telefon i sajt. |
+
+Koordinator menja plan/status i API ugovor; nezavisni radnici imaju isključivo vlasništvo nad `content-types.ts`/testom šema i `content.test.cjs`. Produkcijska objava čeka uvoz seed-a; main menja vlasnik merge-om PR-a.
+
 ## Tačan sledeći korak
 
 **Presek 2026-09-13 (odluka vlasnika):** Aplikacija mora da ima SVE opcije Sanity Studio admin panela, ne samo Radove. Otkriveno i na produkciji: Sanity dataset je potpuno prazan (0 radova, tehnika, dnevnika, izložbi, profila); javni sajt prikazuje seed iz koda, a `getAllArtworks` prelazi na Sanity čim postoji i jedan objavljen rad — objava iz aplikacije bi sakrila svih 8 seed radova. Redosled: (S1) generički serverski content API za svih 8 tipova sa nacrtima/objavom/brisanjem i opisom polja; (S2) mobilna lista + forma iz opisa polja (tekst, broj, prekidač, izbor, datum, link, slika, galerija, reference) i početni ekran sa svim sekcijama; (S3) editor bogatog teksta (biografija, priča o radu, Dnevnik); (S4) Poruke (kontakt/porudžbine); (S5) uvoz seed sadržaja u Sanity, font dijakritika, novi APK, test na telefonu. Do S5 ne objavljivati radove iz aplikacije.
@@ -180,3 +192,9 @@ PR #1 mergovan (vlasnik), produkcija deployovana: sajt 200, `authConfigured: tru
 U TOKU: `scripts/build-release-apk.sh` + `plugins/withReleaseSigning.cjs` (lozinke iz `~/.gradle/gradle.properties`, van repoa; bez njih release ostaje nepotpisan i skripta pada). Prvi build pao na pogrešno upisanoj lozinci — vlasnik ju je proverio `keytool -storepass:env` i ponovo upisao; drugi build prošao. Provere: apksigner sertifikat nije debug, ugrađen `https://www.zlaticart.com`, instalacija i pokretanje na fizičkom telefonu. Uočeno (UI, P1): Cormorant Garamond na Androidu pomera dijakritik (`došli` — kvačica odvojena); tekst je ispravan precomposed U+0161, problem je u fontu/renderu. Sledeće: vlasnik na telefonu prolazi D4 (login → novi rad sa fotografijom → nacrt → pregled → objava → izmena → sajt), zatim D5 (Wi-Fi/mobilni internet, restart).
 
 | 2026-09-13 | Vlasnik + Claude | IZMENJENO | Puna paritetnost sa Studio-om (svih 8 tipova + Poruke) postaje prioritet ispred poliranja Radova. Pristup: jedan opis polja po tipu na serveru (usklađen sa `sanity/schemas`, test protiv odstupanja) koji pokreće generički API i mobilnu formu; validacija je eksplicitna po polju/tipu, ne skrivena. Odstupa od preporuke skill-a da se izbegne univerzalna forma — razlog: zahtev vlasnika za kompletnim panelom i jedan izvor istine protiv razilaženja sa Studio-om. Postojeće `/api/admin/artworks` rute ostaju zbog APK 0.2.0. |
+
+### 2026-09-13 — Full S1 početak (Codex)
+U TOKU: nova grana od osveženog origin/main; čisto radno stablo sačuvano. API proširenje čuva postojeće artworks rute. Opis polja i nezavisni testovi odvojeni po vlasništvu. Typecheck prvog API preseka prolazi; završni S1 testovi/build još nisu pokrenuti.
+
+### 2026-09-13 — Full S1 provereno (Codex)
+REALIZOVANO (S1 kod): svih osam tipova i sva polja opisano po Studio šemama, generički CRUD sa nacrtima, obaveznom revizijom, atomskom objavom, referencama i zaštitom postojećih podataka. 33 nova testa (21 mutacija, 7 ruta, 5 šema/validacija) i postojeći testovi prolaze. Root typecheck/lint i build (34 stranice, prirodni exit 0), mobile Node 22 typecheck/lint prolaze. Prvi sandbox build pao na mrežnom čitanju dnevnika; isti build sa mrežnim pristupom prošao. Xiaomi `d6d69a7b` dostupan preko adb. Sledeće: S1 PR, S2 implementacija; produkcioni sadržaj ostaje netaknut do S5 uvoza.
