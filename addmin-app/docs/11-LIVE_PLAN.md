@@ -65,9 +65,9 @@ Prihvatanje: sva ponuđena polja se pravilno čuvaju; nepotpun rad ne može da s
 
 | ID | Status | Zadatak | Kriterijum / dokaz |
 |---|---|---|---|
-| N1 | U TOKU | Zaseban nacrt izmene objavljenog rada, usklađen sa Sanity Studio tokom | Javna verzija ostaje dostupna i nepromenjena. Implementirano: čuvanje u `drafts.<id>`, javni klijent `perspective: published`; izolovani testovi |
-| N2 | U TOKU | Pregled prvo čuva nacrt pa otvara njegov prikaz | Sve izmene iz forme vidljive u pregledu. Implementirano: dugme Pregledaj čuva nesačuvane izmene, pregled čita `previewDrafts` preko serverskog klijenta; nije provereno na stvarnom dataset-u |
-| N3 | U TOKU | Objava nacrta i usklađivanje mobilnog i web admina | Javna verzija se menja tek nakon objave; nema duplih stavki. Implementirano: atomska transakcija sa revizijama, spajanje verzija u listi; nije provereno na stvarnom dataset-u |
+| N1 | U TOKU | Zaseban nacrt izmene objavljenog rada, usklađen sa Sanity Studio tokom | Javna verzija ostaje dostupna i nepromenjena. Produkcija 2026-09-13 (prod-drafts-smoke.sh): izmena objavljenog rada ide u nacrt, javna verzija nepromenjena, zastarela forma 409 — PROŠLO. Ostaje Android |
+| N2 | U TOKU | Pregled prvo čuva nacrt pa otvara njegov prikaz | Sve izmene iz forme vidljive u pregledu. Produkcija 2026-09-13: preview link prikazuje izmenu iz nacrta i traku pregleda — PROŠLO (API). Ostaje dugme Pregledaj na Androidu |
+| N3 | U TOKU | Objava nacrta i usklađivanje mobilnog i web admina | Javna verzija se menja tek nakon objave; nema duplih stavki. Produkcija 2026-09-13: novi rad samo nacrt, bez duplikata pri ponovnom create-u, objava i objava izmene menjaju sajt, nacrt uklonjen, lista jedna stavka, arhiviranje sklanja rad — PROŠLO. Ostaje Android i provera iz Sanity Studio-a |
 
 Prihvatanje: proveriti novi rad i izmenu već objavljenog rada kroz nacrt → pregled → objava.
 
@@ -77,7 +77,7 @@ Prihvatanje: proveriti novi rad i izmenu već objavljenog rada kroz nacrt → pr
 |---|---|---|---|
 | A1 | U TOKU | Ograničenje pokušaja PIN-a i privremena blokada | Zaštita proverena i u serverskom okruženju sa više instanci. Kod + testovi (2a1ba43); migracija nije primenjena na Supabase |
 | A2 | U TOKU | Obrada isteka sesije i ponovna prijava uz očuvanje unosa | Istek tokom uređivanja ne gubi formu. Implementirano: 401 → prozor za PIN preko otvorenog ekrana; nije provereno na Androidu |
-| A3 | U TOKU | Serverski opoziv sesije pri odjavi | Opozvani token više ne daje pristup. Kod + testovi (2a1ba43), opoziv gasi i preview; nije provereno na produkcionom store-u |
+| A3 | U TOKU | Serverski opoziv sesije pri odjavi | Opozvani token više ne daje pristup. Kod + testovi (2a1ba43), opoziv gasi i preview. Produkcija 2026-09-13: prvi opoziv pao na prolaznom Supabase 504 (ruta vraćala 500), ponovljena odjava 200 → token 401. Dodat ograničen retry + 503 + log (čeka deploy) |
 | A4 | U TOKU | Timeout zahteva i razumljive mrežne greške | Prekid veze ne ostavlja beskonačan indikator učitavanja. Implementirano: 20s/120s timeout, poruke po tipu greške, retry upita samo za mrežu/5xx; nije provereno na Androidu |
 | A5 | U TOKU | Upload: veličina/format, dozvole, prekid i ponovni pokušaj | Velike slike i odbijena kamera obrađeni; retry ne duplira rad. Implementirano: priprema ≤3000px/≤3.8MB, server 4MB + provera bajtova, clientId za create, keš uploada; nije provereno na Androidu |
 
@@ -170,3 +170,6 @@ U TOKU (kod gotov): Model: objavljen `<id>` + opcioni `drafts.<id>`, isto kao Sa
 
 ### 2026-09-13 — Deploy priprema (Claude, po odobrenju vlasnika)
 U TOKU: uklonjen slučajno praćen `supabase/.temp/` (0d36eb4, samo verzija CLI-ja, bez tajni). Grana pushovana, otvoren PR #1 u `main` (https://github.com/kolevmvk/zlaticart/pull/1). Vercel preview build prošao, PR mergeable/CLEAN. Merge nije izvršen: alat je blokirao merge bez ljudskog pregleda — merge radi vlasnik na GitHub-u. Posle merge-a: provera produkcionog deploy-a, pa probni rad nacrt → pregled → objava.
+
+### 2026-09-13 — Produkciona provera P3 i ispravka odjave (vlasnik + Claude)
+PR #1 mergovan (vlasnik), produkcija deployovana: sajt 200, `authConfigured: true`, pogrešan PIN 401 (Supabase limiter radi). `addmin-app/scripts/prod-drafts-smoke.sh` na produkciji: 23/25 PROŠLO (ceo tok nacrt → objava → izmena → pregled → objava → arhiviranje). PALO: odjava 500 i token ostao važeći. Uzrok: Supabase API Gateway vratio 504 na PATCH `admin_sessions` (bez Postgres greške), a ruta je grešku store-a mapirala na 500 bez loga. SQL kao `service_role` potvrdio da UPDATE radi i opozvao zaostalu probnu sesiju; ponovljena prijava+odjava: 200 za 0.58s, token posle 401 → prolazna greška. Ispravke (c1bd5e5 + ovaj commit): log PostgREST koda/poruke bez tajni, logout 503 umesto 500, ograničen retry opoziva za 5xx/mrežu (3 pokušaja), 4 nova testa (34/34). Probni rad `artwork-proba17893144645816` arhiviran — vlasnik ga briše u Studio-u. Sledeće: PR #2 → merge (vlasnik) → APK sa produkcionim API-jem (P6).

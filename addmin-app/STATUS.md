@@ -132,3 +132,6 @@ Migracija primenjena na produkcioni Supabase i proverena upitom privilegija (ser
 
 ## 2026-09-13 — P3 Sanity nacrti, kod i izolovani testovi (Claude)
 Čuvanje ide u `drafts.<id>`, objava je atomska transakcija sa revizijama, lista spaja verzije, pregled čita nacrt preko serverskog klijenta, javni klijent zaključan na `perspective: published`. Mobilni tok Sačuvaj nacrt / Pregledaj / Objavi. 30/30 serverskih testova, root typecheck/lint/build, mobile typecheck/lint. Čeka deploy odobrenje, proveru na stvarnom datasetu (javni dataset trenutno nema objavljenih radova) i Android test.
+
+## 2026-09-13 — P3 provereno na produkciji; ispravka odjave (Claude)
+Smoke skripta na produkciji 23/25: tok nacrta kompletan. Odjava pala na prolaznom Supabase 504 (ruta 500, token važeći); ponovljena odjava radi. Dodat retry opoziva, 503 i log greške store-a (34/34 testova). Čeka PR #2 i merge.

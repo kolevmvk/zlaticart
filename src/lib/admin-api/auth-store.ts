@@ -147,15 +147,29 @@ export async function isSessionActive(jti: string) {
   return new Date(data.expires_at).getTime() > Date.now()
 }
 
-/** Opoziva sesiju. Idempotentno — ponovni logout ne menja prvo vreme opoziva. */
-export async function revokeSession(jti: string) {
-  const { error } = await client()
-    .from('admin_sessions')
-    .update({ revoked_at: new Date().toISOString() })
-    .eq('jti', jti)
-    .is('revoked_at', null)
+/** Pauze pre ponovnih pokušaja opoziva (ms). */
+export const REVOKE_RETRY_DELAYS_MS = [200, 600]
 
-  if (error) {
-    throw storeFailure('revokeSession', error)
+/**
+ * Opoziva sesiju. Idempotentno — ponovni logout ne menja prvo vreme opoziva,
+ * pa je bezbedno ponoviti ga. Supabase klijent ponavlja samo čitanja; ovde se
+ * prolazna greška servera (5xx, prekid veze) ponavlja ručno, jer neuspeo opoziv
+ * ostavlja token važećim. Na produkciji je viđen jednokratan 504.
+ */
+export async function revokeSession(jti: string) {
+  for (let attempt = 0; ; attempt += 1) {
+    const { error, status } = await client()
+      .from('admin_sessions')
+      .update({ revoked_at: new Date().toISOString() })
+      .eq('jti', jti)
+      .is('revoked_at', null)
+
+    if (!error) return
+
+    const transient = !status || status >= 500
+    if (!transient || attempt >= REVOKE_RETRY_DELAYS_MS.length) {
+      throw storeFailure('revokeSession', error)
+    }
+    await new Promise(resolve => setTimeout(resolve, REVOKE_RETRY_DELAYS_MS[attempt]))
   }
 }
