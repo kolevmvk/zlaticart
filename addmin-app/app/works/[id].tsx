@@ -7,17 +7,19 @@ import {
   AdminApiError,
   type AdminArtworkDetail,
   type AdminMediumOption,
-  type ArtworkStatus,
   fetchArtwork,
   fetchMediums,
   getArtworkPreviewUrl,
-  updateArtwork,
-  uploadArtworkImage,
+  isUnknownOutcome,
+  publishArtwork,
+  saveArtworkDraft,
 } from '@/api/admin'
 import { useAuth } from '@/auth/AuthProvider'
 import type { AdminSession } from '@/auth/session'
-import { ArtworkForm, type ArtworkFormValues, type PendingImage } from '@/components/ArtworkForm'
+import { ArtworkForm, type ArtworkFormValues, type PendingImage, type SubmitAction } from '@/components/ArtworkForm'
 import { colors } from '@/theme/colors'
+import { PublishError, publishErrorMessage, saveErrorMessage, useImageUpload } from '@/hooks/useImageUpload'
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges'
 
 export default function EditArtworkScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -55,7 +57,9 @@ export default function EditArtworkScreen() {
     )
   }
 
-  if (artworkQuery.isError || !artworkQuery.data) {
+  // Samo kad podataka NEMA. Neuspelo osvežavanje (npr. 401 posle isteka
+  // sesije) ne sme da zameni otvorenu formu ekranom greške i obriše unos.
+  if (!artworkQuery.data) {
     const message =
       artworkQuery.error instanceof AdminApiError
         ? artworkQuery.error.message
@@ -79,9 +83,28 @@ export default function EditArtworkScreen() {
       id={id}
       mediums={mediumsQuery.data ?? []}
       mediumsLoading={mediumsQuery.isLoading}
+      mediumsError={mediumsQuery.isError}
+      onRetryMediums={() => mediumsQuery.refetch()}
       session={session}
     />
   )
+}
+
+function versionNotice(artwork: AdminArtworkDetail, hasDraft: boolean, dirty: boolean) {
+  const title = artwork.status === 'published'
+    ? 'Objavljeno na sajtu'
+    : artwork.status === 'archived'
+      ? 'Arhivirano — nije na sajtu'
+      : artwork.hasPublished ? 'Skriveno sa sajta' : 'Nacrt — još nije na sajtu'
+  const parts = [
+    hasDraft
+      ? artwork.status === 'published'
+        ? 'Sačuvane izmene još nisu na sajtu. Pregledajte ih, pa objavite.'
+        : 'Izmene su sačuvane u nacrtu.'
+      : artwork.status === 'published' ? 'Sajt prikazuje ovu verziju.' : null,
+    dirty ? 'U formi imate i nesačuvane izmene.' : null,
+  ].filter(Boolean)
+  return { title, message: parts.length ? parts.join(' ') : undefined }
 }
 
 function EditForm({
@@ -89,12 +112,16 @@ function EditForm({
   id,
   mediums,
   mediumsLoading,
+  mediumsError,
+  onRetryMediums,
   session,
 }: {
   artwork: AdminArtworkDetail
   id: string
   mediums: AdminMediumOption[]
   mediumsLoading: boolean
+  mediumsError: boolean
+  onRetryMediums: () => void
   session: AdminSession
 }) {
   const router = useRouter()
@@ -114,89 +141,112 @@ function EditForm({
     remoteUrl: artwork.thumbnailUrl,
     alt: artwork.primaryImageAlt ?? '',
   })
+  // Verzija na serveru koju ova forma poznaje. Menja se posle svakog čuvanja,
+  // da sledeće čuvanje/objava ne dobije lažni konflikt sa sopstvenom izmenom.
+  const [version, setVersion] = useState({ revision: artwork.revision, slug: artwork.slug, hasDraft: artwork.hasDraft })
+  const [savedForm, setSavedForm] = useState(() => JSON.stringify({ values, image }))
+  // Posle neizvesnog ishoda objave revizija više nije pouzdana (objava je možda prošla).
+  const [publishUncertain, setPublishUncertain] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
-  const [previewLoading, setPreviewLoading] = useState(false)
-  const [previewError, setPreviewError] = useState<string | null>(null)
+  const [previewing, setPreviewing] = useState(false)
+  const uploadImage = useImageUpload()
+  const dirty = JSON.stringify({ values, image }) !== savedForm
+
+  /** Čuva nacrt samo ako forma ima nesačuvane izmene; vraća aktuelnu verziju. */
+  async function saveDraftIfDirty() {
+    if (!dirty) return version
+    const snapshot = JSON.stringify({ values, image })
+    let primaryImage: { assetId: string; alt: string } | null = null
+    if (image.localUri) {
+      primaryImage = { assetId: await uploadImage(session, image.localUri), alt: image.alt.trim() }
+    }
+    const saved = await saveArtworkDraft(session, id, {
+      title: values.title.trim(),
+      year: values.year ? Number(values.year) : null,
+      dimensions: values.dimensions.trim() || null,
+      shortDescription: values.shortDescription.trim() || null,
+      featured: values.featured,
+      heroCandidate: values.heroCandidate,
+      mediumId: values.mediumId,
+      primaryImage,
+      ...(image.remoteUrl && !image.localUri ? { primaryImageAlt: image.alt.trim() } : {}),
+    }, version.revision)
+    const next = { revision: saved.revision, slug: saved.slug ?? version.slug, hasDraft: true }
+    setVersion(next)
+    setSavedForm(snapshot)
+    queryClient.invalidateQueries({ queryKey: ['admin-artworks'] })
+    return next
+  }
 
   async function openPreview() {
-    if (!artwork.slug) return
-    setPreviewError(null)
-    setPreviewLoading(true)
+    setSubmitError(null)
+    setPreviewing(true)
     try {
-      const url = await getArtworkPreviewUrl(session, artwork.slug)
+      const current = await saveDraftIfDirty()
+      if (!current.slug) {
+        setSubmitError('Pregled nije dostupan jer rad nema adresu na sajtu.')
+        return
+      }
+      const url = await getArtworkPreviewUrl(session, current.slug)
       await WebBrowser.openBrowserAsync(url)
     } catch (error) {
-      setPreviewError(
-        error instanceof AdminApiError ? error.message : 'Pregled trenutno ne radi. Proverite vezu.',
-      )
+      setSubmitError(dirty
+        ? saveErrorMessage(error, { creating: false })
+        : error instanceof AdminApiError ? error.message : 'Pregled trenutno ne radi. Proverite vezu.')
     } finally {
-      setPreviewLoading(false)
+      setPreviewing(false)
     }
   }
 
   const mutation = useMutation({
-    mutationFn: async (status: ArtworkStatus) => {
-      let primaryImage: { assetId: string; alt: string } | null = null
-
-      if (image.localUri) {
-        const uploaded = await uploadArtworkImage(session, image.localUri, 'artwork.jpg')
-        primaryImage = { assetId: uploaded.assetId, alt: image.alt.trim() }
+    mutationFn: async (action: SubmitAction) => {
+      const wasDirty = dirty
+      const current = await saveDraftIfDirty()
+      if (action === 'draft') return
+      try {
+        await publishArtwork(session, id, publishUncertain ? undefined : current.revision)
+      } catch (error) {
+        if (isUnknownOutcome(error)) setPublishUncertain(true)
+        throw new PublishError(error, wasDirty)
       }
-      // Ako lokalna slika nije izabrana, primaryImage ostaje null i patch je
-      // parcijalan — postojeca Sanity slika/alt se ne dira (vidi
-      // skills/sanity-proxy-mutation.md).
-
-      await updateArtwork(session, id, {
-        title: values.title.trim(),
-        year: values.year ? Number(values.year) : null,
-        dimensions: values.dimensions.trim() || null,
-        shortDescription: values.shortDescription.trim() || null,
-        status,
-        featured: values.featured,
-        heroCandidate: values.heroCandidate,
-        mediumId: values.mediumId,
-        primaryImage,
-      })
     },
     onError: (error) => {
-      setSubmitError(
-        error instanceof AdminApiError ? error.message : 'Cuvanje trenutno ne radi. Proverite vezu.',
-      )
+      setSubmitError(error instanceof PublishError
+        ? publishErrorMessage(error)
+        : saveErrorMessage(error, { creating: false }))
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-artworks'] })
       queryClient.invalidateQueries({ queryKey: ['admin-artwork', id] })
-      router.back()
+      allowLeave()
+      router.replace({ pathname: '/works', params: { saved: mutation.variables } })
     },
   })
 
+  const allowLeave = useUnsavedChanges(dirty, mutation.isPending || previewing)
+  const hasUnpublished = version.hasDraft || dirty
+
   return (
     <View style={styles.screen}>
-      {artwork.slug && (
-        <Pressable disabled={previewLoading} onPress={openPreview} style={styles.previewButton}>
-          {previewLoading ? (
-            <ActivityIndicator color={colors.ink} size="small" />
-          ) : (
-            <Text style={styles.previewButtonText}>Pregledaj na sajtu</Text>
-          )}
-        </Pressable>
-      )}
-      {previewError && (
-        <View style={styles.errorBar}>
-          <Text style={styles.errorText}>{previewError}</Text>
-        </View>
-      )}
       <ArtworkForm
         image={image}
         mediums={mediums}
         mediumsLoading={mediumsLoading}
+        mediumsError={mediumsError}
+        notice={versionNotice(artwork, version.hasDraft, dirty)}
+        onRetryMediums={onRetryMediums}
         onChange={setValues}
         onImageChange={setImage}
-        onSubmit={(status) => {
+        onPreview={openPreview}
+        onSubmit={(action) => {
           setSubmitError(null)
-          mutation.mutate(status)
+          mutation.mutate(action)
         }}
-        submitLabel={{ draft: 'Sacuvaj kao nacrt', publish: 'Objavi' }}
+        previewing={previewing}
+        submitLabel={{
+          draft: 'Sačuvaj nacrt',
+          publish: artwork.status === 'published' && hasUnpublished ? 'Objavi izmene' : 'Objavi',
+        }}
         submitting={mutation.isPending}
         values={values}
       />
@@ -221,23 +271,6 @@ const styles = StyleSheet.create({
     gap: 12,
     justifyContent: 'center',
     padding: 24,
-  },
-  previewButton: {
-    alignItems: 'center',
-    backgroundColor: colors.canvasWarm,
-    borderColor: colors.gold,
-    borderRadius: 4,
-    borderWidth: 1,
-    margin: 16,
-    marginBottom: 0,
-    paddingVertical: 12,
-  },
-  previewButtonText: {
-    color: colors.ink,
-    fontFamily: 'DMSans_700Bold',
-    fontSize: 13,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
   },
   errorBar: {
     backgroundColor: colors.canvasWarm,

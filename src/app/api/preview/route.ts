@@ -1,31 +1,47 @@
 import { draftMode } from 'next/headers'
 import { NextResponse } from 'next/server'
-import { AdminAuthError, verifyAdminSessionToken } from '@/lib/admin-api/auth'
+import {
+  AdminAuthError,
+  createPreviewToken,
+  PREVIEW_VIEW_TTL_SECONDS,
+  verifyPreviewTokenWithSession,
+} from '@/lib/admin-api/auth'
+import { PREVIEW_COOKIE, previewCookieOptions } from '@/lib/admin-api/preview-cookie'
 
 export const runtime = 'nodejs'
 
-// Javna ruta (nema Authorization header — WebView je otvara kao obicnu
-// navigaciju), ali "javna" ne znaci nezasticena: token u query-ju je isti
-// HMAC-potpisan, kratkotrajan sesijski token kao svuda u admin-api, samo
-// prenet kao URL parametar umesto header-a. Vidi /api/admin/preview-link.
+const NO_STORE = { 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' }
+
+// Javna ruta (in-app browser nema Authorization header), ali token u query-ju
+// je namenski preview token: jedan rad, kratak rok, vezan za aktivnu sesiju.
+// Link token se ovde menja za httpOnly cookie ograničen na isti rad — stranica
+// rada nacrt prikazuje samo uz taj cookie, ne samo zato što je draft mode uključen.
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
-  const token = searchParams.get('token') ?? ''
-  const slug = searchParams.get('slug') ?? ''
+  const token = new URL(request.url).searchParams.get('token') ?? ''
 
+  let claims
   try {
-    verifyAdminSessionToken(token)
+    claims = await verifyPreviewTokenWithSession(token)
   } catch (error) {
-    const message = error instanceof AdminAuthError ? error.code : 'invalid_token'
-    return NextResponse.json({ ok: false, error: message }, { status: 401 })
+    const status = error instanceof AdminAuthError && error.code === 'store_unavailable' ? 503 : 401
+    return NextResponse.json(
+      { ok: false, error: status === 503 ? 'Preview is temporarily unavailable.' : 'Preview link is invalid or expired.' },
+      { status, headers: NO_STORE },
+    )
   }
 
-  if (!slug) {
-    return NextResponse.json({ ok: false, error: 'Missing slug.' }, { status: 400 })
-  }
+  const viewToken = createPreviewToken(
+    { type: claims.type, slug: claims.slug, sid: claims.sid },
+    PREVIEW_VIEW_TTL_SECONDS,
+  )
 
   const draft = await draftMode()
   draft.enable()
 
-  return NextResponse.redirect(new URL(`/works/${encodeURIComponent(slug)}`, request.url))
+  const response = NextResponse.redirect(
+    new URL(`/works/${encodeURIComponent(claims.slug)}`, request.url),
+    { headers: NO_STORE },
+  )
+  response.cookies.set(PREVIEW_COOKIE, viewToken, previewCookieOptions)
+  return response
 }

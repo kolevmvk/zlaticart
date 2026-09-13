@@ -1,5 +1,6 @@
-import { AdminAuthError, verifyAdminRequest } from '@/lib/admin-api/auth'
+import { AdminAuthError, verifyAdminRequestWithSession } from '@/lib/admin-api/auth'
 import { adminAuthError, adminError, adminOk } from '@/lib/admin-api/responses'
+import { MAX_UPLOAD_BYTES, sniffImageType, uploadFilename } from '@/lib/admin-api/image-upload'
 import { adminUploadArtworkImage, adminWriteConfigured } from '@/lib/admin-api/sanity'
 
 export const runtime = 'nodejs'
@@ -9,7 +10,7 @@ export const runtime = 'nodejs'
 // server-side. Vidi skills/image-upload-pipeline.md.
 export async function POST(request: Request) {
   try {
-    verifyAdminRequest(request)
+    await verifyAdminRequestWithSession(request)
   } catch (error) {
     if (error instanceof AdminAuthError) {
       return adminAuthError(error)
@@ -33,14 +34,20 @@ export async function POST(request: Request) {
     return adminError('Missing "file" field.', 400)
   }
 
-  if (file.size > 15 * 1024 * 1024) {
-    return adminError('Image is too large (max 15MB).', 413)
+  if (file.size > MAX_UPLOAD_BYTES) {
+    return adminError('Image is too large (max 4MB).', 413)
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer())
+  const type = sniffImageType(buffer)
+  if (!type) {
+    return adminError('Unsupported image format. Use JPEG, PNG or WebP.', 415)
   }
 
   try {
-    const buffer = Buffer.from(await file.arrayBuffer())
-    const filename = file instanceof File ? file.name : 'upload.jpg'
-    const asset = await adminUploadArtworkImage(buffer, filename)
+    // Sanity deduplicira asset po sadržaju, pa ponovljen upload iste
+    // fotografije posle prekida vraća isti asset, ne pravi kopiju.
+    const asset = await adminUploadArtworkImage(buffer, uploadFilename(type))
     return adminOk({ assetId: asset._id, url: asset.url })
   } catch {
     return adminError('Could not upload image to Sanity.', 502)

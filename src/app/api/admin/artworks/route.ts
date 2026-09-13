@@ -1,13 +1,14 @@
-import { AdminAuthError, verifyAdminRequest } from '@/lib/admin-api/auth'
+import { ArtworkMutationError } from '@/lib/admin-api/artwork-mutation'
+import { AdminAuthError, verifyAdminRequestWithSession } from '@/lib/admin-api/auth'
 import { adminAuthError, adminError, adminOk } from '@/lib/admin-api/responses'
-import { adminCreateArtwork, adminListArtworks, adminWriteConfigured } from '@/lib/admin-api/sanity'
+import { adminCreateArtwork, adminListArtworks, adminWriteConfigured, isClientArtworkId } from '@/lib/admin-api/sanity'
 import { parseArtworkFormInput } from './form-input'
 
 export const runtime = 'nodejs'
 
 export async function GET(request: Request) {
   try {
-    verifyAdminRequest(request)
+    await verifyAdminRequestWithSession(request)
   } catch (error) {
     if (error instanceof AdminAuthError) {
       return adminAuthError(error)
@@ -25,7 +26,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    verifyAdminRequest(request)
+    await verifyAdminRequestWithSession(request)
   } catch (error) {
     if (error instanceof AdminAuthError) {
       return adminAuthError(error)
@@ -49,10 +50,16 @@ export async function POST(request: Request) {
     return adminError(parsed.error, 400)
   }
 
+  const { clientId } = body as Record<string, unknown>
+  if (clientId !== undefined && !isClientArtworkId(clientId)) {
+    return adminError('clientId must look like "artwork-<16-48 letters/digits>".', 400)
+  }
+
   try {
-    const created = await adminCreateArtwork(parsed.data)
-    return adminOk({ _id: created._id }, { status: 201 })
-  } catch {
+    const created = await adminCreateArtwork(parsed.data, clientId)
+    return adminOk(created, { status: created.existed ? 200 : 201 })
+  } catch (error) {
+    if (error instanceof ArtworkMutationError) return adminError(error.message, error.status)
     return adminError('Could not create artwork in Sanity.', 502)
   }
 }

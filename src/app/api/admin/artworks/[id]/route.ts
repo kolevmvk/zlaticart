@@ -1,13 +1,14 @@
-import { AdminAuthError, verifyAdminRequest } from '@/lib/admin-api/auth'
+import { ArtworkMutationError } from '@/lib/admin-api/artwork-mutation'
+import { AdminAuthError, verifyAdminRequestWithSession } from '@/lib/admin-api/auth'
 import { adminAuthError, adminError, adminOk } from '@/lib/admin-api/responses'
-import { adminGetArtwork, adminUpdateArtwork, adminWriteConfigured } from '@/lib/admin-api/sanity'
-import { parseArtworkFormInput } from '../form-input'
+import { adminGetArtwork, adminSaveArtworkDraft, adminWriteConfigured, isArtworkBaseId } from '@/lib/admin-api/sanity'
+import { parseArtworkFormInput, readBaseRevision } from '../form-input'
 
 export const runtime = 'nodejs'
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    verifyAdminRequest(request)
+    await verifyAdminRequestWithSession(request)
   } catch (error) {
     if (error instanceof AdminAuthError) {
       return adminAuthError(error)
@@ -16,6 +17,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   }
 
   const { id } = await params
+  if (!isArtworkBaseId(id)) {
+    return adminError('Artwork not found.', 404)
+  }
 
   try {
     const artwork = await adminGetArtwork(id)
@@ -28,9 +32,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   }
 }
 
+/** Čuva izmene forme u nacrt (`drafts.<id>`); javna verzija se ne menja. */
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    verifyAdminRequest(request)
+    await verifyAdminRequestWithSession(request)
   } catch (error) {
     if (error instanceof AdminAuthError) {
       return adminAuthError(error)
@@ -43,6 +48,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
 
   const { id } = await params
+  if (!isArtworkBaseId(id)) {
+    return adminError('Artwork not found.', 404)
+  }
 
   let body: unknown
   try {
@@ -55,11 +63,16 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!parsed.ok) {
     return adminError(parsed.error, 400)
   }
+  const baseRevision = readBaseRevision(body)
+  if (!baseRevision.ok) {
+    return adminError(baseRevision.error, 400)
+  }
 
   try {
-    await adminUpdateArtwork(id, parsed.data)
-    return adminOk({ _id: id })
-  } catch {
-    return adminError('Could not update artwork in Sanity.', 502)
+    const saved = await adminSaveArtworkDraft(id, parsed.data, baseRevision.value)
+    return adminOk(saved)
+  } catch (error) {
+    if (error instanceof ArtworkMutationError) return adminError(error.message, error.status)
+    return adminError('Could not save artwork draft in Sanity.', 502)
   }
 }

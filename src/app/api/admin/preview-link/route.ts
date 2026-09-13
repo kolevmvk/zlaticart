@@ -1,18 +1,23 @@
-import { AdminAuthError, verifyAdminRequest } from '@/lib/admin-api/auth'
+import {
+  AdminAuthError,
+  createPreviewToken,
+  isPreviewSlug,
+  PREVIEW_LINK_TTL_SECONDS,
+  verifyAdminRequestWithSession,
+} from '@/lib/admin-api/auth'
 import { adminAuthError, adminError, adminOk } from '@/lib/admin-api/responses'
 
 export const runtime = 'nodejs'
 
 // Vidi zlaticart/addmin-app/docs/04-ARCHITECTURE.md "Pregled pre objave —
 // mehanizam". Mobilna app zove ovu (Bearer-autentifikovanu) rutu da dobije
-// preview URL; sam preview URL zatim otvara u WebView-u bez dodatnog
-// Authorization header-a (WebView navigacija ga ne salje pouzdano), zato
-// nosi isti sesijski token kao query parametar — HMAC-potpisan, kratkotrajan,
-// verifikovan na isti nacin na /api/preview.
+// preview URL, koji zatim otvara u in-app browseru bez Authorization header-a.
+// URL zato nosi token — ali NAMENSKI preview token (jedan rad, 5 min, vezan za
+// sesiju), nikad sesijski token koji bi u istoriji browsera značio pun admin.
 export async function POST(request: Request) {
   let claims
   try {
-    claims = verifyAdminRequest(request)
+    claims = await verifyAdminRequestWithSession(request)
   } catch (error) {
     if (error instanceof AdminAuthError) {
       return adminAuthError(error)
@@ -28,18 +33,14 @@ export async function POST(request: Request) {
   }
 
   const { type, slug } = (body ?? {}) as Record<string, unknown>
-  if (type !== 'artwork' || typeof slug !== 'string' || !slug.trim()) {
+  if (type !== 'artwork' || !isPreviewSlug(slug)) {
     return adminError('Expected { type: "artwork", slug: string }.', 400)
   }
 
-  const token = getBearerFromRequest(request)
+  const now = Math.floor(Date.now() / 1000)
+  const token = createPreviewToken({ type, slug, sid: claims.jti }, PREVIEW_LINK_TTL_SECONDS, now)
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-  const url = `${siteUrl}/api/preview?token=${encodeURIComponent(token)}&slug=${encodeURIComponent(slug)}`
+  const url = `${siteUrl}/api/preview?token=${encodeURIComponent(token)}`
 
-  return adminOk({ url, expiresAt: claims.exp })
-}
-
-function getBearerFromRequest(request: Request) {
-  const authorization = request.headers.get('authorization') ?? ''
-  return authorization.slice('Bearer '.length).trim()
+  return adminOk({ url, expiresAt: now + PREVIEW_LINK_TTL_SECONDS })
 }

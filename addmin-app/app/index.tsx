@@ -1,141 +1,48 @@
-import { Link, Redirect } from 'expo-router'
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native'
+import { Redirect, useFocusEffect, useRouter } from 'expo-router'
+import { useCallback } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { StyleSheet, Text, View } from 'react-native'
+import { fetchArtworks } from '@/api/admin'
 import { useAuth } from '@/auth/AuthProvider'
+import { ArtworkCard, Button, Feedback, Screen } from '@/components/ui'
 import { colors } from '@/theme/colors'
-
-// "Radovi" je jedina sekcija sa implementiranim ekranom (Faza 2, prvi korak) —
-// ostale ostaju kao placeholder kartice dok njihove faze ne dodju na red
-// (vidi docs/07-ROADMAP.md), da dashboard ne vodi na prazne/nepostojece ekrane.
-const sections = [
-  'Dnevnik',
-  'Izlozbe',
-  'O meni',
-  'Edukacija',
-  'Tehnike',
-  'Social objave',
-  'Poruke',
-  'Podesavanja',
-]
+import { spacing } from '@/theme/spacing'
+import { textStyles } from '@/theme/typography'
 
 export default function DashboardScreen() {
   const { loading, logout, session } = useAuth()
-
-  if (loading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator color={colors.ink} />
-      </View>
-    )
-  }
-
-  if (!session) {
-    return <Redirect href="/login" />
-  }
-
-  return (
-    <View style={styles.screen}>
-      <View style={styles.header}>
-        <Text style={styles.eyebrow}>Faza 1 auth skeleton</Text>
-        <Text style={styles.title}>ZlaticArt Admin</Text>
-        <Text style={styles.subtitle}>
-          Sesija je sacuvana na uredjaju. CMS sekcije se dodaju kroz naredne faze.
-        </Text>
-      </View>
-
-      <View style={styles.grid}>
-        <Link href="/works" asChild>
-          <Pressable style={styles.card}>
-            <Text style={styles.cardText}>Radovi</Text>
-          </Pressable>
-        </Link>
-        {sections.map((section) => (
-          <View key={section} style={[styles.card, styles.cardDisabled]}>
-            <Text style={styles.cardText}>{section}</Text>
-          </View>
-        ))}
-      </View>
-
-      <Pressable style={styles.button} onPress={logout}>
-        <Text style={styles.buttonText}>Odjavi se</Text>
-      </Pressable>
+  const router = useRouter()
+  const query = useQuery({ queryKey: ['admin-artworks'], queryFn: () => fetchArtworks(session!), enabled: Boolean(session) })
+  const { refetch } = query
+  useFocusEffect(useCallback(() => { if (session) void refetch() }, [session, refetch]))
+  if (loading) return <Screen scroll><Feedback title="Učitavanje…" tone="loading" /></Screen>
+  if (!session) return <Redirect href="/login" />
+  const works = query.data ?? []
+  // Započeto = nikad objavljeno ili ima sačuvane izmene koje još nisu na sajtu.
+  const drafts = works.filter((work) => work.status === 'draft' || work.hasDraft)
+  return <Screen scroll>
+    <View style={styles.intro}>
+      <View style={styles.rule} />
+      <Text style={styles.eyebrow}>VAŠ ATELJE</Text>
+      <Text accessibilityRole="header" style={styles.title}>Prostor za vaše radove.</Text>
+      <Text style={styles.body}>Sačuvajte novu ideju, pripremite fotografije i objavite kada ste spremni.</Text>
     </View>
-  )
+    <Button label="+ Dodaj rad" onPress={() => router.push('/works/new')} testID="dashboard-add-artwork" />
+    <Button label="Otvori sve radove" onPress={() => router.push('/works')} variant="secondary" testID="dashboard-open-artworks" />
+    {query.isPending ? <Feedback title="Učitavanje radova…" tone="loading" /> : query.isError ? <Feedback title="Radovi nisu osveženi" message="Proverite internet vezu i pokušajte ponovo." tone="error" actionLabel="Pokušaj ponovo" onAction={() => void query.refetch()} /> : <>
+      <View style={styles.counts}><Text style={styles.label}>Ukupno radova: {works.length}</Text><Text style={styles.body}>Nacrti: {drafts.length}</Text></View>
+      <Text accessibilityRole="header" style={styles.heading}>{drafts.length ? 'Nastavite započeto' : 'Vaši radovi'}</Text>
+      {works.length === 0 ? <Feedback title="Vaša kolekcija počinje ovde" message="Dodajte prvi rad i sačuvajte ga kao nacrt." /> : (drafts.length ? drafts : works).slice(0, 3).map((work) => <ArtworkCard key={work._id} artwork={work} onPress={() => router.push({ pathname: '/works/[id]', params: { id: work._id } })} />)}
+    </>}
+    <View style={styles.later}><Text style={styles.label}>U pripremi</Text><Text style={styles.body}>Dnevnik, izložbe, poruke i ostali sadržaj biće dostupni u narednim verzijama.</Text></View>
+    <Button label="Odjavi se" onPress={() => void logout()} variant="quiet" testID="dashboard-logout" />
+  </Screen>
 }
-
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    gap: 24,
-    padding: 20,
-    paddingTop: 32,
-    backgroundColor: colors.canvas,
-  },
-  centered: {
-    alignItems: 'center',
-    backgroundColor: colors.canvas,
-    flex: 1,
-    justifyContent: 'center',
-  },
-  header: {
-    gap: 6,
-  },
-  eyebrow: {
-    color: colors.gold,
-    fontFamily: 'DMSans_700Bold',
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-  },
-  title: {
-    color: colors.ink,
-    fontFamily: 'CormorantGaramond_500Medium',
-    fontSize: 38,
-    fontWeight: '500',
-  },
-  subtitle: {
-    color: colors.inkMuted,
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    lineHeight: 21,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  card: {
-    backgroundColor: colors.canvasWarm,
-    borderColor: colors.canvasDeep,
-    borderRadius: 4,
-    borderWidth: 1,
-    minHeight: 76,
-    justifyContent: 'center',
-    padding: 14,
-    width: '47%',
-  },
-  cardDisabled: {
-    opacity: 0.5,
-  },
-  cardText: {
-    color: colors.ink,
-    fontFamily: 'DMSans_500Medium',
-    fontSize: 15,
-    fontWeight: '500',
-  },
-  button: {
-    alignItems: 'center',
-    backgroundColor: colors.ink,
-    borderRadius: 4,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-  },
-  buttonText: {
-    color: colors.canvas,
-    fontFamily: 'DMSans_700Bold',
-    fontSize: 15,
-    fontWeight: '700',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-  },
-} as const)
+  intro: { gap: spacing.md }, rule: { backgroundColor: colors.gold, width: 48, height: 3 },
+  eyebrow: { ...textStyles.caption, color: colors.inkMuted, letterSpacing: 2 },
+  title: { ...textStyles.display, color: colors.ink }, heading: { ...textStyles.heading, color: colors.ink },
+  body: { ...textStyles.body, color: colors.inkMuted }, label: { ...textStyles.label, color: colors.ink },
+  counts: { gap: spacing.xs, paddingVertical: spacing.md, borderTopWidth: 1, borderBottomWidth: 1, borderColor: colors.canvasDeep },
+  later: { gap: spacing.sm, paddingTop: spacing.lg, borderTopWidth: 1, borderColor: colors.canvasDeep },
+})

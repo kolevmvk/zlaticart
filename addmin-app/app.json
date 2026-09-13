@@ -43,7 +43,8 @@
           "cameraPermission": "ZlaticArt Admin koristi kameru da fotografise radove direktno u aplikaciji."
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      "./plugins/withInternalTest.cjs"
     ],
     "experiments": {
       "typedRoutes": true

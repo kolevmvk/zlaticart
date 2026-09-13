@@ -1,12 +1,13 @@
-import { AdminAuthError, verifyAdminRequest } from '@/lib/admin-api/auth'
+import { ArtworkMutationError } from '@/lib/admin-api/artwork-mutation'
+import { AdminAuthError, verifyAdminRequestWithSession } from '@/lib/admin-api/auth'
 import { adminAuthError, adminError, adminOk } from '@/lib/admin-api/responses'
-import { adminSanityClient, adminWriteConfigured, isArtworkStatus } from '@/lib/admin-api/sanity'
+import { adminSetArtworkStatus, adminWriteConfigured, isArtworkBaseId, isArtworkStatus } from '@/lib/admin-api/sanity'
 
 export const runtime = 'nodejs'
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    verifyAdminRequest(request)
+    await verifyAdminRequestWithSession(request)
   } catch (error) {
     if (error instanceof AdminAuthError) {
       return adminAuthError(error)
@@ -19,6 +20,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
 
   const { id } = await params
+  if (!isArtworkBaseId(id)) {
+    return adminError('Artwork not found.', 404)
+  }
 
   let body: unknown
   try {
@@ -33,9 +37,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
 
   try {
-    await adminSanityClient.patch(id).set({ status }).commit()
-    return adminOk({ _id: id, status })
-  } catch {
+    // Vraća stvarnu javnu vidljivost: rad bez objavljene verzije ostaje 'draft'.
+    const result = await adminSetArtworkStatus(id, status)
+    return adminOk({ _id: id, status: result.status })
+  } catch (error) {
+    if (error instanceof ArtworkMutationError) return adminError(error.message, error.status)
     return adminError('Could not update artwork status in Sanity.', 502)
   }
 }

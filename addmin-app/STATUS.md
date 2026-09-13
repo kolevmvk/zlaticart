@@ -89,3 +89,46 @@ Provereno: root `npm run typecheck` ✓ / `npm run lint` ✓ / `npm run build` �
 Na fizickom telefonu: dev-client rebuild-ovan zbog novog native modula `expo-web-browser` (`expo prebuild` + `assembleDebug`, isti proveren tok kao ranije), instaliran, cist login ekran radi (screenshot potvrdjen). Dugme "Pregledaj na sajtu" NIJE live-tap-testirano na uredjaju u ovoj sesiji (isti razlog kao Faza 3 zapis — ScrollView/tastatura cine `adb input tap` koordinate nepouzdanim za visestruke sekvencijalne interakcije); server-side mehanizam koji to dugme poziva je u potpunosti uzivo proveren preko curl-a iznad.
 Sledece: (a) live UI tap test za "Pregledaj na sajtu" dugme u buducoj sesiji; (b) prosiriti Draft Mode pristup na `journalPost` kad Faza 5 (Dnevnik) stigne na red, ponovnom upotrebom istog mehanizma (`preview-link`/`/api/preview` vec generisani da prime `type` parametar, trenutno hardkodovano tumaceni kao artwork — treba grananje po `type` kad se journal doda); (c) i dalje otvoreno: `medium` CRUD (Faza 8) bi popunio "Tehnika nije navedena" fallback stvarnim tehnikama.
 CEKA VLASNIKA: Nema blokade.
+
+## 2026-09-10 — Skillovi za dizajn i paralelan rad (S1)
+Urađeno: Dva kanonska skilla u `.agents/skills/`, Claude simboličke veze, eksplicitne ulazne instrukcije i proširen Android verification checklist. Usklađen operativni prioritet uputstava: nezavisni agenti i više proverenih koraka su dozvoljeni; kriterijumi zavisnih etapa ostaju. UI1/UI2 dodati kao TODO; kod aplikacije nije menjan.
+Provereno: git diff --check prolazi. YAML frontmatter, nazivi/opisi i Claude veze provereni preko postojećeg Node YAML parsera. Bundled quick_validate.py nije mogao da radi jer lokalni Python nema PyYAML; korišćena je navedena alternativna provera. Android build i UI test nisu deo ove dokumentacione izmene.
+Sledeće: R1 po živom planu; nezavisno može UI1 uz dodeljeno vlasništvo. Redizajn tek predstoji.
+ČEKA VLASNIKA: Nema blokade.
+
+## 2026-09-10 — P0/P1/P2/P4: razvojni presek pre commita
+Urađeno: Sačuvana mapa segmenata P0–P13 i skillovi. Dodati UI primitivi i tokeni (još nisu integrisani u redizajnirane ekrane). API podržava alt-only izmenu, uklanjanje tehnike, proveru tipa dokumenta, validaciju objave i zaštitu od paralelne izmene preko revizije. Mobilna forma šalje alt-only podatak i upozorava na nesačuvane izmene; pregled trenutno prikazuje samo sačuvanu verziju.
+Provereno: 9 izolovanih serverskih testova prolazi; root i mobile typecheck prolaze. React lint nalaz praćenja početnog stanja forme ispravljen pre završne ponovljene provere. Testovi koriste lažni Sanity klijent, ne produkciju.
+Nije završeno: integracija UI komponenti, redizajn Početne/Liste/Forme, pravi draft/preview tok i Android UI prihvatanje. Agenti su prekinuti limitom korišćenja; nijedan njihov nepotvrđen rezultat nije označen kao završen.
+Sledeće: završiti P1/P4 referentne ekrane, pokrenuti Android UI proveru, zatim P3; stvarna CMS integracija i fizički uređaj ostaju neprovereni.
+
+## 2026-09-11 — P1/P4 integracija i prvi samostalni test APK
+Urađeno: Novi dashboard, lista sa pretragom/filterima i imenovanim status akcijama, login i zajednička forma. Dodati selektori, čitljive kontrole, galerija/kamera sa obradom greške, dodatni detalji i potvrda čuvanja. Test varijanta com.zlaticart.admin.test ostavlja postojeću aplikaciju netaknutom.
+Provereno: internalTest build PASS; instalacija na Android 35 emulator PASS; fixture login/dashboard/dirty Back/save naziva i alt opisa/uklanjanje tehnike/povratak na listu/restart PASS; veći tekst 1.3 na dashboardu vizuelno pregledan. Mobile typecheck/lint i 9 server testova PASS. Detalji i snimci u docs/12-ANDROID_TEST.md.
+Ograničenja: APK cilja loopback test API uz adb reverse; nije produkciona verzija. Pravi CMS preview/publish, upload, fizički telefon i kompletan mrežni QA nisu potvrđeni. P1/P4 ostaju U TOKU dok relevantni scenariji nisu zatvoreni.
+Sledeće: test na telefonu preko USB-a ili izbor dostupnog API URL-a za novi build; zatim P3 i P5 po planu. Izmene ove sesije nisu komitovane/pushovane.
+
+## 2026-09-12 — Git presek i nastavak ka produkciji
+Urađeno: Pripremljen commit završenog mobilnog UI-ja, ponovljivog internalTest builda i QA evidencije. Vlasnik odobrio rad sa stvarnim podacima na produkcionom serveru.
+Provereno: root i mobile typecheck PASS; mobile lint PASS; svih 9 izolovanih serverskih testova PASS; git diff --check PASS.
+Preostalo: P3 pravi Sanity nacrti i P5 zaštita prijave/opoziv sesije pre produkcione integracije. Prazna lokalna migracija admin_auth_store nije implementirana niti uključena u ovaj commit; lokalni graphify/Supabase keš takođe je izostavljen. Produkciona isporuka nije završena; trenutni APK koristi fixture API.
+Sledeće: implementirati i proveriti P3/P5, zatim proveriti server, postaviti potrebnu produkcionu konfiguraciju i izgraditi APK sa HTTPS API adresom.
+
+## 2026-09-12 — P5, stroža validacija tokena
+Urađeno (uloga Auth/Security Engineer): odbačeni tokeni sa dodatnim segmentima, pogrešnim zaglavljem, nedostajućim/nebrojčanim vremenima, budućim izdavanjem i trajanjem iznad 24h. Dodata izolovana regresiona provera; postojeći CommonJS test harness usklađen sa lint pravilima.
+Provereno: svih 10 serverskih testova PASS, root lint i typecheck PASS. Nema promene produkcionih podataka niti deploya. Prethodni mobilni presek 31b1192 uspešno pushovan na docs/admin-live-plan.
+Sledeće: deljeni limiter pokušaja PIN-a, serverski opoziv sesije i namenski preview token; zatim P3 i produkciona integracija. P5 ostaje U TOKU.
+
+## 2026-09-13 — P5: preview token, istek sesije, mreža i upload
+Urađeno: Namenski kratkotrajni preview token ograničen na jedan rad i vezan za sesiju; nacrt se na sajtu prikazuje samo uz httpOnly preview cookie i aktivnu sesiju. Javni upit rada po slug-u sada vraća samo objavljene radove (ranije su nacrti/arhiva bili javno dostupni po URL-u). Mobilni: timeout i razumljive mrežne greške, ponovna prijava preko otvorenog ekrana bez gubitka forme, priprema fotografije pre slanja (novi native modul expo-image-manipulator), create sa clientId bez duplikata, keš poslate fotografije. Server: limit 4MB i provera formata po bajtovima.
+Provereno: 26/26 serverskih testova (7 novih za preview, 3 za upload), root typecheck/lint, `npm run build` sa javnom Sanity konfiguracijom (lokalno nema .env.local), mobile typecheck/lint (Node 22), lokalni smoke: preview bez/lažnog tokena 401, validan potpis bez store-a 503, preview-link bez auth 401.
+Nije provereno: Android (potreban novi build zbog native modula), stvaran Supabase store (migracija nije primenjena), stvaran Sanity create sa postojećim ID-jem (409 grana).
+Sledeće: P3 pravi Sanity nacrti; zatim primena migracije, produkcione tajne i P6.
+ČEKA VLASNIKA: Supabase secret key i Sanity write token u Vercel, odobrenje primene migracije na produkcioni Supabase.
+
+## 2026-09-13 — Produkcione tajne i ispravka migracije admin_auth_store (Claude)
+Vlasnik postavio 4 serverske tajne na Vercel Production. U migraciji `admin_auth_store` dodati nedostajući GRANT-ovi za `service_role` (bez njih prijava na produkciji ne radi). Migracija još nije primenjena; lokalna SQL provera nije moguća (Docker ne radi).
+Migracija primenjena na produkcioni Supabase i proverena upitom privilegija (service_role: insert/execute true; anon: false). Predlog API domena: `https://www.zlaticart.com` (Vercel, admin ruta odgovara 401).
+
+## 2026-09-13 — P3 Sanity nacrti, kod i izolovani testovi (Claude)
+Čuvanje ide u `drafts.<id>`, objava je atomska transakcija sa revizijama, lista spaja verzije, pregled čita nacrt preko serverskog klijenta, javni klijent zaključan na `perspective: published`. Mobilni tok Sačuvaj nacrt / Pregledaj / Objavi. 30/30 serverskih testova, root typecheck/lint/build, mobile typecheck/lint. Čeka deploy odobrenje, proveru na stvarnom datasetu (javni dataset trenutno nema objavljenih radova) i Android test.
