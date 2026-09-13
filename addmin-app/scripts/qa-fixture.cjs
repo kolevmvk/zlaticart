@@ -29,7 +29,8 @@ http.createServer(async (req, res) => {
   for await (const chunk of req) body += chunk;
   const url = new URL(req.url, 'http://localhost');
   const parts = url.pathname.split('/'); // ['', 'api', 'admin', 'artworks', id, action]
-  const input = body ? JSON.parse(body) : {};
+  const isJson = (req.headers['content-type'] || '').includes('application/json');
+  const input = isJson && body ? JSON.parse(body) : {};
   const send = (status, payload) => {
     res.writeHead(status, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(payload));
@@ -50,6 +51,7 @@ http.createServer(async (req, res) => {
   if (url.pathname === '/api/admin/login') return ok({ token: 'isolated-qa-fixture-session' });
   if (url.pathname === '/api/admin/logout') return ok({ loggedOut: true });
   if (url.pathname === '/api/admin/media') return ok({ mediums: [medium] });
+  if (url.pathname === '/api/admin/upload-image') return ok({ assetId: `image-qa-${Date.now()}`, url: 'http://127.0.0.1:4317/qa-image.png' });
   if (url.pathname === '/api/admin/preview-link') return ok({ url: 'http://127.0.0.1:4317/qa-preview' });
 
   if (url.pathname === '/api/admin/artworks') {
