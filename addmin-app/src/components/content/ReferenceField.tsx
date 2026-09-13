@@ -11,7 +11,7 @@ import { newContentKey } from './ImageField'
 type Reference = Record<string, unknown>
 
 /** Veza ka drugom sadržaju: jedan izbor kao red „Tehnika › Ulje“, više izbora kao čipovi. */
-export function ReferenceField({ field, value, onChange, disabled }: { field: ContentField; value: unknown; onChange: (value: unknown) => void; disabled?: boolean }) {
+export function ReferenceField({ field, value, onChange, disabled, missing }: { field: ContentField; value: unknown; onChange: (value: unknown) => void; disabled?: boolean; missing?: boolean }) {
   const { session } = useAuth()
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -32,7 +32,7 @@ export function ReferenceField({ field, value, onChange, disabled }: { field: Co
 
   return <View>
     {multiple ? <View style={styles.block}>
-      <Text style={styles.label}>{field.title.toLocaleUpperCase('sr')}</Text>
+      <Text style={[styles.label, missing && styles.error]}>{field.title.toLocaleUpperCase('sr')}{missing ? ' — OBAVEZNO ZA OBJAVU' : ''}</Text>
       <View style={styles.chips}>
         {selected.map((ref, index) => <Pressable key={String(ref._key ?? ref._ref)} accessibilityRole="button" accessibilityLabel={`Ukloni ${titleOf(ref)}`} disabled={disabled} onPress={() => onChange(selected.filter((_, i) => i !== index))} style={styles.chip} testID={`field-${field.name}-remove-${index}`}>
           <Text style={styles.chipText} numberOfLines={1}>{titleOf(ref)}</Text><Icon name="close" size={16} color={colors.inkMuted} />
@@ -42,8 +42,8 @@ export function ReferenceField({ field, value, onChange, disabled }: { field: Co
         </Pressable>
       </View>
     </View> : <Pressable accessibilityRole="button" accessibilityLabel={`${field.title}: ${selected[0] ? titleOf(selected[0]) : 'nije izabrano'}`} disabled={disabled} onPress={() => setOpen(true)} style={styles.row} testID={`field-${field.name}-choose`}>
-      <Text style={styles.rowLabel}>{field.title}{field.required ? ' *' : ''}</Text>
-      <View style={styles.rowValue}><Text style={[styles.value, !selected[0] && styles.placeholder]} numberOfLines={1}>{selected[0] ? titleOf(selected[0]) : 'Izaberite'}</Text><Icon name="chevron" size={18} color={colors.inkFaint} /></View>
+      <Text style={[styles.rowLabel, missing && styles.error]}>{field.title}{field.required ? ' *' : ''}</Text>
+      <View style={styles.rowValue}><Text style={[styles.value, !selected[0] && styles.placeholder, missing && styles.error]} numberOfLines={1}>{selected[0] ? titleOf(selected[0]) : missing ? 'Obavezno — izaberite' : 'Izaberite'}</Text><Icon name="chevron" size={18} color={colors.inkFaint} /></View>
     </Pressable>}
 
     <Sheet visible={open} onClose={() => setOpen(false)}>
@@ -82,6 +82,7 @@ const styles = StyleSheet.create({
   rowValue: { flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 1 },
   value: { ...textStyles.body, fontSize: 15, color: colors.ink, flexShrink: 1 },
   placeholder: { color: colors.inkFaint },
+  error: { color: colors.error },
   sheetTitle: { ...textStyles.title, color: colors.ink },
   search: { ...textStyles.body, color: colors.ink, minHeight: 48, borderBottomWidth: 1, borderColor: colors.ink },
   muted: { ...textStyles.caption, color: colors.inkMuted },

@@ -66,14 +66,17 @@ function UploadState({ busy, error, retry, progress }: { busy: boolean; error: s
   if (error) return <Banner title="Fotografija nije poslata" message={error} action={retry ? 'Pokušaj ponovo' : undefined} onAction={retry} />
   return null
 }
-function AltInput({ value, onChange, disabled, required, testID }: { value: unknown; onChange: (alt: string) => void; disabled?: boolean; required?: boolean; testID?: string }) {
-  return <TextInput value={typeof value === 'string' ? value : ''} onChangeText={onChange} editable={!disabled} testID={testID}
-    placeholder={`Opis slike za čitače ekrana${required ? ' (obavezno za objavu)' : ''}`} placeholderTextColor={colors.inkFaint}
-    style={styles.alt} multiline accessibilityLabel="Opis fotografije" />
+function AltInput({ value, onChange, disabled, required, missing, testID }: { value: unknown; onChange: (alt: string) => void; disabled?: boolean; required?: boolean; missing?: boolean; testID?: string }) {
+  return <View>
+    <TextInput value={typeof value === 'string' ? value : ''} onChangeText={onChange} editable={!disabled} testID={testID}
+      placeholder={`Opis slike za čitače ekrana${required ? ' (obavezno za objavu)' : ''}`} placeholderTextColor={missing ? colors.error : colors.inkFaint}
+      style={[styles.alt, missing && styles.altMissing]} multiline accessibilityLabel="Opis fotografije" />
+    {missing ? <Text style={styles.required}>Opis fotografije je obavezan za objavu.</Text> : null}
+  </View>
 }
 
 /** Velika fotografija na vrhu uređivanja (Atelje UI: rad je interfejs). */
-export function HeroImage({ field, value, onChange, disabled, onBusyChange }: { field: ContentField; value: unknown; onChange: (value: unknown) => void; disabled?: boolean; onBusyChange: (busy: boolean) => void }) {
+export function HeroImage({ field, value, onChange, disabled, onBusyChange, missing }: { field: ContentField; value: unknown; onChange: (value: unknown) => void; disabled?: boolean; onBusyChange: (busy: boolean) => void; missing?: Set<string> }) {
   const upload = useImageUpload(onBusyChange)
   const [menu, setMenu] = useState(false)
   const image = value ? record(value) : null
@@ -88,14 +91,15 @@ export function HeroImage({ field, value, onChange, disabled, onBusyChange }: { 
       </Pressable>
     </View> : <View style={[styles.hero, styles.heroEmpty]}>
       <Icon name="image" size={34} color={colors.inkFaint} />
-      <Text style={styles.heroEmptyTitle}>Dodajte fotografiju</Text>
+      <Text style={[styles.heroEmptyTitle, missing?.has(field.name) && styles.requiredTitle]}>Dodajte fotografiju</Text>
+      {missing?.has(field.name) ? <Text style={styles.required}>Fotografija je obavezna za objavu.</Text> : null}
       <View style={styles.row}>
         <PrimaryButton tone="outline" label="Galerija" disabled={locked} onPress={() => choose(false)} testID={`field-${field.name}-gallery`} />
         <PrimaryButton tone="outline" label="Kamera" disabled={locked} onPress={() => choose(true)} testID={`field-${field.name}-camera`} />
       </View>
     </View>}
     <View style={styles.heroBelow}>
-      {image?.asset ? <AltInput value={image.alt} required={field.altRequired} disabled={locked} onChange={alt => onChange({ ...image, alt })} testID={`field-${field.name}-alt-0`} /> : null}
+      {image?.asset ? <AltInput value={image.alt} required={field.altRequired} missing={missing?.has(`${field.name}.alt`)} disabled={locked} onChange={alt => onChange({ ...image, alt })} testID={`field-${field.name}-alt-0`} /> : null}
       <UploadState busy={upload.busy} error={upload.error} retry={upload.retry} progress={upload.progress} />
     </View>
     <MenuSheet visible={menu} onClose={() => setMenu(false)} title="Fotografija" items={[
@@ -107,11 +111,12 @@ export function HeroImage({ field, value, onChange, disabled, onBusyChange }: { 
 }
 
 /** Pojedinačna fotografija u formi (npr. portret, slika objave). */
-export function ImageField({ field, value, onChange, disabled, onBusyChange }: { field: ContentField; value: unknown; onChange: (value: unknown) => void; disabled?: boolean; onBusyChange: (busy: boolean) => void }) {
-  if (field.kind === 'images') return <GalleryField field={field} value={value} onChange={onChange} disabled={disabled} onBusyChange={onBusyChange} />
-  return <SingleImage field={field} value={value} onChange={onChange} disabled={disabled} onBusyChange={onBusyChange} />
+type ImageProps = { field: ContentField; value: unknown; onChange: (value: unknown) => void; disabled?: boolean; onBusyChange: (busy: boolean) => void; missing?: Set<string> }
+export function ImageField(props: ImageProps) {
+  if (props.field.kind === 'images') return <GalleryField {...props} />
+  return <SingleImage {...props} />
 }
-function SingleImage({ field, value, onChange, disabled, onBusyChange }: { field: ContentField; value: unknown; onChange: (value: unknown) => void; disabled?: boolean; onBusyChange: (busy: boolean) => void }) {
+function SingleImage({ field, value, onChange, disabled, onBusyChange, missing }: ImageProps) {
   const upload = useImageUpload(onBusyChange)
   const [menu, setMenu] = useState(false)
   const image = value ? record(value) : null
@@ -127,7 +132,8 @@ function SingleImage({ field, value, onChange, disabled, onBusyChange }: { field
         <PrimaryButton tone="outline" label="Kamera" disabled={locked} onPress={() => choose(true)} testID={`field-${field.name}-camera`} />
       </View>
     </View>}
-    {image?.asset ? <AltInput value={image.alt} required={field.altRequired} disabled={locked} onChange={alt => onChange({ ...image, alt })} testID={`field-${field.name}-alt-0`} /> : null}
+    {missing?.has(field.name) ? <Text style={styles.required}>Fotografija je obavezna za objavu.</Text> : null}
+    {image?.asset ? <AltInput value={image.alt} required={field.altRequired} missing={missing?.has(`${field.name}.alt`)} disabled={locked} onChange={alt => onChange({ ...image, alt })} testID={`field-${field.name}-alt-0`} /> : null}
     <UploadState busy={upload.busy} error={upload.error} retry={upload.retry} progress={upload.progress} />
     <MenuSheet visible={menu} onClose={() => setMenu(false)} title="Fotografija" items={[
       { label: 'Izaberi iz galerije', icon: 'image', onPress: () => choose(false) },
@@ -138,7 +144,7 @@ function SingleImage({ field, value, onChange, disabled, onBusyChange }: { field
 }
 
 /** Galerija: niz sličica, dodir otvara opis, redosled, zamenu i uklanjanje. */
-function GalleryField({ field, value, onChange, disabled, onBusyChange }: { field: ContentField; value: unknown; onChange: (value: unknown) => void; disabled?: boolean; onBusyChange: (busy: boolean) => void }) {
+function GalleryField({ field, value, onChange, disabled, onBusyChange, missing }: ImageProps) {
   const upload = useImageUpload(onBusyChange)
   const [openIndex, setOpenIndex] = useState<number | null>(null)
   const [adding, setAdding] = useState(false)
@@ -154,7 +160,7 @@ function GalleryField({ field, value, onChange, disabled, onBusyChange }: { fiel
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.strip}>
       {images.map((image, index) => <Pressable key={String(image._key ?? index)} accessibilityRole="button" accessibilityLabel={`Fotografija ${index + 1}`} disabled={locked} onPress={() => setOpenIndex(index)} testID={`field-${field.name}-item-${index}`}>
         <Artwork uri={contentImageUrl(image, 400)} style={styles.thumb} />
-        {!image.alt ? <View style={styles.noAlt}><Text style={styles.noAltText}>bez opisa</Text></View> : null}
+        {!image.alt ? <View style={[styles.noAlt, missing?.has(`${field.name}.${index}.alt`) && styles.noAltMissing]}><Text style={[styles.noAltText, missing?.has(`${field.name}.${index}.alt`) && styles.requiredText]}>bez opisa</Text></View> : null}
       </Pressable>)}
       <Pressable accessibilityRole="button" accessibilityLabel="Dodaj fotografiju" disabled={locked} onPress={() => setAdding(true)} style={[styles.thumb, styles.addTile]} testID={`field-${field.name}-gallery`}>
         <Icon name="plus" color={colors.inkMuted} />
@@ -168,7 +174,7 @@ function GalleryField({ field, value, onChange, disabled, onBusyChange }: { fiel
     <Sheet visible={open !== null} onClose={() => setOpenIndex(null)}>
       {open && openIndex !== null ? <>
         <Artwork uri={contentImageUrl(open, 900)} style={styles.sheetImage} />
-        <AltInput value={open.alt} disabled={locked} onChange={alt => update(images.map((item, i) => i === openIndex ? { ...item, alt } : item))} testID={`field-${field.name}-alt-${openIndex}`} />
+        <AltInput value={open.alt} missing={missing?.has(`${field.name}.${openIndex}.alt`)} disabled={locked} onChange={alt => update(images.map((item, i) => i === openIndex ? { ...item, alt } : item))} testID={`field-${field.name}-alt-${openIndex}`} />
         <View style={styles.row}>
           <PrimaryButton tone="outline" label="← Ranije" disabled={locked || openIndex === 0} onPress={() => move(openIndex, -1)} testID={`field-${field.name}-up-${openIndex}`} style={styles.flex} />
           <PrimaryButton tone="outline" label="Kasnije →" disabled={locked || openIndex === images.length - 1} onPress={() => move(openIndex, 1)} testID={`field-${field.name}-down-${openIndex}`} style={styles.flex} />
@@ -204,5 +210,10 @@ const styles = StyleSheet.create({
   noAlt: { position: 'absolute', left: 6, bottom: 6, backgroundColor: 'rgba(240, 237, 230, 0.92)', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 },
   noAltText: { ...textStyles.caption, fontSize: 11, color: colors.inkMuted },
   sheetImage: { height: 280, borderRadius: 12 },
+  required: { ...textStyles.caption, color: colors.error, paddingTop: 4 },
+  requiredTitle: { color: colors.error },
+  requiredText: { color: colors.error },
+  altMissing: { borderColor: colors.error },
+  noAltMissing: { backgroundColor: colors.canvas, borderWidth: 1, borderColor: colors.error },
   plain: { borderWidth: 0 },
 })

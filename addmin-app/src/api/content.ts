@@ -66,3 +66,32 @@ export function contentCover(type: ContentType | undefined, document: Record<str
   const first = gallery && Array.isArray(document[gallery.name]) ? (document[gallery.name] as unknown[])[0] : null
   return contentImageUrl(first, width)
 }
+
+export type MissingField = { key: string; label: string }
+/**
+ * Šta nedostaje za objavu — ista pravila kao serverski validateContent(publish):
+ * obavezna polja, fotografija i opis fotografije gde je obavezan. `key` je naziv
+ * polja ili `polje.alt` / `polje.<indeks>.alt` za opis fotografije.
+ */
+export function missingForPublish(type: ContentType, values: Record<string, unknown>): MissingField[] {
+  const missing: MissingField[] = []
+  const text = (value: unknown) => typeof value === 'string' && value.trim().length > 0
+  for (const field of type.fields) {
+    if (field.kind === 'info') continue
+    // Vidljivost rada postavlja sama objava.
+    if (type.name === 'artwork' && field.name === 'status') continue
+    const value = values[field.name]
+    const label = field.kind === 'slug' ? 'Adresa na sajtu' : field.title
+    const image = value && typeof value === 'object' && !Array.isArray(value) ? value as { asset?: unknown; alt?: unknown } : null
+    const empty = value == null || value === '' || (typeof value === 'string' && !value.trim())
+      || (field.kind === 'slug' && !text(image && (image as { current?: unknown }).current))
+      || (field.kind === 'image' && !image?.asset)
+    if (field.required && empty) { missing.push({ key: field.name, label }); continue }
+    if (field.kind === 'image' && image?.asset && field.altRequired && !text(image.alt)) missing.push({ key: `${field.name}.alt`, label: `Opis fotografije — ${field.title}` })
+    if (field.kind === 'images' && field.altRequired && Array.isArray(value)) value.forEach((item, index) => {
+      const photo = item as { asset?: unknown; alt?: unknown } | null
+      if (photo?.asset && !text(photo.alt)) missing.push({ key: `${field.name}.${index}.alt`, label: `Opis fotografije ${index + 1} — ${field.title}` })
+    })
+  }
+  return missing
+}
