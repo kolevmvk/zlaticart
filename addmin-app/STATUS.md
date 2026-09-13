@@ -138,3 +138,9 @@ Smoke skripta na produkciji 23/25: tok nacrta kompletan. Odjava pala na prolazno
 
 ## 2026-09-13 — Prvi potpisan release APK na telefonu (Claude)
 0.2.0 (versionCode 2), potpisan trajnim ključem, API `https://www.zlaticart.com`; instaliran na Xiaomi posle deinstalacije debug 0.1.0, otvara login bez greške. Čeka D4 test sa pravim PIN-om. Uočen problem fonta sa dijakriticima u serif naslovima.
+
+## 2026-09-13 — Full Studio S1 početak (Codex)
+Fetch uspešan, grana `feat/admin-full-studio` od `origin/main` (`b0ee8f7`, merge PR #2). Pročitana predaja i aktivni protokoli; čisto radno stablo. U toku generički API/šema/testovi; produkcioni podaci nisu menjani. Sledeće: završne S1 provere i PR.
+
+## 2026-09-13 — Full S1 završen kod i provere (Codex)
+Šema svih osam tipova, generičke autentifikovane content rute, obavezna revizija forme, nacrti/atomska objava/odbacivanje/brisanje sa proverom referenci. Očuvana postojeća nepoznata polja, galerijski ključevi i crop/hotspot. 33 nova testa i sve stare test datoteke PASS (9/9 datoteka); root typecheck/lint/build PASS (34/34 stranice, exit 0), mobile Node 22 typecheck/lint PASS. Build zahteva mrežni pristup javnom Sanity sadržaju. Xiaomi je povezan. Produkcioni API smoke nije rađen: čeka merge vlasnika. Sledeće: S1 PR, S2 mobilni ekrani.
