@@ -6,14 +6,16 @@ import { ImageManipulator, SaveFormat } from 'expo-image-manipulator'
  * Server (Vercel) ne prima telo zahteva veće od 4.5MB, a fotografija sa
  * telefona lako prelazi 8MB. Umesto oštre kompresije pri izboru (koja kvari
  * boje i detalje slike), fotografija se uzima u punom kvalitetu i ovde svodi
- * na dovoljnu veličinu za sajt — dugačka ivica najviše 3000px — uz što blažu
+ * na dovoljnu veličinu za sajt — dugačka ivica najviše 2400px — uz što blažu
  * kompresiju koja staje ispod limita.
  */
 const UPLOAD_LIMIT_BYTES = 3.8 * 1024 * 1024
+// 2400px je dovoljno i za najveći prikaz na sajtu (Sanity CDN pravi manje verzije),
+// a fajl je oko upola manji od 3000px — slanje sa telefona je primetno brže.
 const STEPS = [
-  { maxEdge: 3000, compress: 0.9 },
   { maxEdge: 2400, compress: 0.85 },
   { maxEdge: 2000, compress: 0.8 },
+  { maxEdge: 1600, compress: 0.8 },
 ] as const
 
 export class ImagePreparationError extends Error {}

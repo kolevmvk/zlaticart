@@ -2,7 +2,7 @@
   "expo": {
     "name": "ZlaticArt Admin",
     "slug": "zlaticart-admin",
-    "version": "0.3.0",
+    "version": "0.3.1",
     "orientation": "portrait",
     "scheme": "zlaticart-admin",
     "userInterfaceStyle": "automatic",
@@ -19,7 +19,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F0EDE6"
       },
-      "versionCode": 3
+      "versionCode": 4
     },
     "web": {
       "favicon": "./assets/favicon.png"

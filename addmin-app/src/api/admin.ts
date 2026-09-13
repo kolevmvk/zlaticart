@@ -211,19 +211,43 @@ export async function getArtworkPreviewUrl(session: AdminSession, slug: string):
 export async function uploadArtworkImage(
   session: AdminSession,
   localUri: string,
+  onProgress?: (fraction: number) => void,
 ): Promise<{ assetId: string; url: string }> {
+  if (!API_BASE_URL) {
+    throw new AdminApiError('Adresa servera nije podešena u ovoj verziji aplikacije.', undefined, 'config')
+  }
   const formData = new FormData()
-  // React Native's fetch/FormData accepts this { uri, name, type } shape in
+  // React Native's FormData accepts this { uri, name, type } shape in
   // place of a real Blob/File — standard Expo pattern for multipart upload.
   formData.append('file', { uri: localUri, name: 'artwork.jpg', type: 'image/jpeg' } as unknown as Blob)
 
-  return adminRequest<{ assetId: string; url: string }>('/api/admin/upload-image', {
-    method: 'POST',
-    token: session.token,
-    // Content-Type intentionally omitted — fetch sets the multipart
-    // boundary itself; forcing it manually breaks the upload.
-    body: formData,
-    timeoutMs: UPLOAD_TIMEOUT_MS,
+  // XMLHttpRequest umesto fetch: samo on javlja napredak slanja, pa korisnica
+  // vidi procenat umesto „zaglavljenog“ dugmeta. Greške se tumače isto kao adminRequest.
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', `${API_BASE_URL}/api/admin/upload-image`)
+    xhr.setRequestHeader('Accept', 'application/json')
+    xhr.setRequestHeader('Authorization', `Bearer ${session.token}`)
+    xhr.timeout = UPLOAD_TIMEOUT_MS
+    xhr.upload.onprogress = event => { if (event.lengthComputable && event.total > 0) onProgress?.(event.loaded / event.total) }
+    xhr.onerror = () => reject(new AdminApiError('Nema internet veze. Proverite Wi-Fi ili mobilne podatke.', undefined, 'network'))
+    xhr.ontimeout = () => reject(new AdminApiError('Server ne odgovara. Proverite vezu i pokušajte ponovo.', undefined, 'timeout'))
+    xhr.onload = () => {
+      if (xhr.status === 401) {
+        unauthorizedListener?.(session.token)
+        reject(new AdminApiError('Sesija je istekla. Prijavite se ponovo.', 401, 'unauthorized'))
+        return
+      }
+      let json: AdminApiResponse<{ assetId: string; url: string }> | null = null
+      try { json = JSON.parse(xhr.responseText) } catch { json = null }
+      if (xhr.status < 200 || xhr.status >= 300 || !json?.ok) {
+        reject(new AdminApiError(httpMessage(xhr.status, json && !json.ok ? json.error : null), xhr.status))
+        return
+      }
+      onProgress?.(1)
+      resolve(json.data)
+    }
+    xhr.send(formData)
   })
 }
 
