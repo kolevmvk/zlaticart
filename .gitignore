@@ -33,3 +33,6 @@ Thumbs.db
 
 # Personal/local task tracker — not shared team documentation, never commit
 TODO_OWNER.md
+
+# Supabase CLI local state
+supabase/.temp/
