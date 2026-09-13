@@ -23,7 +23,7 @@ function knownValues(type: ContentType, document: Record<string, unknown>) {
 
 // Grupe polja (Atelje UI): osnovno, tekst, fotografije, povezano, na sajtu, detalji.
 type GroupKey = 'basic' | 'text' | 'images' | 'links' | 'site' | 'details'
-const groupTitles: Record<GroupKey, string> = { basic: 'Osnovno', text: 'Tekst', images: 'Fotografije', links: 'Povezano', site: 'Na sajtu', details: 'Detalji' }
+const groupTitles: Record<GroupKey, string> = { basic: 'Osnovno', text: 'Opis i tekst', images: 'Fotografije', links: 'Povezano', site: 'Na sajtu', details: 'Detalji' }
 function groupOf(field: ContentField): GroupKey {
   if (field.kind === 'portableText' || field.kind === 'text') return 'text'
   if (field.kind === 'image' || field.kind === 'images') return 'images'
@@ -54,6 +54,7 @@ export function ContentForm({ type, initial }: { type: ContentType; initial?: Co
   const [working, setWorking] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const busyRef = useRef(false)
+  const scrollRef = useRef<ScrollView>(null)
   const uploadRef = useRef(false)
   const [error, setError] = useState<string | null>(null)
   const [needsReload, setNeedsReload] = useState(false)
@@ -62,6 +63,7 @@ export function ContentForm({ type, initial }: { type: ContentType; initial?: Co
   const [deleting, setDeleting] = useState<DeleteTarget | null>(null)
   const [detailsOpen, setDetailsOpen] = useState(Boolean(type.singleton))
   const [keyboard, setKeyboard] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
   const dirty = !same(knownValues(type, values), knownValues(type, baseline))
   const busy = Boolean(working) || uploading || expired
   const allowLeave = useUnsavedChanges(dirty, Boolean(working) || uploading)
@@ -140,6 +142,9 @@ export function ContentForm({ type, initial }: { type: ContentType; initial?: Co
       await WebBrowser.openBrowserAsync(url)
     } catch (e) {
       setError(`${savedBeforeFailure ? 'Nacrt je sačuvan. ' : ''}${e instanceof Error ? e.message : 'Radnja nije završena. Proverite vezu i pokušajte ponovo.'}`)
+      // Dugme je pri dnu, a poruka na vrhu forme: pokaži je i kratko najavi.
+      scrollRef.current?.scrollTo({ y: 0, animated: true })
+      toast.show(savedBeforeFailure ? 'Nacrt je sačuvan, ali radnja nije završena.' : 'Nije sačuvano — pogledajte poruku na vrhu.')
       if (e instanceof AdminApiError && (e.status === 409 || e.kind === 'network' || e.kind === 'timeout')) setNeedsReload(true)
     } finally { busyRef.current = false; setWorking(null) }
   }
@@ -183,7 +188,7 @@ export function ContentForm({ type, initial }: { type: ContentType; initial?: Co
   const moreButton = <IconButton icon="more" label="Još radnji" onImage={Boolean(heroField)} onPress={() => setMenu(true)} testID="content-menu" />
   const barVisible = !keyboard
   return <View style={styles.screen}>
-    <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: insets.bottom + 140 }}>
+    <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" scrollEventThrottle={32} onScroll={event => { const next = event.nativeEvent.contentOffset.y > (heroField ? 340 : 8); if (next !== scrolled) setScrolled(next) }} contentContainerStyle={{ paddingBottom: insets.bottom + 140 }}>
       {heroField ? <View>
         <HeroImage field={heroField} value={values[heroField.name]} onChange={value => change(heroField.name, value)} disabled={busy} onBusyChange={setBusy} />
         <View style={[styles.heroBar, { top: insets.top + 8 }]}><TopBar onImage right={moreButton} /></View>
@@ -203,8 +208,8 @@ export function ContentForm({ type, initial }: { type: ContentType; initial?: Co
           const open = !collapsible || detailsOpen
           return <View key={group.key} style={styles.group}>
             {collapsible ? <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setDetailsOpen(!open)} style={styles.groupToggle} testID="content-details">
-              <Eyebrow>{groupTitles[group.key].toLocaleUpperCase('sr')}</Eyebrow><Icon name={open ? 'close' : 'plus'} size={18} color={colors.inkFaint} />
-            </Pressable> : <Eyebrow style={styles.groupTitle}>{groupTitles[group.key].toLocaleUpperCase('sr')}</Eyebrow>}
+              <Text style={styles.groupHeading}>{groupTitles[group.key]}</Text><Icon name={open ? 'close' : 'plus'} size={20} color={colors.inkMuted} />
+            </Pressable> : <Text style={styles.groupHeading}>{groupTitles[group.key]}</Text>}
             {open ? <ContentFields fields={group.fields} value={values} onChange={change} disabled={busy} onBusyChange={setBusy}
               renderPortableText={(field, value, onChange) => <PortableTextEditor field={field} value={value} onChange={onChange} disabled={busy} onBusyChange={setBusy} />} /> : null}
           </View>
@@ -212,6 +217,8 @@ export function ContentForm({ type, initial }: { type: ContentType; initial?: Co
       </View>
     </ScrollView>
 
+    {/* Pozadina ispod statusne trake kad sadržaj prođe ispod nje. */}
+    {scrolled || !heroField ? <View pointerEvents="none" style={[styles.statusBackdrop, { height: insets.top }]} /> : null}
     {barVisible ? <View style={[styles.bar, { paddingBottom: insets.bottom + 12 }]}>
       <View style={styles.barStatus}>
         {version ? <StatusLine status={version.publicationStatus} hasPublished={version.hasPublished} hidden={artworkOffSite} /> : <Text style={styles.barText}>Novi unos</Text>}
@@ -245,9 +252,10 @@ const styles = StyleSheet.create({
   titleBlock: { gap: 2, borderBottomWidth: 1, borderColor: colors.ink, paddingBottom: 4 },
   title: { ...textStyles.heading, fontSize: 34, lineHeight: 40, color: colors.ink, paddingVertical: 4, paddingHorizontal: 0 },
   titleText: { fontSize: 24, lineHeight: 31, minHeight: 64, textAlignVertical: 'top' },
-  group: { gap: 8 },
-  groupTitle: { marginBottom: 2 },
+  group: { gap: 14, borderTopWidth: 1, borderColor: colors.canvasDeep, paddingTop: 18 },
+  groupHeading: { ...textStyles.title, fontSize: 22, lineHeight: 28, color: colors.ink },
   groupToggle: { minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  statusBackdrop: { position: 'absolute', top: 0, left: 0, right: 0, backgroundColor: colors.canvas },
   bar: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: edge, paddingTop: 12, backgroundColor: colors.canvas, borderTopWidth: 1, borderColor: colors.canvasDeep },
   barStatus: { flex: 1, gap: 2 },
   barText: { ...textStyles.caption, color: colors.ink },

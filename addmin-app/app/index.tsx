@@ -17,6 +17,13 @@ function greeting() {
 function itemImage(type: ContentType | undefined, item: ContentItem | undefined, width = 600) {
   return contentCover(type, item?.document, width)
 }
+// Srpska množina: 1 rad, 2–4 rada, 5+ radova (11–14 uvek radova).
+function radova(n: number) {
+  const mod10 = n % 10, mod100 = n % 100
+  if (mod10 === 1 && mod100 !== 11) return `${n} rad`
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `${n} rada`
+  return `${n} radova`
+}
 function countLabel(type: ContentType, items: ContentItem[] | undefined) {
   if (type.singleton) return items?.length ? 'Uredi' : 'Popuni'
   if (!items) return ''
@@ -47,7 +54,8 @@ export default function HomeScreen() {
   const byType = new Map(types.map((type, index) => [type.name, lists[index]?.data]))
   const artworkType = types.find(type => type.name === 'artwork')
   const artworks = byType.get('artwork') ?? []
-  const latest = artworks[0]
+  // Poslednje uređeno sa fotografijom — kartica bez slike ne predstavlja rad.
+  const latest = artworks.find(item => itemImage(artworkType, item)) ?? artworks[0]
   const onSite = artworks.filter(item => item.hasPublished).length
   const waiting = artworks.filter(item => item.publicationStatus !== 'published').length
   const failed = schema.isError || lists.some(list => list.isError)
@@ -69,7 +77,7 @@ export default function HomeScreen() {
 
       <View style={styles.intro}>
         <Text accessibilityRole="header" style={styles.greeting}>{greeting()}, Zlatice.</Text>
-        <Text style={styles.summary}>{artworks.length ? `Na sajtu ${onSite === 1 ? 'je 1 rad' : `je ${onSite} radova`}.${waiting ? ` ${waiting === 1 ? 'Jedan čeka' : `${waiting} čekaju`} objavu.` : ''}` : schema.isPending ? 'Učitavam vaš atelje…' : 'Dodajte prvi rad — sajt ga prikazuje tek kad ga objavite.'}</Text>
+        <Text style={styles.summary}>{artworks.length ? `${onSite ? `Na sajtu: ${radova(onSite)}.` : 'Još ništa nije na sajtu.'}${waiting ? ` ${waiting === 1 ? 'Jedan čeka' : `${waiting} čekaju`} objavu.` : ''}` : schema.isPending ? 'Učitavam vaš atelje…' : 'Dodajte prvi rad — sajt ga prikazuje tek kad ga objavite.'}</Text>
       </View>
 
       {failed ? <Banner title="Deo ateljea nije osvežen" message="Proverite internet vezu." action="Pokušaj ponovo" onAction={refetchAll} /> : null}

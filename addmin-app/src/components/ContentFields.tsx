@@ -41,6 +41,20 @@ function LineInput({ field, value, onChangeText, disabled, error, hint, multilin
   </View>
 }
 
+// Kratka polja (godina, dimenzije, mesto) u jednom redu: naziv levo, vrednost desno.
+function InlineInput({ field, value, onChangeText, disabled, error, keyboardType }: { field: ContentField; value: string; onChangeText: (text: string) => void; disabled?: boolean; error?: string; keyboardType?: 'default' | 'numbers-and-punctuation' | 'email-address' }) {
+  const [focused, setFocused] = useState(false)
+  return <View>
+    <View style={[styles.row, focused && styles.inputFocused, Boolean(error) && styles.inputError]}>
+      <Text style={styles.rowLabel}>{fieldLabel(field)}{field.required ? ' *' : ''}</Text>
+      <TextInput value={value} onChangeText={onChangeText} editable={!disabled} keyboardType={keyboardType} autoCapitalize={keyboardType === 'email-address' ? 'none' : 'sentences'}
+        onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} accessibilityLabel={fieldLabel(field)} testID={`field-${field.name}`}
+        placeholder="Dodajte" placeholderTextColor={colors.inkFaint} style={styles.inlineInput} />
+    </View>
+    {error ? <Text style={[styles.hint, styles.error]}>{error}</Text> : null}
+  </View>
+}
+
 function DateRow({ field, value, onChange, disabled }: { field: ContentField; value: unknown; onChange: (value: unknown) => void; disabled?: boolean }) {
   const [open, setOpen] = useState(false)
   const text = typeof value === 'string' ? value : ''
@@ -65,7 +79,7 @@ function NumberInput({ field, value, onChange, disabled }: { field: ContentField
   const [raw, setRaw] = useState<string | null>(null)
   const display = raw !== null && (raw === String(value ?? '') || Number(raw.replace(',', '.')) === value) ? raw : String(value ?? '')
   const invalid = display !== '' && (!/^-?(?:\d+(?:[.,]\d*)?|[.,]\d+)$/.test(display) || !Number.isFinite(Number(display.replace(',', '.'))))
-  return <LineInput field={field} value={display} disabled={disabled} keyboardType="numbers-and-punctuation" error={invalid ? 'Unesite broj.' : undefined}
+  return <InlineInput field={field} value={display} disabled={disabled} keyboardType="numbers-and-punctuation" error={invalid ? 'Unesite broj.' : undefined}
     onChangeText={text => { setRaw(text); const normalized = text.replace(',', '.'); onChange(text === '' ? null : /^-?(?:\d+(?:\.\d*)?|\.\d+)$/.test(normalized) && Number.isFinite(Number(normalized)) ? Number(normalized) : text) }} />
 }
 
@@ -92,6 +106,8 @@ export function ContentFields({ fields, value, onChange, disabled, onBusyChange,
       </View>; break
       case 'portableText': control = <View style={styles.block}><Text style={styles.label}>{field.title.toLocaleUpperCase('sr')}</Text>{renderPortableText?.(field, current, change)}</View>; break
       case 'slug': control = <LineInput field={field} value={typeof object(current).current === 'string' ? String(object(current).current) : ''} disabled={disabled} autoCapitalize="none" keyboardType="url" prefix="zlaticart.com/…/" hint="Mala slova, brojevi i crtice." onChangeText={text => change({ ...object(current), _type: 'slug', current: text })} />; break
+      case 'string': control = field.name === 'contactEmail' || field.name === 'siteTitle' ? <LineInput field={field} value={typeof current === 'string' ? current : ''} disabled={disabled} keyboardType={field.name === 'contactEmail' ? 'email-address' : 'default'} autoCapitalize={field.name === 'contactEmail' ? 'none' : 'sentences'} onChangeText={change} />
+        : <InlineInput field={field} value={typeof current === 'string' ? current : ''} disabled={disabled} onChangeText={change} />; break
       default: control = <LineInput field={field} value={typeof current === 'string' ? current : ''} disabled={disabled} multiline={field.kind === 'text'}
         keyboardType={field.kind === 'url' ? 'url' : field.name === 'contactEmail' ? 'email-address' : 'default'}
         autoCapitalize={field.kind === 'url' || field.name === 'contactEmail' ? 'none' : 'sentences'}
@@ -118,6 +134,7 @@ const styles = StyleSheet.create({
   rowLabel: { ...textStyles.body, fontSize: 15, color: colors.ink },
   rowValue: { ...textStyles.body, fontSize: 15, color: colors.ink },
   placeholder: { color: colors.inkFaint },
+  inlineInput: { ...textStyles.body, fontSize: 15, color: colors.ink, flex: 1, textAlign: 'right', minHeight: 52, paddingVertical: 0 },
   clear: { width: 32, height: 44, alignItems: 'center', justifyContent: 'center' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   note: { backgroundColor: colors.canvasWarm, borderRadius: 12, padding: 14, gap: 4 },

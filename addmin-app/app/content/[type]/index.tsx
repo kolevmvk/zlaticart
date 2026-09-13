@@ -1,7 +1,7 @@
 import { Redirect, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
 import { useCallback, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { FlatList, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import { FlatList, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { contentCover, fetchContents, fetchContentTypes, type ContentItem, type ContentType } from '@/api/content'
 import { useAuth } from '@/auth/AuthProvider'
@@ -37,6 +37,9 @@ export default function ContentListScreen() {
   const insets = useSafeAreaInsets()
   const queryClient = useQueryClient()
   const toast = useToast()
+  const { width } = useWindowDimensions()
+  // Fiksna širina kartice: poslednja u neparnom redu ne sme biti šira od ostalih.
+  const cardWidth = (width - edge * 2 - 14) / 2
   const [search, setSearch] = useState<string | null>(null)
   const [filter, setFilter] = useState<Filter>('all')
   const [menuItem, setMenuItem] = useState<ContentItem | null>(null)
@@ -93,7 +96,7 @@ export default function ContentListScreen() {
       renderItem={({ item }) => {
         const label = `Uredi: ${item.title || 'Bez naslova'}`
         const status = <StatusLine status={item.publicationStatus} hasPublished={item.hasPublished} hidden={hiddenArtwork(item)} />
-        if (gallery) return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityHint="Dug pritisak otvara još radnji" onPress={() => openItem(item)} onLongPress={() => setMenuItem(item)} style={({ pressed }) => [styles.card, pressed && styles.pressed]} testID={`content-item-${item._id}`}>
+        if (gallery) return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityHint="Dug pritisak otvara još radnji" onPress={() => openItem(item)} onLongPress={() => setMenuItem(item)} style={({ pressed }) => [styles.card, { width: cardWidth }, pressed && styles.pressed]} testID={`content-item-${item._id}`}>
           <Artwork uri={image(item, 600)} style={styles.cardImage} label={item.title} />
           <Text style={styles.cardTitle} numberOfLines={2}>{item.title || 'Bez naslova'}</Text>
           {type && subtitle(type, item) ? <Text style={styles.muted} numberOfLines={1}>{subtitle(type, item)}</Text> : null}
@@ -139,7 +142,7 @@ const styles = StyleSheet.create({
   emptyTitle: { ...textStyles.title, color: colors.ink },
   muted: { ...textStyles.caption, color: colors.inkMuted },
   column: { gap: 14 },
-  card: { flex: 1, gap: 6, maxWidth: '50%' },
+  card: { gap: 6 },
   cardImage: { aspectRatio: 4 / 5, borderRadius: 10 },
   cardTitle: { ...textStyles.cardTitle, color: colors.ink },
   row: { flexDirection: 'row', gap: 14, paddingVertical: 16, borderBottomWidth: 1, borderColor: colors.canvasDeep },
