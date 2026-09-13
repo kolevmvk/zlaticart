@@ -135,3 +135,6 @@ Migracija primenjena na produkcioni Supabase i proverena upitom privilegija (ser
 
 ## 2026-09-13 — P3 provereno na produkciji; ispravka odjave (Claude)
 Smoke skripta na produkciji 23/25: tok nacrta kompletan. Odjava pala na prolaznom Supabase 504 (ruta 500, token važeći); ponovljena odjava radi. Dodat retry opoziva, 503 i log greške store-a (34/34 testova). Čeka PR #2 i merge.
+
+## 2026-09-13 — Prvi potpisan release APK na telefonu (Claude)
+0.2.0 (versionCode 2), potpisan trajnim ključem, API `https://www.zlaticart.com`; instaliran na Xiaomi posle deinstalacije debug 0.1.0, otvara login bez greške. Čeka D4 test sa pravim PIN-om. Uočen problem fonta sa dijakriticima u serif naslovima.

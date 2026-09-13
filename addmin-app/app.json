@@ -2,7 +2,7 @@
   "expo": {
     "name": "ZlaticArt Admin",
     "slug": "zlaticart-admin",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "orientation": "portrait",
     "scheme": "zlaticart-admin",
     "userInterfaceStyle": "automatic",
@@ -18,7 +18,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F0EDE6"
-      }
+      },
+      "versionCode": 2
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -44,7 +45,8 @@
         }
       ],
       "expo-web-browser",
-      "./plugins/withInternalTest.cjs"
+      "./plugins/withInternalTest.cjs",
+      "./plugins/withReleaseSigning.cjs"
     ],
     "experiments": {
       "typedRoutes": true

@@ -87,10 +87,10 @@ Prihvatanje: problemi sa sesijom i mrežom ne uzrokuju tihi gubitak unosa ili za
 
 | ID | Status | Zadatak | Kriterijum / dokaz |
 |---|---|---|---|
-| D1 | TODO | Proveriti produkcioni API URL i serversku konfiguraciju | APK koristi dostupan produkcioni API; tajne ostaju na serveru |
-| D2 | TODO | Trajni release ključ, rezervna kopija i verzionisanje | Definisan vlasnik ključa; release ne koristi debug potpis |
-| D3 | TODO | Samostalan APK, instalacija i ažuriranje | Radi bez Metro servera i računara; proverena nadogradnja |
-| D4 | TODO | Kompletan fizički Android test | Login → unos → fotografija → nacrt → pregled → objava → izmena → sajt |
+| D1 | REALIZOVANO | Proveriti produkcioni API URL i serversku konfiguraciju | APK koristi dostupan produkcioni API; tajne ostaju na serveru. 2026-09-13: `https://www.zlaticart.com`, 4 serverske tajne na Vercel Production, migracija primenjena; build skripta proverava ugrađen URL i odsustvo fixture URL-a |
+| D2 | REALIZOVANO | Trajni release ključ, rezervna kopija i verzionisanje | Definisan vlasnik ključa; release ne koristi debug potpis. 2026-09-13: ključ kod vlasnika na Linuxu i Mac mini-ju (isti SHA-256), sertifikat `CN=ZlaticArt Admin` SHA-256 `2a0c24b8…d523d3`, 0.2.0/versionCode 2, `plugins/withReleaseSigning.cjs` bez debug fallback-a, uputstvo `14-ANDROID_RELEASE.md` |
+| D3 | U TOKU | Samostalan APK, instalacija i ažuriranje | Radi bez Metro servera i računara; proverena nadogradnja. 2026-09-13: release APK (SHA-256 `2cffc6aa…4f10f0a`, 43 MB, arm64) instaliran na Xiaomi M2007J3SG posle deinstalacije debug 0.1.0, pokreće se na login ekran bez crash-a. Nije proverena nadogradnja (treba 0.2.1) |
+| D4 | U TOKU | Kompletan fizički Android test | Login → unos → fotografija → nacrt → pregled → objava → izmena → sajt |
 | D5 | TODO | Wi-Fi, mobilni internet, slab signal i ponovno pokretanje | Proverena upotreba van lokalne razvojne mreže |
 
 Prihvatanje: Zlatica može samostalno koristiti Radove. Pre promene potpisa proveriti put prelaska sa ranije instaliranog debug-potpisanog APK-a, bez pretpostavke da će direktna nadogradnja uspeti.
@@ -173,3 +173,6 @@ U TOKU: uklonjen slučajno praćen `supabase/.temp/` (0d36eb4, samo verzija CLI-
 
 ### 2026-09-13 — Produkciona provera P3 i ispravka odjave (vlasnik + Claude)
 PR #1 mergovan (vlasnik), produkcija deployovana: sajt 200, `authConfigured: true`, pogrešan PIN 401 (Supabase limiter radi). `addmin-app/scripts/prod-drafts-smoke.sh` na produkciji: 23/25 PROŠLO (ceo tok nacrt → objava → izmena → pregled → objava → arhiviranje). PALO: odjava 500 i token ostao važeći. Uzrok: Supabase API Gateway vratio 504 na PATCH `admin_sessions` (bez Postgres greške), a ruta je grešku store-a mapirala na 500 bez loga. SQL kao `service_role` potvrdio da UPDATE radi i opozvao zaostalu probnu sesiju; ponovljena prijava+odjava: 200 za 0.58s, token posle 401 → prolazna greška. Ispravke (c1bd5e5 + ovaj commit): log PostgREST koda/poruke bez tajni, logout 503 umesto 500, ograničen retry opoziva za 5xx/mrežu (3 pokušaja), 4 nova testa (34/34). Probni rad `artwork-proba17893144645816` arhiviran — vlasnik ga briše u Studio-u. Sledeće: PR #2 → merge (vlasnik) → APK sa produkcionim API-jem (P6).
+
+### 2026-09-13 — P6, prvi potpisan Android release (Claude)
+U TOKU: `scripts/build-release-apk.sh` + `plugins/withReleaseSigning.cjs` (lozinke iz `~/.gradle/gradle.properties`, van repoa; bez njih release ostaje nepotpisan i skripta pada). Prvi build pao na pogrešno upisanoj lozinci — vlasnik ju je proverio `keytool -storepass:env` i ponovo upisao; drugi build prošao. Provere: apksigner sertifikat nije debug, ugrađen `https://www.zlaticart.com`, instalacija i pokretanje na fizičkom telefonu. Uočeno (UI, P1): Cormorant Garamond na Androidu pomera dijakritik (`došli` — kvačica odvojena); tekst je ispravan precomposed U+0161, problem je u fontu/renderu. Sledeće: vlasnik na telefonu prolazi D4 (login → novi rad sa fotografijom → nacrt → pregled → objava → izmena → sajt), zatim D5 (Wi-Fi/mobilni internet, restart).
