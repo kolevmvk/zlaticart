@@ -36,3 +36,6 @@ TODO_OWNER.md
 
 # Supabase CLI local state
 supabase/.temp/
+
+# Potpisani APK-ovi za slanje (ne idu u git)
+release/
