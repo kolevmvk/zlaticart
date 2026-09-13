@@ -116,3 +116,18 @@ as $$
 $$;
 
 revoke all on function zlaticart.admin_auth_cleanup() from public, anon, authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Dozvole za service_role
+-- ---------------------------------------------------------------------------
+--
+-- service_role zaobilazi RLS, ali NE i GRANT-ove. Supabase automatski daje
+-- dozvole samo u šemi public; u zasebnoj šemi bez ovoga server dobija
+-- "permission denied". anon/authenticated ne dobijaju ništa.
+
+grant usage on schema zlaticart to service_role;
+
+grant select, insert, update on table zlaticart.admin_sessions to service_role;
+
+grant execute on function zlaticart.admin_register_login_attempt(text, integer, integer, boolean) to service_role;
+grant execute on function zlaticart.admin_auth_cleanup() to service_role;

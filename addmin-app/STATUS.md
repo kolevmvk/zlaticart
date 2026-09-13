@@ -125,3 +125,7 @@ Provereno: 26/26 serverskih testova (7 novih za preview, 3 za upload), root type
 Nije provereno: Android (potreban novi build zbog native modula), stvaran Supabase store (migracija nije primenjena), stvaran Sanity create sa postojećim ID-jem (409 grana).
 Sledeće: P3 pravi Sanity nacrti; zatim primena migracije, produkcione tajne i P6.
 ČEKA VLASNIKA: Supabase secret key i Sanity write token u Vercel, odobrenje primene migracije na produkcioni Supabase.
+
+## 2026-09-13 — Produkcione tajne i ispravka migracije admin_auth_store (Claude)
+Vlasnik postavio 4 serverske tajne na Vercel Production. U migraciji `admin_auth_store` dodati nedostajući GRANT-ovi za `service_role` (bez njih prijava na produkciji ne radi). Migracija još nije primenjena; lokalna SQL provera nije moguća (Docker ne radi).
+Migracija primenjena na produkcioni Supabase i proverena upitom privilegija (service_role: insert/execute true; anon: false). Predlog API domena: `https://www.zlaticart.com` (Vercel, admin ruta odgovara 401).
