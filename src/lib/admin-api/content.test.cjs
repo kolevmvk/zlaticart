@@ -29,6 +29,8 @@ const client = {
         if (operation === 'create' && next.has(body._id)) throw conflict()
         next.set(body._id, { ...structuredClone(body), _rev: transactionId })
       } else if (operation === 'patch') {
+        // Revizijska brava mora nositi operaciju (kao Studio), inače Sanity ne garantuje proveru.
+        if (!body.set && !body.unset) throw new Error('Patch without operations')
         const doc = next.get(body.id)
         if (!doc || body.ifRevisionID && doc._rev !== body.ifRevisionID) throw conflict()
         Object.assign(doc, structuredClone(body.set ?? {}))

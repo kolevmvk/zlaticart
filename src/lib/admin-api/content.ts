@@ -82,8 +82,11 @@ function apply(current: Record<string, unknown>, fields: Record<string, unknown>
   }
   return next
 }
+// Revizijska brava kao u Sanity Studio-u: patch mora imati operaciju da bi
+// Sanity proverio `ifRevisionID`; unset nepostojećeg pseudo-polja ne menja sadržaj.
+export const REVISION_LOCK_FIELD = '_revision_lock_pseudo_field_'
 function guard(document: ContentDocument) {
-  return { patch: { id: document._id, ifRevisionID: document._rev } }
+  return { patch: { id: document._id, ifRevisionID: document._rev, unset: [REVISION_LOCK_FIELD] } }
 }
 async function commit(mutations: Record<string, unknown>[]) {
   try {
