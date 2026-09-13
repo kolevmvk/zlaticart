@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
 import * as WebBrowser from 'expo-web-browser'
 import { AdminApiError, updateArtworkStatus } from '@/api/admin'
-import { contentCover, createContent, fetchContent, getContentPreviewUrl, newContentId, publishContent, removeContent, saveContent, type ContentField, type ContentItem, type ContentType } from '@/api/content'
+import { contentCover, missingForPublish, createContent, fetchContent, getContentPreviewUrl, newContentId, publishContent, removeContent, saveContent, type ContentField, type ContentItem, type ContentType } from '@/api/content'
 import { useAuth } from '@/auth/AuthProvider'
 import { Banner, edge, Eyebrow, Icon, IconButton, MenuSheet, PrimaryButton, Sheet, StatusLine, Toast, TopBar, useToast, type MenuItem } from '@/components/atelier'
 import { DeleteSheet, type DeleteTarget } from '@/components/atelier/DeleteSheet'
@@ -158,6 +158,10 @@ export function ContentForm({ type, initial }: { type: ContentType; initial?: Co
   const artworkOffSite = type.name === 'artwork' && Boolean(version?.hasPublished) && !version?.hasDraft && version?.document.status !== 'published'
   const canPublish = !busy && (!version || dirty || Boolean(version.hasDraft) || artworkOffSite)
   const title = titleField ? String(values[titleField.name] ?? '') : ''
+  // Šta nedostaje za objavu: označava se crvenim slovima i proverava pre slanja.
+  const missing = missingForPublish(type, values)
+  const missingKeys = new Set(missing.map(item => item.key))
+  const [missingOpen, setMissingOpen] = useState(false)
 
   function change(name: string, value: unknown) {
     setValues(previous => {
@@ -190,16 +194,16 @@ export function ContentForm({ type, initial }: { type: ContentType; initial?: Co
   return <View style={styles.screen}>
     <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" scrollEventThrottle={32} onScroll={event => { const next = event.nativeEvent.contentOffset.y > (heroField ? 340 : 8); if (next !== scrolled) setScrolled(next) }} contentContainerStyle={{ paddingBottom: insets.bottom + 140 }}>
       {heroField ? <View>
-        <HeroImage field={heroField} value={values[heroField.name]} onChange={value => change(heroField.name, value)} disabled={busy} onBusyChange={setBusy} />
+        <HeroImage field={heroField} value={values[heroField.name]} onChange={value => change(heroField.name, value)} disabled={busy} onBusyChange={setBusy} missing={missingKeys} />
         <View style={[styles.heroBar, { top: insets.top + 8 }]}><TopBar onImage right={moreButton} /></View>
       </View> : <View style={{ paddingTop: insets.top }}><TopBar right={moreButton} title={type.title} /></View>}
 
       <View style={styles.body}>
         {error ? <Banner title="Nije završeno" message={error} action={needsReload && version ? 'Učitaj sačuvanu verziju' : undefined} onAction={() => setConfirm('reload')} /> : null}
-        {titleField ? <View style={styles.titleBlock}>
-          <Eyebrow>{(heroField ? type.title : titleField.title).toLocaleUpperCase('sr')}</Eyebrow>
+        {titleField ? <View style={[styles.titleBlock, missingKeys.has(titleField.name) && styles.titleMissing]}>
+          <Eyebrow style={missingKeys.has(titleField.name) ? styles.missingText : undefined}>{(heroField ? type.title : titleField.title).toLocaleUpperCase('sr')}{missingKeys.has(titleField.name) ? ' — NAZIV JE OBAVEZAN' : ''}</Eyebrow>
           <TextInput value={title} onChangeText={text => change(titleField.name, text)} editable={!busy} multiline={titleField.kind === 'text'}
-            placeholder={titleField.kind === 'text' ? 'Kratak opis objave' : 'Naziv'} placeholderTextColor={colors.inkFaint}
+            placeholder={titleField.kind === 'text' ? 'Kratak opis objave' : 'Naziv'} placeholderTextColor={missingKeys.has(titleField.name) ? colors.error : colors.inkFaint}
             style={[styles.title, titleField.kind === 'text' && styles.titleText]} accessibilityLabel={titleField.title} testID={`field-${titleField.name}`} />
         </View> : null}
 
@@ -208,9 +212,9 @@ export function ContentForm({ type, initial }: { type: ContentType; initial?: Co
           const open = !collapsible || detailsOpen
           return <View key={group.key} style={styles.group}>
             {collapsible ? <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setDetailsOpen(!open)} style={styles.groupToggle} testID="content-details">
-              <Text style={styles.groupHeading}>{groupTitles[group.key]}</Text><Icon name={open ? 'close' : 'plus'} size={20} color={colors.inkMuted} />
+              <Text style={[styles.groupHeading, !open && group.fields.some(field => missingKeys.has(field.name)) && styles.missingText]}>{groupTitles[group.key]}{!open && group.fields.some(field => missingKeys.has(field.name)) ? ' — nešto nedostaje' : ''}</Text><Icon name={open ? 'close' : 'plus'} size={20} color={colors.inkMuted} />
             </Pressable> : <Text style={styles.groupHeading}>{groupTitles[group.key]}</Text>}
-            {open ? <ContentFields fields={group.fields} value={values} onChange={change} disabled={busy} onBusyChange={setBusy}
+            {open ? <ContentFields fields={group.fields} value={values} onChange={change} disabled={busy} onBusyChange={setBusy} missing={missingKeys}
               renderPortableText={(field, value, onChange) => <PortableTextEditor field={field} value={value} onChange={onChange} disabled={busy} onBusyChange={setBusy} />} /> : null}
           </View>
         })}
@@ -226,10 +230,16 @@ export function ContentForm({ type, initial }: { type: ContentType; initial?: Co
       </View>
       {dirty || !version ? <PrimaryButton tone="outline" label="Sačuvaj" disabled={busy} loading={working === 'draft'} onPress={() => void run('draft')} testID="content-save-draft" style={styles.barButton} /> : null}
       {previewable ? <Pressable accessibilityRole="button" accessibilityLabel="Pregledaj na sajtu" disabled={busy} onPress={() => void run('preview')} style={[styles.eye, busy && styles.disabled]} testID="content-preview"><Icon name="eye" /></Pressable> : null}
-      <PrimaryButton label={canPublish ? 'Objavi' : 'Na sajtu'} disabled={!canPublish} loading={working === 'publish'} onPress={() => setConfirm('publish')} testID="content-publish" style={styles.barButton} />
+      <PrimaryButton label={canPublish ? 'Objavi' : 'Na sajtu'} disabled={!canPublish} loading={working === 'publish'} onPress={() => { if (missing.length) { setDetailsOpen(true); setMissingOpen(true) } else setConfirm('publish') }} testID="content-publish" style={styles.barButton} />
     </View> : null}
 
     <MenuSheet visible={menu} onClose={() => setMenu(false)} title={title || type.title} items={menuItems} />
+    <Sheet visible={missingOpen} onClose={() => setMissingOpen(false)} testID="missing-sheet">
+      <Text style={styles.sheetTitle}>Pre objave dopunite</Text>
+      {missing.map(item => <Text key={item.key} style={styles.missingItem}>• {item.label}</Text>)}
+      <Text style={styles.sheetText}>Polja su u formi označena crvenim slovima. Nacrt možete sačuvati i bez njih.</Text>
+      <PrimaryButton label="U redu" onPress={() => { setMissingOpen(false); scrollRef.current?.scrollTo({ y: 0, animated: true }) }} testID="missing-ok" />
+    </Sheet>
     <Sheet visible={confirm !== null} onClose={() => setConfirm(null)}>
       {confirm ? <>
         <Text style={styles.sheetTitle}>{confirmCopy[confirm][0]}</Text>
@@ -266,4 +276,7 @@ const styles = StyleSheet.create({
   sheetTitle: { ...textStyles.title, color: colors.ink },
   sheetText: { ...textStyles.body, fontSize: 15, color: colors.inkMuted },
   plain: { borderWidth: 0 },
+  missingText: { color: colors.error },
+  titleMissing: { borderColor: colors.error },
+  missingItem: { ...textStyles.body, color: colors.error },
 })
