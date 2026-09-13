@@ -39,6 +39,7 @@ export default function DashboardScreen() {
     {query.isError ? <Feedback title="Sekcije nisu osvežene" message="Proverite vezu i pokušajte ponovo." tone="error" actionLabel="Pokušaj ponovo" onAction={() => void query.refetch()} /> : null}
     {error ? <Feedback title="Sekcija nije otvorena" message={error} tone="error" /> : null}
     {query.data?.map(type => <Button key={type.name} label={type.title} variant="secondary" loading={opening === type.name} disabled={Boolean(opening)} onPress={() => void open(type)} testID={`dashboard-section-${type.name}`} />)}
+    <Button label="Poruke" variant="secondary" testID="dashboard-messages" onPress={() => router.push('/messages')} />
     <Button label="Odjavi se" onPress={() => void logout()} variant="quiet" testID="dashboard-logout" />
   </Screen>
 }

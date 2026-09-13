@@ -14,6 +14,11 @@ const artworks = [
   { _id: 'qa-published', title: 'QA — Svetlost u ateljeu', slug: 'qa-svetlost', status: 'published', hasDraft: false, hasPublished: true, revision: nextRevision(), year: 2025, featured: true, thumbnailUrl: null, dimensions: null, shortDescription: null, heroCandidate: false, medium: null, primaryImageAlt: null },
 ];
 const createdByClientId = new Map();
+// Sintetičke poruke za UI proveru — nisu stvarni upiti.
+const qaMessages = {
+  contact: [{ id: '00000000-0000-4000-8000-000000000001', name: 'QA Posetilac', email: 'qa.posetilac@example.com', message: 'Sintetička kontakt poruka za proveru ekrana.', created_at: '2026-09-13T10:00:00Z' }],
+  commission: [{ id: '00000000-0000-4000-8000-000000000002', name: 'QA Naručilac', email: 'qa.narucilac@example.com', format: '50 × 70 cm', technique: 'Ulje na platnu', budget: 'Po dogovoru', description: 'Sintetička porudžbina za proveru ekrana.', created_at: '2026-09-13T11:00:00Z' }],
+};
 
 function applyForm(artwork, input) {
   for (const key of ['title', 'year', 'dimensions', 'shortDescription', 'featured', 'heroCandidate']) {
@@ -56,6 +61,14 @@ http.createServer(async (req, res) => {
   if (url.pathname === '/api/admin/preview-link') return ok({ url: 'http://127.0.0.1:4317/qa-preview' });
 
   if (qaContent(req, url, input, ok, fail)) return;
+  if (parts[3] === 'messages' && (parts[4] === 'contact' || parts[4] === 'commission')) {
+    const rows = qaMessages[parts[4]];
+    if (parts[5]) {
+      const message = rows.find(row => row.id === decodeURIComponent(parts[5]));
+      return message ? ok({ message }) : fail(404, 'Poruka nije pronađena.');
+    }
+    return ok({ messages: rows, hasMore: false, page: 0 });
+  }
 
   if (url.pathname === '/api/admin/artworks') {
     if (req.method === 'GET') return ok({ artworks });
