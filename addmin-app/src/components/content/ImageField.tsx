@@ -22,14 +22,17 @@ function useImageUpload(onBusyChange: (busy: boolean) => void) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [pending, setPending] = useState<{ uri: string; done: (assetId: string) => void } | null>(null)
+  // null = priprema fotografije; broj = udeo poslat na server.
+  const [progress, setProgress] = useState<number | null>(null)
   async function send(uri: string, done: (assetId: string) => void) {
     if (!session) throw new Error('Prijavite se ponovo da biste poslali fotografiju.')
-    const { assetId } = await uploadArtworkImage(session, uri)
+    setProgress(0)
+    const { assetId } = await uploadArtworkImage(session, uri, fraction => setProgress(fraction))
     setPending(null)
     done(assetId)
   }
   async function run(task: () => Promise<void>) {
-    setError(''); setBusy(true); onBusyChange(true)
+    setError(''); setBusy(true); setProgress(null); onBusyChange(true)
     try { await task() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Fotografija nije poslata. Pokušajte ponovo.') }
     finally { setBusy(false); onBusyChange(false) }
   }
@@ -45,13 +48,21 @@ function useImageUpload(onBusyChange: (busy: boolean) => void) {
     })
   }
   const retry = pending ? () => void run(() => send(pending.uri, pending.done)) : undefined
-  return { busy, error, pick, retry }
+  return { busy, error, pick, retry, progress }
 }
 const withAsset = (previous: Image | undefined, assetId: string, key?: string): Image => ({
   ...(previous ?? {}), _type: 'image', asset: { ...record(previous?.asset), _type: 'reference', _ref: assetId }, ...(key ? { _key: key } : {}),
 })
-function UploadState({ busy, error, retry }: { busy: boolean; error: string; retry?: () => void }) {
-  if (busy) return <Text style={styles.muted}>Priprema i slanje fotografije…</Text>
+export function uploadLabel(progress: number | null) {
+  if (progress === null) return 'Pripremam fotografiju…'
+  if (progress >= 1) return 'Čuvam fotografiju…'
+  return `Šaljem fotografiju… ${Math.round(progress * 100)}%`
+}
+function UploadState({ busy, error, retry, progress }: { busy: boolean; error: string; retry?: () => void; progress: number | null }) {
+  if (busy) return <View style={styles.progress}>
+    <Text style={styles.muted}>{uploadLabel(progress)}</Text>
+    <View style={styles.track}><View style={[styles.bar, { width: `${Math.round((progress ?? 0.03) * 100)}%` }]} /></View>
+  </View>
   if (error) return <Banner title="Fotografija nije poslata" message={error} action={retry ? 'Pokušaj ponovo' : undefined} onAction={retry} />
   return null
 }
@@ -73,7 +84,7 @@ export function HeroImage({ field, value, onChange, disabled, onBusyChange }: { 
     {image?.asset ? <View style={styles.hero}>
       <Artwork uri={uri} style={StyleSheet.absoluteFill} label={typeof image.alt === 'string' ? image.alt : undefined} />
       <Pressable accessibilityRole="button" disabled={locked} onPress={() => setMenu(true)} style={styles.heroAction} testID={`field-${field.name}-replace`}>
-        <Text style={styles.heroActionText}>{upload.busy ? 'Slanje…' : 'Zameni fotografiju'}</Text>
+        <Text style={styles.heroActionText}>{upload.busy ? uploadLabel(upload.progress) : 'Zameni fotografiju'}</Text>
       </Pressable>
     </View> : <View style={[styles.hero, styles.heroEmpty]}>
       <Icon name="image" size={34} color={colors.inkFaint} />
@@ -85,7 +96,7 @@ export function HeroImage({ field, value, onChange, disabled, onBusyChange }: { 
     </View>}
     <View style={styles.heroBelow}>
       {image?.asset ? <AltInput value={image.alt} required={field.altRequired} disabled={locked} onChange={alt => onChange({ ...image, alt })} testID={`field-${field.name}-alt-0`} /> : null}
-      <UploadState busy={upload.busy} error={upload.error} retry={upload.retry} />
+      <UploadState busy={upload.busy} error={upload.error} retry={upload.retry} progress={upload.progress} />
     </View>
     <MenuSheet visible={menu} onClose={() => setMenu(false)} title="Fotografija" items={[
       { label: 'Izaberi iz galerije', icon: 'image', onPress: () => choose(false) },
@@ -117,7 +128,7 @@ function SingleImage({ field, value, onChange, disabled, onBusyChange }: { field
       </View>
     </View>}
     {image?.asset ? <AltInput value={image.alt} required={field.altRequired} disabled={locked} onChange={alt => onChange({ ...image, alt })} testID={`field-${field.name}-alt-0`} /> : null}
-    <UploadState busy={upload.busy} error={upload.error} retry={upload.retry} />
+    <UploadState busy={upload.busy} error={upload.error} retry={upload.retry} progress={upload.progress} />
     <MenuSheet visible={menu} onClose={() => setMenu(false)} title="Fotografija" items={[
       { label: 'Izaberi iz galerije', icon: 'image', onPress: () => choose(false) },
       { label: 'Fotografiši', icon: 'camera', onPress: () => choose(true) },
@@ -149,7 +160,7 @@ function GalleryField({ field, value, onChange, disabled, onBusyChange }: { fiel
         <Icon name="plus" color={colors.inkMuted} />
       </Pressable>
     </ScrollView>
-    <UploadState busy={upload.busy} error={upload.error} retry={upload.retry} />
+    <UploadState busy={upload.busy} error={upload.error} retry={upload.retry} progress={upload.progress} />
     <MenuSheet visible={adding} onClose={() => setAdding(false)} title="Dodaj fotografiju" items={[
       { label: 'Izaberi iz galerije', icon: 'image', onPress: () => void upload.pick(false, assetId => update([...images, withAsset(undefined, assetId, newContentKey())])) },
       { label: 'Fotografiši', icon: 'camera', onPress: () => void upload.pick(true, assetId => update([...images, withAsset(undefined, assetId, newContentKey())])), testID: `field-${field.name}-camera` },
@@ -174,6 +185,9 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   row: { flexDirection: 'row', gap: 10 },
   muted: { ...textStyles.caption, color: colors.inkMuted },
+  progress: { gap: 6 },
+  track: { height: 3, borderRadius: 999, backgroundColor: colors.canvasDeep, overflow: 'hidden' },
+  bar: { height: 3, backgroundColor: colors.gold },
   hero: { height: 400, backgroundColor: colors.canvasWarm },
   heroEmpty: { alignItems: 'center', justifyContent: 'center', gap: 12, paddingHorizontal: 20 },
   heroEmptyTitle: { ...textStyles.title, color: colors.ink },
