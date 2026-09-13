@@ -55,7 +55,8 @@ export default function ArtworkDetailView({ artwork, prev, next }: ArtworkDetail
             paddingTop: 'var(--nav-height, 4.5rem)',
           }}
         >
-          <Image
+          {/* Pregled nacrta može biti bez fotografije; objava je zahteva. */}
+          {img?.src ? <Image
             src={img.src}
             alt={img.alt}
             fill
@@ -64,7 +65,9 @@ export default function ArtworkDetailView({ artwork, prev, next }: ArtworkDetail
             sizes="(min-width: 768px) 58vw, 100vw"
             className="object-contain md:object-contain p-4 md:p-8 lg:p-12"
             style={{ objectPosition: 'center center' }}
-          />
+          /> : <div className="absolute inset-0 flex items-center justify-center p-8 text-center font-sans text-sm text-ink/40">
+            Fotografija još nije dodata.
+          </div>}
         </div>
 
         {/* RIGHT — metadata column: vertically centered on desktop, full-width below on mobile */}

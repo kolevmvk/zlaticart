@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${artwork.title} — Zlatica`,
     description: artwork.shortDescription ?? `${artwork.medium.title} by Zlatica`,
     openGraph: {
-      images: [{ url: artwork.primaryImage.src, width: artwork.primaryImage.width, height: artwork.primaryImage.height }],
+      images: artwork.primaryImage?.src ? [{ url: artwork.primaryImage.src, width: artwork.primaryImage.width, height: artwork.primaryImage.height }] : [],
     },
     alternates: { canonical: `/works/${artwork.slug}` },
   }
@@ -61,7 +61,8 @@ export default async function ArtworkDetailPage({ params }: Props) {
     '@context': 'https://schema.org',
     '@type': 'VisualArtwork',
     name: artwork.title,
-    image: artwork.primaryImage.src,
+    // Nacrt u pregledu može biti bez fotografije.
+    ...(artwork.primaryImage?.src ? { image: artwork.primaryImage.src } : {}),
     artform: artwork.medium.title,
     ...(artwork.year ? { dateCreated: String(artwork.year) } : {}),
     ...(artwork.dimensions ? { artworkSurface: artwork.dimensions } : {}),

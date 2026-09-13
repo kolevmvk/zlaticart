@@ -132,19 +132,51 @@ export async function recordSession(jti: string, expiresAtUnix: number) {
  * bez zapisa u bazi ne prolazi. Time stari tokeni izdati pre uvođenja store-a
  * prestaju da rade, što je namerno.
  */
+/**
+ * Potvrđena aktivna sesija pamti se kratko po instanci servera. Svaki admin
+ * zahtev proverava sesiju, a Supabase povremeno odgovori sa 504 — bez keša
+ * jedan zastoj obori čitav niz zahteva (viđeno na produkciji). Opoziv na istoj
+ * instanci briše keš odmah; na drugoj instanci važi najviše SESSION_CACHE_MS.
+ * Istek tokena se i dalje proverava u potpisu (auth.ts). Negativan ishod se ne pamti.
+ */
+export const SESSION_CACHE_MS = 30_000
+export const SESSION_RETRY_DELAYS_MS = [250, 750]
+const confirmedSessions = new Map<string, number>()
+
+/** Samo za testove. */
+export function resetSessionCacheForTest() {
+  confirmedSessions.clear()
+}
+
 export async function isSessionActive(jti: string) {
-  const { data, error } = await client()
-    .from('admin_sessions')
-    .select('jti, revoked_at, expires_at')
-    .eq('jti', jti)
-    .maybeSingle()
+  const confirmedAt = confirmedSessions.get(jti)
+  if (confirmedAt !== undefined && Date.now() - confirmedAt < SESSION_CACHE_MS) return true
 
-  if (error) {
-    throw storeFailure('isSessionActive', error)
+  for (let attempt = 0; ; attempt += 1) {
+    const { data, error, status } = await client()
+      .from('admin_sessions')
+      .select('jti, revoked_at, expires_at')
+      .eq('jti', jti)
+      .maybeSingle()
+
+    if (!error) {
+      const active = Boolean(data && !data.revoked_at && new Date(data.expires_at).getTime() > Date.now())
+      if (active) {
+        if (confirmedSessions.size >= 500) confirmedSessions.clear()
+        confirmedSessions.set(jti, Date.now())
+      } else {
+        confirmedSessions.delete(jti)
+      }
+      return active
+    }
+
+    // Čitanje je bezbedno ponoviti; trajna greška (npr. dozvole) odmah ide dalje.
+    const transient = !status || status >= 500
+    if (!transient || attempt >= SESSION_RETRY_DELAYS_MS.length) {
+      throw storeFailure('isSessionActive', error)
+    }
+    await new Promise(resolve => setTimeout(resolve, SESSION_RETRY_DELAYS_MS[attempt]))
   }
-
-  if (!data || data.revoked_at) return false
-  return new Date(data.expires_at).getTime() > Date.now()
 }
 
 /** Pauze pre ponovnih pokušaja opoziva (ms). */
@@ -157,6 +189,7 @@ export const REVOKE_RETRY_DELAYS_MS = [200, 600]
  * ostavlja token važećim. Na produkciji je viđen jednokratan 504.
  */
 export async function revokeSession(jti: string) {
+  confirmedSessions.delete(jti)
   for (let attempt = 0; ; attempt += 1) {
     const { error, status } = await client()
       .from('admin_sessions')
