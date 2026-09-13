@@ -30,6 +30,18 @@ export class AdminStoreError extends Error {
   }
 }
 
+/**
+ * Beleži grešku store-a u serverski log (Vercel) i vraća AdminStoreError.
+ * Samo kod/poruka PostgREST greške — bez ključeva, tokena i jti vrednosti.
+ */
+function storeFailure(operation: string, error: unknown) {
+  const detail = error && typeof error === 'object' ? error as Record<string, unknown> : {}
+  console.error(`[admin-store] ${operation} failed`, {
+    code: detail.code, message: detail.message, details: detail.details, hint: detail.hint,
+  })
+  return new AdminStoreError('store_unavailable', error)
+}
+
 function makeClient(url: string, key: string) {
   return createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -88,12 +100,12 @@ export async function registerLoginAttempt(attemptKey: string, succeeded: boolea
   })
 
   if (error) {
-    throw new AdminStoreError('store_unavailable', error)
+    throw storeFailure('registerLoginAttempt', error)
   }
 
   const row = Array.isArray(data) ? data[0] : data
   if (!row || typeof row.allowed !== 'boolean') {
-    throw new AdminStoreError('store_unavailable', data)
+    throw storeFailure('registerLoginAttempt', data)
   }
 
   return {
@@ -109,7 +121,7 @@ export async function recordSession(jti: string, expiresAtUnix: number) {
     .insert({ jti, expires_at: new Date(expiresAtUnix * 1000).toISOString() })
 
   if (error) {
-    throw new AdminStoreError('store_unavailable', error)
+    throw storeFailure('recordSession', error)
   }
 }
 
@@ -128,22 +140,36 @@ export async function isSessionActive(jti: string) {
     .maybeSingle()
 
   if (error) {
-    throw new AdminStoreError('store_unavailable', error)
+    throw storeFailure('isSessionActive', error)
   }
 
   if (!data || data.revoked_at) return false
   return new Date(data.expires_at).getTime() > Date.now()
 }
 
-/** Opoziva sesiju. Idempotentno — ponovni logout ne menja prvo vreme opoziva. */
-export async function revokeSession(jti: string) {
-  const { error } = await client()
-    .from('admin_sessions')
-    .update({ revoked_at: new Date().toISOString() })
-    .eq('jti', jti)
-    .is('revoked_at', null)
+/** Pauze pre ponovnih pokušaja opoziva (ms). */
+export const REVOKE_RETRY_DELAYS_MS = [200, 600]
 
-  if (error) {
-    throw new AdminStoreError('store_unavailable', error)
+/**
+ * Opoziva sesiju. Idempotentno — ponovni logout ne menja prvo vreme opoziva,
+ * pa je bezbedno ponoviti ga. Supabase klijent ponavlja samo čitanja; ovde se
+ * prolazna greška servera (5xx, prekid veze) ponavlja ručno, jer neuspeo opoziv
+ * ostavlja token važećim. Na produkciji je viđen jednokratan 504.
+ */
+export async function revokeSession(jti: string) {
+  for (let attempt = 0; ; attempt += 1) {
+    const { error, status } = await client()
+      .from('admin_sessions')
+      .update({ revoked_at: new Date().toISOString() })
+      .eq('jti', jti)
+      .is('revoked_at', null)
+
+    if (!error) return
+
+    const transient = !status || status >= 500
+    if (!transient || attempt >= REVOKE_RETRY_DELAYS_MS.length) {
+      throw storeFailure('revokeSession', error)
+    }
+    await new Promise(resolve => setTimeout(resolve, REVOKE_RETRY_DELAYS_MS[attempt]))
   }
 }
