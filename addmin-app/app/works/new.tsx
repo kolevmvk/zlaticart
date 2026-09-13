@@ -3,15 +3,17 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 import {
-  AdminApiError,
+  type ArtworkFormInput,
   type ArtworkStatus,
   createArtwork,
   fetchMediums,
-  uploadArtworkImage,
+  newClientArtworkId,
+  updateArtwork,
 } from '@/api/admin'
 import { useAuth } from '@/auth/AuthProvider'
 import { ArtworkForm, type ArtworkFormValues, type PendingImage } from '@/components/ArtworkForm'
 import { colors } from '@/theme/colors'
+import { saveErrorMessage, useImageUpload } from '@/hooks/useImageUpload'
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges'
 
 const EMPTY_VALUES: ArtworkFormValues = {
@@ -34,6 +36,9 @@ export default function NewArtworkScreen() {
   const [values, setValues] = useState(EMPTY_VALUES)
   const [image, setImage] = useState(EMPTY_IMAGE)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  // Jedan ID za ovu formu: svaki ponovni pokušaj cilja isti rad.
+  const [clientId] = useState(newClientArtworkId)
+  const uploadImage = useImageUpload()
 
   const mediumsQuery = useQuery({
     queryKey: ['admin-mediums'],
@@ -46,11 +51,10 @@ export default function NewArtworkScreen() {
       let primaryImage: { assetId: string; alt: string } | null = null
 
       if (image.localUri) {
-        const uploaded = await uploadArtworkImage(session!, image.localUri, 'artwork.jpg')
-        primaryImage = { assetId: uploaded.assetId, alt: image.alt.trim() }
+        primaryImage = { assetId: await uploadImage(session!, image.localUri), alt: image.alt.trim() }
       }
 
-      await createArtwork(session!, {
+      const input: ArtworkFormInput = {
         title: values.title.trim(),
         year: values.year ? Number(values.year) : null,
         dimensions: values.dimensions.trim() || null,
@@ -60,12 +64,16 @@ export default function NewArtworkScreen() {
         heroCandidate: values.heroCandidate,
         mediumId: values.mediumId,
         primaryImage,
-      })
+      }
+
+      const created = await createArtwork(session!, input, clientId)
+      if (created.existed) {
+        // Prethodni pokušaj je stigao do servera; primeni trenutni unos na taj rad.
+        await updateArtwork(session!, created._id, input)
+      }
     },
     onError: (error) => {
-      setSubmitError(
-        error instanceof AdminApiError ? error.message : 'Cuvanje trenutno ne radi. Proverite vezu.',
-      )
+      setSubmitError(saveErrorMessage(error, { creating: true }))
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-artworks'] })

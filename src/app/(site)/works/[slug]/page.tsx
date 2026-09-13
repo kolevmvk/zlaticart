@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
-import { draftMode } from 'next/headers'
+import { cookies, draftMode } from 'next/headers'
 import { notFound } from 'next/navigation'
+import { hasArtworkPreviewAccess } from '@/lib/admin-api/auth'
+import { PREVIEW_COOKIE } from '@/lib/admin-api/preview-cookie'
 import Navigation from '@/components/nav/Navigation'
 import SiteFooter from '@/components/nav/SiteFooter'
 import ArtworkDetailView from '@/components/works/ArtworkDetailView'
@@ -33,12 +35,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ArtworkDetailPage({ params }: Props) {
   const { slug } = await params
   const draft = await draftMode()
-  // Faza 4 (addmin-app Pregled pre objave): u draft modu se preskace Next-ov
-  // static/CDN kes i ide se direktno na Sanity (useCdn:false) da izmena
-  // napravljena sekund ranije u admin panelu odmah bude vidljiva ovde — vidi
-  // zlaticart/addmin-app/docs/04-ARCHITECTURE.md.
+  // Faza 4 (addmin-app Pregled pre objave): u pregledu se preskace Next-ov
+  // static/CDN kes i ide se direktno na Sanity (useCdn:false), bez filtera
+  // objave — vidi zlaticart/addmin-app/docs/04-ARCHITECTURE.md. Sam draft mode
+  // nije dovoljan: nacrt se otkriva samo uz preview cookie za OVAJ rad i
+  // aktivnu admin sesiju. cookies() se čita tek u draft modu, da stranica
+  // ostane statička za posetioce.
+  const previewing = draft.isEnabled && await hasArtworkPreviewAccess(
+    (await cookies()).get(PREVIEW_COOKIE)?.value,
+    slug,
+  )
   const [artwork, allArtworks, settings] = await Promise.all([
-    draft.isEnabled ? sanityGetArtworkBySlugFresh(slug) : getArtworkBySlug(slug),
+    previewing ? sanityGetArtworkBySlugFresh(slug) : getArtworkBySlug(slug),
     getAllArtworks(),
     getSiteSettings(),
   ])
@@ -68,7 +76,7 @@ export default async function ArtworkDetailPage({ params }: Props) {
       />
       <Navigation theme="light" />
       <main className="min-h-svh bg-canvas">
-        {draft.isEnabled && (
+        {previewing && (
           <div className="sticky top-0 z-50 flex items-center justify-center gap-3 bg-ink px-4 py-2 text-center text-sm font-medium text-canvas">
             <span>PREGLED — nije još objavljeno</span>
             <a href="/api/preview/disable" className="underline underline-offset-2">

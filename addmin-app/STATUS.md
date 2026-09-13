@@ -118,3 +118,10 @@ Sledeće: implementirati i proveriti P3/P5, zatim proveriti server, postaviti po
 Urađeno (uloga Auth/Security Engineer): odbačeni tokeni sa dodatnim segmentima, pogrešnim zaglavljem, nedostajućim/nebrojčanim vremenima, budućim izdavanjem i trajanjem iznad 24h. Dodata izolovana regresiona provera; postojeći CommonJS test harness usklađen sa lint pravilima.
 Provereno: svih 10 serverskih testova PASS, root lint i typecheck PASS. Nema promene produkcionih podataka niti deploya. Prethodni mobilni presek 31b1192 uspešno pushovan na docs/admin-live-plan.
 Sledeće: deljeni limiter pokušaja PIN-a, serverski opoziv sesije i namenski preview token; zatim P3 i produkciona integracija. P5 ostaje U TOKU.
+
+## 2026-09-13 — P5: preview token, istek sesije, mreža i upload
+Urađeno: Namenski kratkotrajni preview token ograničen na jedan rad i vezan za sesiju; nacrt se na sajtu prikazuje samo uz httpOnly preview cookie i aktivnu sesiju. Javni upit rada po slug-u sada vraća samo objavljene radove (ranije su nacrti/arhiva bili javno dostupni po URL-u). Mobilni: timeout i razumljive mrežne greške, ponovna prijava preko otvorenog ekrana bez gubitka forme, priprema fotografije pre slanja (novi native modul expo-image-manipulator), create sa clientId bez duplikata, keš poslate fotografije. Server: limit 4MB i provera formata po bajtovima.
+Provereno: 26/26 serverskih testova (7 novih za preview, 3 za upload), root typecheck/lint, `npm run build` sa javnom Sanity konfiguracijom (lokalno nema .env.local), mobile typecheck/lint (Node 22), lokalni smoke: preview bez/lažnog tokena 401, validan potpis bez store-a 503, preview-link bez auth 401.
+Nije provereno: Android (potreban novi build zbog native modula), stvaran Supabase store (migracija nije primenjena), stvaran Sanity create sa postojećim ID-jem (409 grana).
+Sledeće: P3 pravi Sanity nacrti; zatim primena migracije, produkcione tajne i P6.
+ČEKA VLASNIKA: Supabase secret key i Sanity write token u Vercel, odobrenje primene migracije na produkcioni Supabase.

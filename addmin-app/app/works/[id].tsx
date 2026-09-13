@@ -12,12 +12,12 @@ import {
   fetchMediums,
   getArtworkPreviewUrl,
   updateArtwork,
-  uploadArtworkImage,
 } from '@/api/admin'
 import { useAuth } from '@/auth/AuthProvider'
 import type { AdminSession } from '@/auth/session'
 import { ArtworkForm, type ArtworkFormValues, type PendingImage } from '@/components/ArtworkForm'
 import { colors } from '@/theme/colors'
+import { saveErrorMessage, useImageUpload } from '@/hooks/useImageUpload'
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges'
 
 export default function EditArtworkScreen() {
@@ -56,7 +56,9 @@ export default function EditArtworkScreen() {
     )
   }
 
-  if (artworkQuery.isError || !artworkQuery.data) {
+  // Samo kad podataka NEMA. Neuspelo osvežavanje (npr. 401 posle isteka
+  // sesije) ne sme da zameni otvorenu formu ekranom greške i obriše unos.
+  if (!artworkQuery.data) {
     const message =
       artworkQuery.error instanceof AdminApiError
         ? artworkQuery.error.message
@@ -124,6 +126,7 @@ function EditForm({
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [previewLoading, setPreviewLoading] = useState(false)
   const [previewError, setPreviewError] = useState<string | null>(null)
+  const uploadImage = useImageUpload()
 
   async function openPreview() {
     if (!artwork.slug || dirty || mutation.isPending) return
@@ -146,8 +149,7 @@ function EditForm({
       let primaryImage: { assetId: string; alt: string } | null = null
 
       if (image.localUri) {
-        const uploaded = await uploadArtworkImage(session, image.localUri, 'artwork.jpg')
-        primaryImage = { assetId: uploaded.assetId, alt: image.alt.trim() }
+        primaryImage = { assetId: await uploadImage(session, image.localUri), alt: image.alt.trim() }
       }
 
       await updateArtwork(session, id, {
@@ -164,9 +166,7 @@ function EditForm({
       })
     },
     onError: (error) => {
-      setSubmitError(
-        error instanceof AdminApiError ? error.message : 'Cuvanje trenutno ne radi. Proverite vezu.',
-      )
+      setSubmitError(saveErrorMessage(error, { creating: false }))
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-artworks'] })

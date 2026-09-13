@@ -29,7 +29,7 @@ Ovo je operativna mapa prihvaćenog plana. Raniji ID-jevi ostaju za praćenje po
 | P2 / API + koordinator | U TOKU | Tačno čuvanje Radova (R1–R3) | Alt-only → null/omitted semantika → publish validacija → integracija | Testovi mutacija i ponovno učitavanje; proizvod: API i mobilni ugovor |
 | P3 / API + UI | TODO | Nacrti bez promene javne verzije (N1–N3) | Sanity draft → sačuvaj pre pregleda → objavi | Novi/postojeći rad, bez duplikata; proizvod: ceo preview/publish tok |
 | P4 / UI + koordinator | U TOKU | Početna, lista i forma (UI2/R4/R5) | Dizajn → named status actions → dirty guard → API integracija | Tastatura, Back, prazno/greška/uspeh; proizvod: referentni ekrani |
-| P5 / API + UI | U TOKU | Sesije i mrežna pouzdanost (A1–A5) | Lockout/opoziv → istek → timeout/retry → upload | Neuspešni tokovi bez tihog gubitka/duplikata; proizvod: robusna aplikacija |
+| P5 / API + UI | U TOKU | Sesije i mrežna pouzdanost (A1–A5) | Lockout/opoziv → istek → timeout/retry → upload | Neuspešni tokovi bez tihog gubitka/duplikata; proizvod: robusna aplikacija. Kod i izolovani testovi gotovi 2026-09-13; čeka primenu migracije, produkcione tajne i Android proveru |
 | P6 / QA + koordinator | TODO | Android isporuka A (D1–D5) | Produkcioni API → potpis → APK → instalacija/nadogradnja | Fizički telefon bez Metro, Wi-Fi i mobilni internet; proizvod: APK Radovi i uputstvo |
 | P7 / UI + CMS | TODO | Dnevnik (C1) | Lista/editor/slike/reference → nacrt/pregled/objava | Persistencija formatiranja i web prikaz; proizvod: modul Dnevnik |
 | P8 / UI + CMS | TODO | Izložbe (C2) | Lista/status/datum → forma/multi-upload → objava | Redosled slika i prekid uploada; proizvod: modul Izložbe |
@@ -75,11 +75,11 @@ Prihvatanje: proveriti novi rad i izmenu već objavljenog rada kroz nacrt → pr
 
 | ID | Status | Zadatak | Kriterijum / dokaz |
 |---|---|---|---|
-| A1 | TODO | Ograničenje pokušaja PIN-a i privremena blokada | Zaštita proverena i u serverskom okruženju sa više instanci |
-| A2 | TODO | Obrada isteka sesije i ponovna prijava uz očuvanje unosa | Istek tokom uređivanja ne gubi formu |
-| A3 | TODO | Serverski opoziv sesije pri odjavi | Opozvani token više ne daje pristup |
-| A4 | TODO | Timeout zahteva i razumljive mrežne greške | Prekid veze ne ostavlja beskonačan indikator učitavanja |
-| A5 | TODO | Upload: veličina/format, dozvole, prekid i ponovni pokušaj | Velike slike i odbijena kamera obrađeni; retry ne duplira rad |
+| A1 | U TOKU | Ograničenje pokušaja PIN-a i privremena blokada | Zaštita proverena i u serverskom okruženju sa više instanci. Kod + testovi (2a1ba43); migracija nije primenjena na Supabase |
+| A2 | U TOKU | Obrada isteka sesije i ponovna prijava uz očuvanje unosa | Istek tokom uređivanja ne gubi formu. Implementirano: 401 → prozor za PIN preko otvorenog ekrana; nije provereno na Androidu |
+| A3 | U TOKU | Serverski opoziv sesije pri odjavi | Opozvani token više ne daje pristup. Kod + testovi (2a1ba43), opoziv gasi i preview; nije provereno na produkcionom store-u |
+| A4 | U TOKU | Timeout zahteva i razumljive mrežne greške | Prekid veze ne ostavlja beskonačan indikator učitavanja. Implementirano: 20s/120s timeout, poruke po tipu greške, retry upita samo za mrežu/5xx; nije provereno na Androidu |
+| A5 | U TOKU | Upload: veličina/format, dozvole, prekid i ponovni pokušaj | Velike slike i odbijena kamera obrađeni; retry ne duplira rad. Implementirano: priprema ≤3000px/≤3.8MB, server 4MB + provera bajtova, clientId za create, keš uploada; nije provereno na Androidu |
 
 Prihvatanje: problemi sa sesijom i mrežom ne uzrokuju tihi gubitak unosa ili zaglavljenu aplikaciju.
 
@@ -134,6 +134,8 @@ UI1 može napredovati nezavisno od serverskih ispravki. UI2 i R1/R2/R4 dele ekra
 
 ## Tačan sledeći korak
 
+**Presek 2026-09-13:** P5 kod završen (preview token, istek sesije, mreža, upload) sa izolovanim testovima; P5 ostaje U TOKU do primene migracije `admin_auth_store`, postavljanja produkcionih tajni i Android provere. Sledeće: P3 (odvojeni Sanity nacrti), zatim P6. Novi native modul `expo-image-manipulator` zahteva novi APK build.
+
 **Presek 2026-09-11:** UI komponente integrisane u dashboard, listu, login i formu. Napravljen samostalan internalTest APK; Android 35 fixture testovi login/Back/save/restart prolaze. Detalji i ograničenja u `12-ANDROID_TEST.md`. P1/P4 ostaju U TOKU zbog preostalog QA, P2 nije potvrđen na stvarnom CMS-u. Vlasnik je odobrio nastavak ka stvarnim podacima na produkcionom serveru. Sledeće: P3 (odvojeni Sanity nacrti) i P5 (zaštita prijave i opoziv sesije), zatim serverska konfiguracija i novi APK sa HTTPS API adresom. Test APK sada koristi loopback API preko adb reverse, ne javnu produkciju.
 
 ## Dnevnik odluka i izmena
@@ -148,3 +150,6 @@ Za naredni zapis: datum | agent | status | ID zadatka, promena, razlog, testovi,
 
 ### 2026-09-12 — P5, validacija tokena
 REALIZOVANO: stroga provera tri JWT segmenta, HS256/JWT zaglavlja, numeričkih vremena, budućeg izdavanja, isteka i maksimalnog trajanja 24h. Regresioni test pokriva neispravne i izmenjene tokene; ukupno 10 serverskih testova, root typecheck i lint prolaze. Ovo ne završava P5: limiter prijave, opoziv sesije i namenski preview token tek slede. UI/Android presek poslat u commitu 31b1192.
+
+### 2026-09-13 — P5, preview token, istek sesije, mreža i upload (Claude)
+U TOKU: (1) Namenski preview token (jedan rad, 5 min link / 30 min pregled, izveden ključ, vezan za sesiju) umesto sesijskog tokena u URL-u; `/api/preview` ga menja za httpOnly cookie, a stranica rada otkriva nacrt samo uz taj cookie i aktivnu sesiju (fail closed). (2) Ispravljen propust: javni `sanityGetArtworkBySlug` nije filtrirao `status == "published"`, pa su nacrti/arhiva bili javno dostupni po slug-u. (3) Mobilni: timeout 20s/120s, tipizovane mrežne greške, 401 → ponovna prijava preko otvorenog ekrana bez gubitka forme, forma se ne menja ekranom greške pri neuspelom osvežavanju. (4) Upload: priprema fotografije (≤3000px, ≤3.8MB JPEG, izbor u punom kvalitetu), server 4MB (ispod Vercel 4.5MB) i provera JPEG/PNG/WebP po bajtovima; create sa `clientId` ne duplira rad pri retry-u, poslata fotografija se ne šalje ponovo. Provere: 26/26 serverskih testova, root typecheck/lint/build (sa javnom Sanity konfiguracijom), mobile typecheck/lint, lokalni `next start` smoke za 401/503 preview putanje. Nije provereno: Android uređaj, stvaran Supabase store, stvaran Sanity create/409.

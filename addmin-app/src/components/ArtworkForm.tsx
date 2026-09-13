@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { AdminMediumOption, ArtworkStatus } from '@/api/admin'
+import { ImagePreparationError, prepareUploadImage } from '@/api/image'
 import { Button, Feedback, Field } from '@/components/ui'
 import { colors } from '@/theme/colors'
 import { shape, spacing } from '@/theme/spacing'
@@ -47,14 +48,19 @@ export function ArtworkForm({ values, onChange, image, onImageChange, mediums, m
           return
         }
       }
+      // Pun kvalitet pri izboru; smanjenje za slanje radi prepareUploadImage,
+      // blaže od fiksne kompresije koja kvari boje i detalje slike.
       const result = camera
-        ? await ImagePicker.launchCameraAsync({ quality: 0.6, allowsEditing: true })
-        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.6, allowsEditing: true })
+        ? await ImagePicker.launchCameraAsync({ quality: 1, allowsEditing: true })
+        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 1, allowsEditing: true })
       if (result.canceled || !result.assets[0]) return
+      const prepared = await prepareUploadImage(result.assets[0])
       setImageFailed(false)
-      onImageChange({ ...image, localUri: result.assets[0].uri })
-    } catch {
-      setPickerError('Fotografija nije otvorena. Pokušajte ponovo ili izaberite drugu fotografiju.')
+      onImageChange({ ...image, localUri: prepared.uri })
+    } catch (error) {
+      setPickerError(error instanceof ImagePreparationError
+        ? `${error.message} Izaberite drugu fotografiju.`
+        : 'Fotografija nije otvorena. Pokušajte ponovo ili izaberite drugu fotografiju.')
     } finally { setPicking(false) }
   }
   return <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -75,7 +81,7 @@ export function ArtworkForm({ values, onChange, image, onImageChange, mediums, m
           <View style={styles.flex}><Button label="Kamera" testID="artwork-camera" variant="secondary" disabled={busy} onPress={() => pickImage(true)} /></View>
           <View style={styles.flex}><Button label="Galerija" testID="artwork-gallery" variant="secondary" disabled={busy} onPress={() => pickImage(false)} /></View>
         </View>
-        {picking ? <Feedback title="Otvaranje fotografije…" tone="loading" /> : null}
+        {picking ? <Feedback title="Priprema fotografije…" tone="loading" /> : null}
         {pickerError ? <Feedback title="Fotografija nije dodata" message={pickerError} tone="error" /> : null}
         {image.localUri ? <Button label="Odustani od nove fotografije" variant="quiet" disabled={busy} onPress={() => { setImageFailed(false); onImageChange({ ...image, localUri: null }) }} /> : null}
         {hasImage ? <Field label="Opis fotografije" testID="artwork-alt" value={image.alt} onChangeText={alt => onImageChange({ ...image, alt })} placeholder="Šta je prikazano na slici?" hint="Kratak opis za osobe koje koriste čitač ekrana. Obavezan uz novu fotografiju i za objavu." editable={!busy} multiline /> : null}

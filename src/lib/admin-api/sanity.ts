@@ -101,9 +101,19 @@ function slugify(title: string) {
     .slice(0, 96)
 }
 
-export async function adminCreateArtwork(input: ArtworkFormInput) {
-  const doc: { _type: 'artwork'; [key: string]: unknown } = {
+/**
+ * ID novog rada koji bira klijent, stabilan kroz ponovne pokušaje iste forme.
+ * Ako je odgovor na prvi create izgubljen (timeout), ponovljeni zahtev ne pravi
+ * drugi rad nego dobija `existed: true` i klijent šalje izmenu postojećeg.
+ */
+export function isClientArtworkId(value: unknown): value is string {
+  return typeof value === 'string' && /^artwork-[A-Za-z0-9]{16,48}$/.test(value)
+}
+
+export async function adminCreateArtwork(input: ArtworkFormInput, clientId?: string) {
+  const doc: { _type: 'artwork'; _id?: string; [key: string]: unknown } = {
     _type: 'artwork',
+    ...(clientId ? { _id: clientId } : {}),
     title: input.title,
     slug: { _type: 'slug', current: `${slugify(input.title)}-${Date.now().toString(36)}` },
     status: input.status,
@@ -127,7 +137,23 @@ export async function adminCreateArtwork(input: ArtworkFormInput) {
   }
 
   assertPublishableArtwork(doc)
-  return adminSanityClient.create(doc)
+  try {
+    const created = await adminSanityClient.create(doc)
+    return { _id: created._id, existed: false }
+  } catch (error) {
+    if (!clientId || !isConflict(error)) throw error
+    // Isti ID već postoji: ponovljen zahtev iste forme. Potvrdi da je to rad,
+    // a ne slučajni sudar sa drugim tipom dokumenta.
+    const existing = await adminSanityClient.fetch<{ _type: string } | null>(
+      '*[_id == $id][0]{_type}', { id: clientId }, { perspective: 'raw' }
+    )
+    if (existing?._type !== 'artwork') throw error
+    return { _id: clientId, existed: true }
+  }
+}
+
+function isConflict(error: unknown) {
+  return Boolean(error && typeof error === 'object' && 'statusCode' in error && error.statusCode === 409)
 }
 
 async function readArtworkForMutation(id: string): Promise<ArtworkDocument> {
@@ -157,7 +183,7 @@ async function commitArtworkPatch<T>(commit: () => Promise<T>): Promise<T> {
   try {
     return await commit()
   } catch (error) {
-    if (error && typeof error === 'object' && 'statusCode' in error && error.statusCode === 409) {
+    if (isConflict(error)) {
       throw new ArtworkMutationError('Artwork changed. Reload it before saving again.', 409)
     }
     throw error

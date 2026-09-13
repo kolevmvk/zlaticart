@@ -84,7 +84,7 @@ export function verifyAdminSessionToken(token: string, now = currentUnixSeconds(
   if (
     !tokenHeader || tokenHeader.alg !== 'HS256' || tokenHeader.typ !== 'JWT' ||
     !claims || claims.sub !== TOKEN_SUBJECT ||
-    typeof claims.jti !== 'string' || !/^[A-Za-z0-9_-]{16,64}$/.test(claims.jti) ||
+    !isJti(claims.jti) ||
     !Number.isSafeInteger(claims.iat) || !Number.isSafeInteger(claims.exp) ||
     claims.iat > now || claims.exp <= now || claims.exp <= claims.iat ||
     claims.exp - claims.iat > SESSION_TTL_SECONDS
@@ -93,6 +93,125 @@ export function verifyAdminSessionToken(token: string, now = currentUnixSeconds(
   }
 
   return claims
+}
+
+/**
+ * Namenski preview token — NE sesijski token.
+ *
+ * Sesijski token daje pun admin pristup 24h; da ide u URL (istorija browsera,
+ * logovi, Referer), curenje bi značilo preuzimanje admina. Preview token može
+ * samo da prikaže nacrt JEDNOG rada, kratko traje i vezan je za sesiju koja ga
+ * je izdala (logout ga poništava).
+ *
+ * Potpisuje se ključem izvedenim iz ADMIN_SESSION_SECRET sa drugim kontekstom,
+ * pa se sesijski token ne može podmetnuti kao preview token niti obrnuto.
+ */
+const PREVIEW_SUBJECT = 'zlaticart-preview'
+/** Rok za otvaranje linka iz aplikacije. */
+export const PREVIEW_LINK_TTL_SECONDS = 5 * 60
+/** Koliko dugo browser sme da gleda nacrt posle otvaranja linka. */
+export const PREVIEW_VIEW_TTL_SECONDS = 30 * 60
+const PREVIEW_MAX_TTL_SECONDS = PREVIEW_VIEW_TTL_SECONDS
+
+export type PreviewScope = {
+  type: 'artwork'
+  slug: string
+  /** jti sesije koja je izdala pregled. */
+  sid: string
+}
+
+type PreviewClaims = PreviewScope & {
+  sub: typeof PREVIEW_SUBJECT
+  iat: number
+  exp: number
+}
+
+export function isPreviewSlug(value: unknown): value is string {
+  // Slug iz Studija nije uvek ASCII; dovoljno je da je jedan segment putanje.
+  return typeof value === 'string' && /^[^\s/\\?#%]{1,200}$/u.test(value)
+}
+
+export function createPreviewToken(scope: PreviewScope, ttlSeconds: number, now = currentUnixSeconds()) {
+  if (scope.type !== 'artwork' || !isPreviewSlug(scope.slug) || !isJti(scope.sid)) {
+    throw new AdminAuthError('invalid_token')
+  }
+  if (!Number.isSafeInteger(ttlSeconds) || ttlSeconds <= 0 || ttlSeconds > PREVIEW_MAX_TTL_SECONDS) {
+    throw new Error('Preview token TTL is out of range')
+  }
+
+  const claims: PreviewClaims = {
+    sub: PREVIEW_SUBJECT,
+    type: scope.type,
+    slug: scope.slug,
+    sid: scope.sid,
+    iat: now,
+    exp: now + ttlSeconds,
+  }
+  const header = base64UrlEncodeJson({ alg: 'HS256', typ: 'JWT' })
+  const payload = base64UrlEncodeJson(claims)
+  return `${header}.${payload}.${sign(`${header}.${payload}`, readPreviewKey())}`
+}
+
+export function verifyPreviewToken(token: string, now = currentUnixSeconds()): PreviewClaims {
+  const key = readPreviewKey()
+  const parts = token.split('.')
+  const [header, payload, signature] = parts
+
+  if (parts.length !== 3 || parts.some(part => !/^[A-Za-z0-9_-]+$/.test(part))) {
+    throw new AdminAuthError('invalid_token')
+  }
+  if (!safeEqual(signature, sign(`${header}.${payload}`, key))) {
+    throw new AdminAuthError('invalid_token')
+  }
+
+  const tokenHeader = parseJsonPart<Record<string, unknown>>(header)
+  const claims = parseJsonPart<PreviewClaims>(payload)
+  if (
+    !tokenHeader || tokenHeader.alg !== 'HS256' || tokenHeader.typ !== 'JWT' ||
+    !claims || claims.sub !== PREVIEW_SUBJECT || claims.type !== 'artwork' ||
+    !isPreviewSlug(claims.slug) || !isJti(claims.sid) ||
+    !Number.isSafeInteger(claims.iat) || !Number.isSafeInteger(claims.exp) ||
+    claims.iat > now || claims.exp <= now || claims.exp <= claims.iat ||
+    claims.exp - claims.iat > PREVIEW_MAX_TTL_SECONDS
+  ) {
+    throw new AdminAuthError('invalid_token')
+  }
+
+  return claims
+}
+
+/**
+ * Pun preview token: potpis + rok + da sesija koja ga je izdala nije opozvana.
+ * FAIL CLOSED kao i sesijska provera.
+ */
+export async function verifyPreviewTokenWithSession(token: string, now = currentUnixSeconds()) {
+  const claims = verifyPreviewToken(token, now)
+
+  let active: boolean
+  try {
+    active = await isSessionActive(claims.sid)
+  } catch {
+    throw new AdminAuthError('store_unavailable')
+  }
+  if (!active) {
+    throw new AdminAuthError('session_revoked')
+  }
+
+  return claims
+}
+
+/**
+ * Da li preview token (iz cookie-ja) dozvoljava čitanje nacrta baš ovog rada.
+ * Nikad ne baca — svaka greška znači "nema pristupa", pa se prikazuje javna verzija.
+ */
+export async function hasArtworkPreviewAccess(token: string | undefined, slug: string) {
+  if (!token) return false
+  try {
+    const claims = await verifyPreviewTokenWithSession(token)
+    return claims.slug === slug
+  } catch {
+    return false
+  }
 }
 
 export function getBearerToken(request: Request) {
@@ -198,7 +317,15 @@ function readSessionSecret() {
   return secret
 }
 
-function sign(value: string, secret: string) {
+function readPreviewKey() {
+  return createHmac('sha256', readSessionSecret()).update('zlaticart-preview-token-v1').digest()
+}
+
+function isJti(value: unknown): value is string {
+  return typeof value === 'string' && /^[A-Za-z0-9_-]{16,64}$/.test(value)
+}
+
+function sign(value: string, secret: string | Buffer) {
   return createHmac('sha256', secret).update(value).digest('base64url')
 }
 
