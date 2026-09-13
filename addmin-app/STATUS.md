@@ -129,3 +129,6 @@ Sledeće: P3 pravi Sanity nacrti; zatim primena migracije, produkcione tajne i P
 ## 2026-09-13 — Produkcione tajne i ispravka migracije admin_auth_store (Claude)
 Vlasnik postavio 4 serverske tajne na Vercel Production. U migraciji `admin_auth_store` dodati nedostajući GRANT-ovi za `service_role` (bez njih prijava na produkciji ne radi). Migracija još nije primenjena; lokalna SQL provera nije moguća (Docker ne radi).
 Migracija primenjena na produkcioni Supabase i proverena upitom privilegija (service_role: insert/execute true; anon: false). Predlog API domena: `https://www.zlaticart.com` (Vercel, admin ruta odgovara 401).
+
+## 2026-09-13 — P3 Sanity nacrti, kod i izolovani testovi (Claude)
+Čuvanje ide u `drafts.<id>`, objava je atomska transakcija sa revizijama, lista spaja verzije, pregled čita nacrt preko serverskog klijenta, javni klijent zaključan na `perspective: published`. Mobilni tok Sačuvaj nacrt / Pregledaj / Objavi. 30/30 serverskih testova, root typecheck/lint/build, mobile typecheck/lint. Čeka deploy odobrenje, proveru na stvarnom datasetu (javni dataset trenutno nema objavljenih radova) i Android test.

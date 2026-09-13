@@ -17,7 +17,7 @@ export default function WorksScreen() {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<ArtworkStatus | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
-  const savedNotice = saved === 'published' ? 'Rad je objavljen.' : saved === 'draft' ? 'Nacrt je sačuvan.' : null
+  const savedNotice = saved === 'published' ? 'Rad je objavljen na sajtu.' : saved === 'draft' ? 'Nacrt je sačuvan. Sajt nije promenjen.' : null
   const query = useQuery({ queryKey: ['admin-artworks'], queryFn: () => fetchArtworks(session!), enabled: Boolean(session) })
   const { refetch } = query
   useFocusEffect(useCallback(() => { if (session) void refetch() }, [session, refetch]))
@@ -28,10 +28,18 @@ export default function WorksScreen() {
   })
   function chooseStatus(artwork: AdminArtworkListItem) {
     if (mutation.isPending) return
+    // Objava je ponuđena i objavljenom radu kad ima sačuvane izmene u nacrtu.
+    const options = (Object.keys(statusLabels) as ArtworkStatus[]).filter((status) => status !== artwork.status || (status === 'published' && artwork.hasDraft))
     Alert.alert('Promeni status rada', artwork.title, [
-      ...(Object.keys(statusLabels) as ArtworkStatus[]).filter((status) => status !== artwork.status).map((status) => ({
-        text: status === 'published' ? 'Objavi rad' : status === 'archived' ? 'Arhiviraj rad' : 'Vrati u nacrt',
-        onPress: () => Alert.alert(status === 'published' ? 'Objavi na sajtu?' : 'Sačuvaj promenu statusa?', status === 'published' ? 'Rad će biti javno dostupan.' : 'Ova promena može ukloniti rad sa javnog sajta.', [{ text: 'Otkaži', style: 'cancel' }, { text: 'Potvrdi', onPress: () => mutation.mutate({ artwork, status }) }]),
+      ...options.map((status) => ({
+        text: status === 'published' ? (artwork.status === 'published' ? 'Objavi izmene' : 'Objavi rad') : status === 'archived' ? 'Arhiviraj rad' : 'Skloni sa sajta',
+        onPress: () => Alert.alert(
+          status === 'published' ? 'Objavi na sajtu?' : 'Skloni rad sa sajta?',
+          status === 'published'
+            ? artwork.hasDraft ? 'Na sajtu će se pojaviti i sve sačuvane izmene iz nacrta.' : 'Rad će biti javno dostupan.'
+            : artwork.hasDraft ? 'Rad neće biti vidljiv na sajtu. Sačuvane izmene ostaju u nacrtu.' : 'Rad neće biti vidljiv na sajtu.',
+          [{ text: 'Otkaži', style: 'cancel' }, { text: 'Potvrdi', onPress: () => mutation.mutate({ artwork, status }) }],
+        ),
       })),
       { text: 'Otkaži', style: 'cancel' },
     ])

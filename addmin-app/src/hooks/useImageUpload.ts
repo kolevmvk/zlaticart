@@ -30,3 +30,25 @@ export function saveErrorMessage(error: unknown, { creating }: { creating: boole
   }
   return error instanceof AdminApiError ? error.message : 'Čuvanje trenutno ne radi. Pokušajte ponovo.'
 }
+
+/** Objava nije uspela; `saved` znači da su izmene pre toga sačuvane u nacrt. */
+export class PublishError extends Error {
+  constructor(public readonly original: unknown, public readonly saved: boolean) {
+    super('publish failed')
+  }
+}
+
+export function publishErrorMessage(error: PublishError) {
+  const prefix = error.saved ? 'Izmene su sačuvane u nacrtu, ali rad nije objavljen. ' : ''
+  const original = error.original
+  if (isUnknownOutcome(original)) {
+    return `${prefix}${(original as AdminApiError).message} Nije potvrđeno da je rad objavljen — proverite listu radova ili pokušajte ponovo.`
+  }
+  if (original instanceof AdminApiError && original.status === 400) {
+    return `${prefix}Za objavu su potrebni naziv, fotografija i opis fotografije.`
+  }
+  if (original instanceof AdminApiError && original.kind === 'unauthorized') {
+    return `${prefix}Sesija je istekla. Posle ponovne prijave pritisnite objavu još jednom.`
+  }
+  return `${prefix}${original instanceof AdminApiError ? original.message : 'Objava trenutno ne radi. Pokušajte ponovo.'}`
+}

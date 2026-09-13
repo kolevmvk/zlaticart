@@ -18,7 +18,8 @@ export default function DashboardScreen() {
   if (loading) return <Screen scroll><Feedback title="Učitavanje…" tone="loading" /></Screen>
   if (!session) return <Redirect href="/login" />
   const works = query.data ?? []
-  const drafts = works.filter((work) => work.status === 'draft')
+  // Započeto = nikad objavljeno ili ima sačuvane izmene koje još nisu na sajtu.
+  const drafts = works.filter((work) => work.status === 'draft' || work.hasDraft)
   return <Screen scroll>
     <View style={styles.intro}>
       <View style={styles.rule} />

@@ -5,12 +5,13 @@ export function isArtworkStatus(value: unknown): value is ArtworkStatus {
   return typeof value === 'string' && (ARTWORK_STATUSES as readonly string[]).includes(value)
 }
 
+// Forma više ne nosi status: čuvanje uvek ide u nacrt (`drafts.<id>`), a
+// javna vidljivost se menja samo zasebnom akcijom objave ili promene statusa.
 export type ArtworkFormInput = {
   title: string
   year: number | null
   dimensions: string | null
   shortDescription: string | null
-  status: ArtworkStatus
   featured: boolean
   heroCandidate: boolean
   mediumId?: string | null
@@ -60,10 +61,11 @@ export function assertPublishableArtwork(document: Record<string, unknown>) {
 
 // Only known form fields are patched. In particular an alt-only change never
 // replaces the image object, so crop/hotspot and future image fields survive.
+// Nacrt sme biti nepotpun: validacija objave radi se tek pri objavi.
 export function artworkUpdateFields(current: ArtworkDocument, input: ArtworkFormInput) {
   assertArtworkDocument(current)
   const set: Record<string, unknown> = {
-    title: input.title, status: input.status, year: input.year,
+    title: input.title, year: input.year,
     dimensions: input.dimensions, shortDescription: input.shortDescription,
     featured: input.featured, heroCandidate: input.heroCandidate,
   }
@@ -71,23 +73,31 @@ export function artworkUpdateFields(current: ArtworkDocument, input: ArtworkForm
   if (input.mediumId === null) unset.push('medium')
   else if (input.mediumId !== undefined) set.medium = { _type: 'reference', _ref: input.mediumId }
 
-  let image = current.primaryImage
   if (input.primaryImage) {
-    image = {
+    set.primaryImage = {
       _type: 'image', alt: input.primaryImage.alt,
       asset: { _type: 'reference', _ref: input.primaryImage.assetId },
     }
-    set.primaryImage = image
   } else if (input.primaryImageAlt !== undefined) {
-    if (typeof record(record(image).asset)._ref !== 'string') {
+    if (typeof record(record(current.primaryImage).asset)._ref !== 'string') {
       if (input.primaryImageAlt.trim()) {
         throw new ArtworkMutationError('Upload a primary image before changing its alt description.', 400)
       }
     } else {
-      image = { ...record(image), alt: input.primaryImageAlt }
       set['primaryImage.alt'] = input.primaryImageAlt
     }
   }
-  assertPublishableArtwork({ ...current, ...set, primaryImage: image })
   return { set, unset }
+}
+
+/** Primenjuje isti set/unset kao patch, ali na kopiju dokumenta (za novi nacrt). */
+export function applyArtworkFields(current: ArtworkDocument, input: ArtworkFormInput) {
+  const { set, unset } = artworkUpdateFields(current, input)
+  const next: Record<string, unknown> = structuredClone(current)
+  for (const [key, value] of Object.entries(set)) {
+    if (key === 'primaryImage.alt') next.primaryImage = { ...record(next.primaryImage), alt: value }
+    else next[key] = value
+  }
+  for (const key of unset) delete next[key]
+  return next as ArtworkDocument
 }

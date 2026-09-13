@@ -58,6 +58,7 @@ export function ArtworkCard({ artwork, onPress, children }: { artwork: AdminArtw
         <Text style={styles.cardTitle}>{artwork.title || 'Rad bez naslova'}</Text>
         <Text style={styles.caption}>{artwork.year ?? 'Godina nije uneta'}{artwork.featured ? ' · Izdvojeno' : ''}</Text>
         <StatusBadge status={artwork.status} />
+        {artwork.hasDraft ? <Text style={styles.caption}>{artwork.status === 'published' ? 'Ima sačuvane izmene koje još nisu na sajtu' : 'Sačuvan nacrt'}</Text> : null}
       </View>
     </Pressable>
     {children ? <View style={styles.cardActions}>{children}</View> : null}

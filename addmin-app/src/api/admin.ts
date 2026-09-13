@@ -71,7 +71,10 @@ export type AdminArtworkListItem = {
   _id: string
   title: string
   slug: string | null
+  /** Javna vidljivost rada na sajtu. */
   status: ArtworkStatus
+  /** Postoje sačuvane izmene koje još nisu objavljene. */
+  hasDraft: boolean
   year: number | null
   featured: boolean
   thumbnailUrl: string | null
@@ -86,12 +89,13 @@ export async function fetchArtworks(session: AdminSession): Promise<AdminArtwork
   return response.artworks
 }
 
+/** 'published' objavljuje i sačuvani nacrt; 'draft'/'archived' skrivaju rad sa sajta. */
 export async function updateArtworkStatus(
   session: AdminSession,
   id: string,
   status: ArtworkStatus,
 ): Promise<void> {
-  await adminFetch<{ _id: string; status: ArtworkStatus }>(`/api/admin/artworks/${id}/status`, {
+  await adminFetch<{ _id: string; status: ArtworkStatus }>(`/api/admin/artworks/${encodeURIComponent(id)}/status`, {
     method: 'PATCH',
     token: session.token,
     body: JSON.stringify({ status }),
@@ -104,6 +108,10 @@ export type AdminArtworkDetail = AdminArtworkListItem & {
   heroCandidate: boolean
   medium: { _id: string; title: string } | null
   primaryImageAlt: string | null
+  /** Rad ima objavljenu verziju (može biti skrivena ili arhivirana). */
+  hasPublished: boolean
+  /** Revizija verzije koja se uređuje; šalje se pri čuvanju i objavi. */
+  revision: string
 }
 
 export type AdminMediumOption = { _id: string; title: string }
@@ -113,7 +121,6 @@ export type ArtworkFormInput = {
   year: number | null
   dimensions: string | null
   shortDescription: string | null
-  status: ArtworkStatus
   featured: boolean
   heroCandidate: boolean
   mediumId: string | null
@@ -122,7 +129,7 @@ export type ArtworkFormInput = {
 }
 
 export async function fetchArtwork(session: AdminSession, id: string): Promise<AdminArtworkDetail> {
-  const response = await adminFetch<{ artwork: AdminArtworkDetail }>(`/api/admin/artworks/${id}`, {
+  const response = await adminFetch<{ artwork: AdminArtworkDetail }>(`/api/admin/artworks/${encodeURIComponent(id)}`, {
     method: 'GET',
     token: session.token,
   })
@@ -137,7 +144,10 @@ export async function fetchMediums(session: AdminSession): Promise<AdminMediumOp
   return response.mediums
 }
 
+export type ArtworkWriteResult = { _id: string; revision: string; slug: string | null }
+
 /**
+ * Novi rad nastaje kao nacrt i nije na sajtu dok se ne objavi.
  * `clientId` je stabilan za jednu formu. Ako je prvi pokušaj stigao do servera
  * a odgovor se izgubio, ponovni pokušaj dobija `existed: true` umesto duplikata.
  */
@@ -145,8 +155,8 @@ export async function createArtwork(
   session: AdminSession,
   input: ArtworkFormInput,
   clientId: string,
-): Promise<{ _id: string; existed: boolean }> {
-  return adminFetch<{ _id: string; existed: boolean }>('/api/admin/artworks', {
+): Promise<ArtworkWriteResult & { existed: boolean }> {
+  return adminFetch<ArtworkWriteResult & { existed: boolean }>('/api/admin/artworks', {
     method: 'POST',
     token: session.token,
     body: JSON.stringify({ ...input, clientId }),
@@ -162,11 +172,29 @@ export function newClientArtworkId() {
   return `artwork-${suffix}`
 }
 
-export async function updateArtwork(session: AdminSession, id: string, input: ArtworkFormInput): Promise<void> {
-  await adminFetch<{ _id: string }>(`/api/admin/artworks/${id}`, {
+/**
+ * Čuva izmene u nacrt; javna verzija na sajtu se ne menja. `baseRevision` je
+ * revizija koju je forma učitala — ako je rad u međuvremenu izmenjen, server vraća 409.
+ */
+export async function saveArtworkDraft(
+  session: AdminSession,
+  id: string,
+  input: ArtworkFormInput,
+  baseRevision?: string,
+): Promise<ArtworkWriteResult> {
+  return adminFetch<ArtworkWriteResult>(`/api/admin/artworks/${encodeURIComponent(id)}`, {
     method: 'PATCH',
     token: session.token,
-    body: JSON.stringify(input),
+    body: JSON.stringify({ ...input, ...(baseRevision ? { baseRevision } : {}) }),
+  })
+}
+
+/** Objavljuje sačuvani nacrt na sajtu. */
+export async function publishArtwork(session: AdminSession, id: string, revision?: string): Promise<ArtworkWriteResult> {
+  return adminFetch<ArtworkWriteResult>(`/api/admin/artworks/${encodeURIComponent(id)}/publish`, {
+    method: 'POST',
+    token: session.token,
+    body: JSON.stringify(revision ? { revision } : {}),
   })
 }
 

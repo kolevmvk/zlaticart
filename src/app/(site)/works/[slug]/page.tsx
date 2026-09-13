@@ -7,7 +7,7 @@ import Navigation from '@/components/nav/Navigation'
 import SiteFooter from '@/components/nav/SiteFooter'
 import ArtworkDetailView from '@/components/works/ArtworkDetailView'
 import { getArtworkBySlug, getAllArtworks, getSiteSettings } from '@/lib/content/api'
-import { sanityGetArtworkBySlugFresh } from '@/lib/sanity/queries'
+import { adminGetArtworkPreviewBySlug } from '@/lib/admin-api/artwork-preview'
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -35,9 +35,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ArtworkDetailPage({ params }: Props) {
   const { slug } = await params
   const draft = await draftMode()
-  // Faza 4 (addmin-app Pregled pre objave): u pregledu se preskace Next-ov
-  // static/CDN kes i ide se direktno na Sanity (useCdn:false), bez filtera
-  // objave — vidi zlaticart/addmin-app/docs/04-ARCHITECTURE.md. Sam draft mode
+  // Pregled pre objave (addmin-app): u pregledu se preskace Next-ov static/CDN
+  // kes i cita se nacrt (`drafts.<id>`) preko serverskog admin klijenta — vidi
+  // zlaticart/addmin-app/docs/04-ARCHITECTURE.md. Sam draft mode
   // nije dovoljan: nacrt se otkriva samo uz preview cookie za OVAJ rad i
   // aktivnu admin sesiju. cookies() se čita tek u draft modu, da stranica
   // ostane statička za posetioce.
@@ -46,7 +46,7 @@ export default async function ArtworkDetailPage({ params }: Props) {
     slug,
   )
   const [artwork, allArtworks, settings] = await Promise.all([
-    previewing ? sanityGetArtworkBySlugFresh(slug) : getArtworkBySlug(slug),
+    previewing ? adminGetArtworkPreviewBySlug(slug) : getArtworkBySlug(slug),
     getAllArtworks(),
     getSiteSettings(),
   ])

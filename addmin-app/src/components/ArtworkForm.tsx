@@ -2,7 +2,7 @@ import * as ImagePicker from 'expo-image-picker'
 import { useState } from 'react'
 import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import type { AdminMediumOption, ArtworkStatus } from '@/api/admin'
+import type { AdminMediumOption } from '@/api/admin'
 import { ImagePreparationError, prepareUploadImage } from '@/api/image'
 import { Button, Feedback, Field } from '@/components/ui'
 import { colors } from '@/theme/colors'
@@ -14,22 +14,28 @@ export type ArtworkFormValues = {
   mediumId: string | null; featured: boolean; heroCandidate: boolean
 }
 export type PendingImage = { localUri: string | null; remoteUrl: string | null; alt: string }
+/** 'draft' čuva nacrt (sajt se ne menja), 'published' čuva pa objavljuje. */
+export type SubmitAction = 'draft' | 'published'
 type Props = {
   values: ArtworkFormValues; onChange: (values: ArtworkFormValues) => void
   image: PendingImage; onImageChange: (image: PendingImage) => void
   mediums: AdminMediumOption[]; mediumsLoading: boolean; mediumsError?: boolean; onRetryMediums?: () => void
   submitting: boolean; submitLabel: { draft: string; publish: string }
-  onSubmit: (status: ArtworkStatus) => void
+  onSubmit: (action: SubmitAction) => void
+  /** Čuva nacrt ako ima izmena, pa otvara pregled na sajtu. */
+  onPreview: () => void; previewing: boolean
+  /** Gde je rad: na sajtu, u nacrtu, sa neobjavljenim izmenama. */
+  notice?: { title: string; message?: string }
 }
 
 export function ArtworkForm({ values, onChange, image, onImageChange, mediums, mediumsLoading,
-  mediumsError, onRetryMediums, submitting, submitLabel, onSubmit }: Props) {
+  mediumsError, onRetryMediums, submitting, submitLabel, onSubmit, onPreview, previewing, notice }: Props) {
   const insets = useSafeAreaInsets()
   const [pickerError, setPickerError] = useState<string | null>(null)
   const [picking, setPicking] = useState(false)
   const [details, setDetails] = useState(false)
   const [imageFailed, setImageFailed] = useState(false)
-  const busy = submitting || picking
+  const busy = submitting || picking || previewing
   const hasImage = Boolean(image.localUri || image.remoteUrl)
   const canDraft = Boolean(values.title.trim()) && (!image.localUri || Boolean(image.alt.trim()))
   const canPublish = canDraft && hasImage && Boolean(image.alt.trim())
@@ -70,6 +76,7 @@ export function ArtworkForm({ values, onChange, image, onImageChange, mediums, m
         <Text style={styles.heading}>Priča jednog rada</Text>
         <Text style={styles.body}>Dodajte naziv i fotografiju. Ostale podatke možete dopuniti kasnije.</Text>
       </View>
+      {notice ? <Feedback title={notice.title} message={notice.message} /> : null}
       <Field label="Naziv rada" testID="artwork-title" value={values.title} onChangeText={v => set('title', v)} placeholder="Unesite naziv" editable={!busy} returnKeyType="next" />
       <View style={styles.section}>
         <Text style={styles.label}>Fotografija</Text>
@@ -108,8 +115,9 @@ export function ArtworkForm({ values, onChange, image, onImageChange, mediums, m
         <View style={styles.switchRow}><Text style={[styles.body, styles.flex]}>Kandidat za naslovni rad</Text><Switch accessibilityLabel="Kandidat za naslovni rad" disabled={busy} value={values.heroCandidate} onValueChange={v => set('heroCandidate', v)} trackColor={{ false: colors.canvasDeep, true: colors.ink }} /></View>
       </View> : null}
       <View style={styles.actions}>
-        <Text style={styles.caption}>{canPublish ? 'Rad je spreman za čuvanje ili objavu.' : 'Nacrt zahteva naziv. Za objavu dodajte fotografiju i njen opis.'}</Text>
+        <Text style={styles.caption}>{canPublish ? 'Nacrt se čuva bez promene sajta. Pregled prikazuje nacrt, a sajt se menja tek objavom.' : 'Nacrt zahteva naziv. Za objavu dodajte fotografiju i njen opis.'}</Text>
         <Button label={submitLabel.draft} testID="artwork-save-draft" variant="secondary" disabled={!canDraft || busy} onPress={() => onSubmit('draft')} />
+        <Button label={previewing ? 'Otvaranje pregleda…' : 'Pregledaj na sajtu'} testID="artwork-preview" variant="secondary" disabled={!canDraft || busy} loading={previewing} onPress={onPreview} />
         <Button label={submitting ? 'Čuvanje…' : submitLabel.publish} testID="artwork-publish" disabled={!canPublish || busy} loading={submitting} onPress={() => onSubmit('published')} />
       </View>
     </ScrollView>

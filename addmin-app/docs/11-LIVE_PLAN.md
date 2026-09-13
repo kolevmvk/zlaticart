@@ -27,7 +27,7 @@ Ovo je operativna mapa prihvaćenog plana. Raniji ID-jevi ostaju za praćenje po
 | P0 / koordinator | U TOKU | Zajednički početak i pravila | Proveri stanje, učitaj skillove, utvrdi uređaje, dodeli fajlove | Jedinstven plan, baza 56390cb, dostupni test uslovi; postojeće nekomitovane izmene se čuvaju |
 | P1 / UI | U TOKU | Dosledan sistem dizajna (UI1) | Tokeni → zajedničke kontrole → referentni prikaz | Android mali ekran/veći tekst/kontrast; proizvod: komponente i snimci |
 | P2 / API + koordinator | U TOKU | Tačno čuvanje Radova (R1–R3) | Alt-only → null/omitted semantika → publish validacija → integracija | Testovi mutacija i ponovno učitavanje; proizvod: API i mobilni ugovor |
-| P3 / API + UI | TODO | Nacrti bez promene javne verzije (N1–N3) | Sanity draft → sačuvaj pre pregleda → objavi | Novi/postojeći rad, bez duplikata; proizvod: ceo preview/publish tok |
+| P3 / API + UI | U TOKU | Nacrti bez promene javne verzije (N1–N3) | Sanity draft → sačuvaj pre pregleda → objavi | Novi/postojeći rad, bez duplikata; proizvod: ceo preview/publish tok. Kod i izolovani testovi gotovi 2026-09-13; čeka deploy, proveru na stvarnom dataset-u i Android |
 | P4 / UI + koordinator | U TOKU | Početna, lista i forma (UI2/R4/R5) | Dizajn → named status actions → dirty guard → API integracija | Tastatura, Back, prazno/greška/uspeh; proizvod: referentni ekrani |
 | P5 / API + UI | U TOKU | Sesije i mrežna pouzdanost (A1–A5) | Lockout/opoziv → istek → timeout/retry → upload | Neuspešni tokovi bez tihog gubitka/duplikata; proizvod: robusna aplikacija. Kod i izolovani testovi gotovi 2026-09-13; čeka primenu migracije, produkcione tajne i Android proveru |
 | P6 / QA + koordinator | TODO | Android isporuka A (D1–D5) | Produkcioni API → potpis → APK → instalacija/nadogradnja | Fizički telefon bez Metro, Wi-Fi i mobilni internet; proizvod: APK Radovi i uputstvo |
@@ -65,9 +65,9 @@ Prihvatanje: sva ponuđena polja se pravilno čuvaju; nepotpun rad ne može da s
 
 | ID | Status | Zadatak | Kriterijum / dokaz |
 |---|---|---|---|
-| N1 | TODO | Zaseban nacrt izmene objavljenog rada, usklađen sa Sanity Studio tokom | Javna verzija ostaje dostupna i nepromenjena |
-| N2 | TODO | Pregled prvo čuva nacrt pa otvara njegov prikaz | Sve izmene iz forme vidljive u pregledu |
-| N3 | TODO | Objava nacrta i usklađivanje mobilnog i web admina | Javna verzija se menja tek nakon objave; nema duplih stavki |
+| N1 | U TOKU | Zaseban nacrt izmene objavljenog rada, usklađen sa Sanity Studio tokom | Javna verzija ostaje dostupna i nepromenjena. Implementirano: čuvanje u `drafts.<id>`, javni klijent `perspective: published`; izolovani testovi |
+| N2 | U TOKU | Pregled prvo čuva nacrt pa otvara njegov prikaz | Sve izmene iz forme vidljive u pregledu. Implementirano: dugme Pregledaj čuva nesačuvane izmene, pregled čita `previewDrafts` preko serverskog klijenta; nije provereno na stvarnom dataset-u |
+| N3 | U TOKU | Objava nacrta i usklađivanje mobilnog i web admina | Javna verzija se menja tek nakon objave; nema duplih stavki. Implementirano: atomska transakcija sa revizijama, spajanje verzija u listi; nije provereno na stvarnom dataset-u |
 
 Prihvatanje: proveriti novi rad i izmenu već objavljenog rada kroz nacrt → pregled → objava.
 
@@ -134,6 +134,8 @@ UI1 može napredovati nezavisno od serverskih ispravki. UI2 i R1/R2/R4 dele ekra
 
 ## Tačan sledeći korak
 
+**Presek 2026-09-13 (P3):** Kod nacrta završen i izolovano testiran (30/30 serverskih testova, root typecheck/lint/build, mobile typecheck/lint, fixture smoke). Sledeće: (1) odobrenje vlasnika za produkcioni deploy grane (admin tajne su već na Vercel Production, migracija primenjena); (2) na produkciji jedan probni rad kroz novi → nacrt → pregled → objava → izmena objavljenog (javna verzija nepromenjena do objave) → brisanje probnog rada; (3) novi APK sa `https://www.zlaticart.com` i test na povezanom Xiaomi telefonu (P6). Otvoreno: odbacivanje nacrta nije implementirano (samo u Studio-u).
+
 **Presek 2026-09-13:** P5 kod završen (preview token, istek sesije, mreža, upload) sa izolovanim testovima; P5 ostaje U TOKU do primene migracije `admin_auth_store`, postavljanja produkcionih tajni i Android provere. Sledeće: P3 (odvojeni Sanity nacrti), zatim P6. Novi native modul `expo-image-manipulator` zahteva novi APK build.
 
 **Presek 2026-09-11:** UI komponente integrisane u dashboard, listu, login i formu. Napravljen samostalan internalTest APK; Android 35 fixture testovi login/Back/save/restart prolaze. Detalji i ograničenja u `12-ANDROID_TEST.md`. P1/P4 ostaju U TOKU zbog preostalog QA, P2 nije potvrđen na stvarnom CMS-u. Vlasnik je odobrio nastavak ka stvarnim podacima na produkcionom serveru. Sledeće: P3 (odvojeni Sanity nacrti) i P5 (zaštita prijave i opoziv sesije), zatim serverska konfiguracija i novi APK sa HTTPS API adresom. Test APK sada koristi loopback API preko adb reverse, ne javnu produkciju.
@@ -162,3 +164,6 @@ REALIZOVANO (baza): vlasnik je ispravljenu migraciju pokrenuo u SQL Editoru prod
 
 ### 2026-09-13 — Odluke vlasnika za P6 (vlasnik + Claude)
 IZMENJENO (D1/D2 preduslovi rešeni): API domen potvrđen — `EXPO_PUBLIC_ADMIN_API_URL=https://www.zlaticart.com`. Release ključ se čuva na Linux mašini i na Mac mini-ju (van repozitorijuma; lozinka van repoa i sesije). Fizički Android povezan: Xiaomi M2007J3SG, Android 12, instaliran `com.zlaticart.admin` 0.1.0 (versionCode 1) sa ranijim debug potpisom — release APK sa novim potpisom neće moći da ga nadogradi, potrebna je deinstalacija (gubi se samo lokalna sesija). Redosled ostaje: P3 pre deploy-a i P6.
+
+### 2026-09-13 — P3, Sanity nacrti (Claude)
+U TOKU (kod gotov): Model: objavljen `<id>` + opcioni `drafts.<id>`, isto kao Sanity Studio. `status` je javna vidljivost objavljene verzije; rad bez objavljene verzije je uvek `draft` (ili `archived`). API: PATCH `/api/admin/artworks/[id]` čuva nacrt (kopija objavljenog dokumenta sa svim nepoznatim poljima, crop/hotspot i referencama + polja forme), opcioni `baseRevision` → 409 na zastarelu formu; POST `/api/admin/artworks` pravi samo `drafts.<clientId>` i ne duplira pri ponovnom pokušaju ni posle objave; nova ruta POST `/api/admin/artworks/[id]/publish` validira dokument koji postaje javan i u jednoj transakciji patch(ifRevisionID) nacrta i objavljene verzije → createOrReplace/create → delete samo tog nacrta; PATCH status: `published` = objava, `archived`/`draft` skrivaju objavljenu verziju i ne diraju nacrt. ID u ruti ne sme sadržati tačku (nema direktnog `drafts.*`). Forma više ne šalje status. Lista/detalj spajaju verzije (sadržaj iz nacrta, `hasDraft`, `hasPublished`, `revision`). Pregled čita `previewDrafts` preko serverskog admin klijenta (nacrti nisu javni); javni klijent ima `perspective: 'published'` da read token nikad ne otkrije nacrte. Mobilno: Sačuvaj nacrt / Pregledaj na sajtu (čuva pa otvara) / Objavi (izmene), obaveštenje o stanju verzije, poruke kad je čuvanje uspelo a objava nije, oznaka neobjavljenih izmena u listi i na početnoj. QA fixture prati novi ugovor. Pronađeno testom i ispravljeno: ponovljen create posle objave pravio bi nov nacrt preko objavljenog rada. Provere: 30/30 serverskih testova (13 za nacrte sa lažnim datasetom koji poštuje 409/ifRevisionID/atomske transakcije), root typecheck/lint/build, mobile typecheck/lint, curl smoke fixture-a, Sanity API prihvata `published`/`previewDrafts` na v2024-01-01. Nije provereno: stvaran Sanity mutate/transakcija, pregled nacrta na sajtu, Android UI.
