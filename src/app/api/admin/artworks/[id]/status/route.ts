@@ -2,6 +2,7 @@ import { ArtworkMutationError } from '@/lib/admin-api/artwork-mutation'
 import { AdminAuthError, verifyAdminRequestWithSession } from '@/lib/admin-api/auth'
 import { adminAuthError, adminError, adminOk } from '@/lib/admin-api/responses'
 import { adminSetArtworkStatus, adminWriteConfigured, isArtworkBaseId, isArtworkStatus } from '@/lib/admin-api/sanity'
+import { revalidateSite } from '@/lib/admin-api/site-revalidate'
 
 export const runtime = 'nodejs'
 
@@ -39,6 +40,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   try {
     // Vraća stvarnu javnu vidljivost: rad bez objavljene verzije ostaje 'draft'.
     const result = await adminSetArtworkStatus(id, status)
+    revalidateSite()
     return adminOk({ _id: id, status: result.status })
   } catch (error) {
     if (error instanceof ArtworkMutationError) return adminError(error.message, error.status)

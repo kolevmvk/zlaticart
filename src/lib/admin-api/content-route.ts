@@ -4,6 +4,7 @@ import { adminAuthError, adminError, adminOk } from './responses'
 import { adminWriteConfigured } from './sanity'
 import { ContentError, contentType, contentUsage, createContent, getContent, listContent, publishContent, removeContent, saveContent } from './content'
 import { contentTypes } from './content-types'
+import { revalidateSite } from './site-revalidate'
 
 type Params = { type?: string; id?: string }
 export async function contentRoute(request: Request, params: Params = {}, action?: 'schema' | 'publish' | 'discard') {
@@ -23,10 +24,17 @@ export async function contentRoute(request: Request, params: Params = {}, action
       body = parsed as Record<string, unknown>
     } catch { return adminError('Zahtev nije ispravan.', 400) }
     if (!params.id) return adminOk({ content: await createContent(type, body.clientId, body.fields) }, { status: 201 })
-    if (action === 'publish') return adminOk({ content: await publishContent(type, params.id, body.baseRevision) })
+    if (action === 'publish') {
+      const content = await publishContent(type, params.id, body.baseRevision)
+      revalidateSite()
+      return adminOk({ content })
+    }
     if (action === 'discard' || request.method === 'DELETE') {
       if (body.confirm !== true) return adminError('Potvrdite brisanje ili odbacivanje nacrta.', 400)
-      return adminOk(await removeContent(type, params.id, body.baseRevision, action === 'discard', body.unlinkReferences === true))
+      const result = await removeContent(type, params.id, body.baseRevision, action === 'discard', body.unlinkReferences === true)
+      // Brisanje (i uklonjena povezivanja) menja sajt; odbacivanje nacrta ne dira javnu verziju.
+      if (action !== 'discard') revalidateSite()
+      return adminOk(result)
     }
     return adminOk({ content: await saveContent(type, params.id, body.fields, body.baseRevision) })
   } catch (error) {
