@@ -138,13 +138,15 @@ UI1 može napredovati nezavisno od serverskih ispravki. UI2 i R1/R2/R4 dele ekra
 |---|---|---|
 | Full S1 | REALIZOVANO | Generički API i šema svih osam tipova; 21 test mutacija + 7 ruta/autorizacije + 5 validacije/šema. Sve postojeće test datoteke prolaze (9/9), root typecheck/lint/build exit 0, mobile Node 22 typecheck/lint exit 0. Izolovane provere; produkcioni smoke čeka merge vlasnika. |
 | Full S2 | U TOKU | Mobilni API ugovor, navigacija i polja se implementiraju iz završene S1 šeme; sledeće integracija i Android provere. |
-| Full S3 | TODO | Portable Text editor i pregled dnevnika. |
-| Full S4 | TODO | Kontakt poruke i porudžbine. |
+| Full S3 | U TOKU | Editor, web renderer i pregled dnevnika implementirani; test APK build prošao, završne provere ostaju. Vidi poslednju predaju u STATUS.md. |
+| Full S4 | U TOKU | Rute i mobilni ekrani napisani, nisu provereni; nedostaje GRANT SELECT migracija za service_role. |
 | Full S5 | TODO | Uvoz postojećeg seed-a, font, release, fizički telefon i sajt. |
 
 Koordinator menja plan/status i API ugovor; nezavisni radnici imaju isključivo vlasništvo nad `content-types.ts`/testom šema i `content.test.cjs`. Produkcijska objava čeka uvoz seed-a; main menja vlasnik merge-om PR-a.
 
 ## Tačan sledeći korak
+
+**Presek 2026-09-13 (Atelje):** S1 u main (PR #3). S2–S5 priprema + Atelje redizajn + brisanje sa uklanjanjem povezivanja na grani `feat/admin-full-studio-s2`, provereno na Xiaomiju sa izolovanim serverom. Redosled do produkcije: (1) PR u main → merge vlasnik; (2) vlasnik primenjuje `supabase/migrations/20260913190000_admin_messages_read.sql`; (3) smoke produkcije; (4) uvoz seed-a `addmin-app/scripts/import-seed.sh` (PIN vlasnik) PRE prve prave objave; (5) release 0.3.0 instalacija preko 0.2.0 (isti ključ — provera nadogradnje) i test na telefonu sa pravim podacima.
 
 **Presek 2026-09-13 (odluka vlasnika):** Aplikacija mora da ima SVE opcije Sanity Studio admin panela, ne samo Radove. Otkriveno i na produkciji: Sanity dataset je potpuno prazan (0 radova, tehnika, dnevnika, izložbi, profila); javni sajt prikazuje seed iz koda, a `getAllArtworks` prelazi na Sanity čim postoji i jedan objavljen rad — objava iz aplikacije bi sakrila svih 8 seed radova. Redosled: (S1) generički serverski content API za svih 8 tipova sa nacrtima/objavom/brisanjem i opisom polja; (S2) mobilna lista + forma iz opisa polja (tekst, broj, prekidač, izbor, datum, link, slika, galerija, reference) i početni ekran sa svim sekcijama; (S3) editor bogatog teksta (biografija, priča o radu, Dnevnik); (S4) Poruke (kontakt/porudžbine); (S5) uvoz seed sadržaja u Sanity, font dijakritika, novi APK, test na telefonu. Do S5 ne objavljivati radove iz aplikacije.
 
@@ -198,3 +200,6 @@ U TOKU: nova grana od osveženog origin/main; čisto radno stablo sačuvano. API
 
 ### 2026-09-13 — Full S1 provereno (Codex)
 REALIZOVANO (S1 kod): svih osam tipova i sva polja opisano po Studio šemama, generički CRUD sa nacrtima, obaveznom revizijom, atomskom objavom, referencama i zaštitom postojećih podataka. 33 nova testa (21 mutacija, 7 ruta, 5 šema/validacija) i postojeći testovi prolaze. Root typecheck/lint i build (34 stranice, prirodni exit 0), mobile Node 22 typecheck/lint prolaze. Prvi sandbox build pao na mrežnom čitanju dnevnika; isti build sa mrežnim pristupom prošao. Xiaomi `d6d69a7b` dostupan preko adb. Sledeće: S1 PR, S2 implementacija; produkcioni sadržaj ostaje netaknut do S5 uvoza.
+
+### 2026-09-13 — Predaja Claude-u po zahtevu korisnika
+U TOKU: S2–S4 kod sačuvan na `feat/admin-full-studio-s2`; detaljan tehnički presek je poslednji zapis u STATUS.md. S2 cache ispravka i S3 editor su u novom uspešno izgrađenom test APK-u, još nisu provereni na telefonu. S4 poslednje izmene nisu proverene, S5 nije implementiran. Tačan sledeći korak: završiti postojeće izmene i provere, bez nove analize; zatim seed/font/release. S1 PR #3 otvoren, main i produkcioni podaci netaknuti.
