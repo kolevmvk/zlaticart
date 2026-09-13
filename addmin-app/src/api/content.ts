@@ -42,3 +42,7 @@ export function contentImageUrl(value: unknown): string | null {
   const match = asset?.match(/^image-([a-zA-Z0-9]+)-(\d+x\d+)-(jpg|jpeg|png|webp|gif|avif)$/)
   return match ? `https://cdn.sanity.io/images/qm16j7ru/production/${match[1]}-${match[2]}.${match[3]}?w=800&fit=max&auto=format` : null
 }
+
+export async function getContentPreviewUrl(session: AdminSession, type: 'artwork' | 'journalPost', slug: string) {
+  return (await adminFetch<{url:string}>('/api/admin/preview-link', {method:'POST',token:session.token,body:JSON.stringify({type,slug})})).url
+}

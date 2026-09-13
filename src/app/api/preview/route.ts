@@ -39,7 +39,7 @@ export async function GET(request: Request) {
   draft.enable()
 
   const response = NextResponse.redirect(
-    new URL(`/works/${encodeURIComponent(claims.slug)}`, request.url),
+    new URL(`/${claims.type === 'journalPost' ? 'journal' : 'works'}/${encodeURIComponent(claims.slug)}`, request.url),
     { headers: NO_STORE },
   )
   response.cookies.set(PREVIEW_COOKIE, viewToken, previewCookieOptions)

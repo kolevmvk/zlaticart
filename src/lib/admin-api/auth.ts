@@ -114,7 +114,7 @@ export const PREVIEW_VIEW_TTL_SECONDS = 30 * 60
 const PREVIEW_MAX_TTL_SECONDS = PREVIEW_VIEW_TTL_SECONDS
 
 export type PreviewScope = {
-  type: 'artwork'
+  type: 'artwork' | 'journalPost'
   slug: string
   /** jti sesije koja je izdala pregled. */
   sid: string
@@ -126,13 +126,17 @@ type PreviewClaims = PreviewScope & {
   exp: number
 }
 
+export function isPreviewType(value: unknown): value is PreviewScope['type'] {
+  return value === 'artwork' || value === 'journalPost'
+}
+
 export function isPreviewSlug(value: unknown): value is string {
   // Slug iz Studija nije uvek ASCII; dovoljno je da je jedan segment putanje.
   return typeof value === 'string' && /^[^\s/\\?#%]{1,200}$/u.test(value)
 }
 
 export function createPreviewToken(scope: PreviewScope, ttlSeconds: number, now = currentUnixSeconds()) {
-  if (scope.type !== 'artwork' || !isPreviewSlug(scope.slug) || !isJti(scope.sid)) {
+  if (!isPreviewType(scope.type) || !isPreviewSlug(scope.slug) || !isJti(scope.sid)) {
     throw new AdminAuthError('invalid_token')
   }
   if (!Number.isSafeInteger(ttlSeconds) || ttlSeconds <= 0 || ttlSeconds > PREVIEW_MAX_TTL_SECONDS) {
@@ -168,7 +172,7 @@ export function verifyPreviewToken(token: string, now = currentUnixSeconds()): P
   const claims = parseJsonPart<PreviewClaims>(payload)
   if (
     !tokenHeader || tokenHeader.alg !== 'HS256' || tokenHeader.typ !== 'JWT' ||
-    !claims || claims.sub !== PREVIEW_SUBJECT || claims.type !== 'artwork' ||
+    !claims || claims.sub !== PREVIEW_SUBJECT || !isPreviewType(claims.type) ||
     !isPreviewSlug(claims.slug) || !isJti(claims.sid) ||
     !Number.isSafeInteger(claims.iat) || !Number.isSafeInteger(claims.exp) ||
     claims.iat > now || claims.exp <= now || claims.exp <= claims.iat ||
@@ -204,11 +208,15 @@ export async function verifyPreviewTokenWithSession(token: string, now = current
  * Da li preview token (iz cookie-ja) dozvoljava čitanje nacrta baš ovog rada.
  * Nikad ne baca — svaka greška znači "nema pristupa", pa se prikazuje javna verzija.
  */
-export async function hasArtworkPreviewAccess(token: string | undefined, slug: string) {
+export function hasArtworkPreviewAccess(token: string | undefined, slug: string) {
+  return hasContentPreviewAccess(token, 'artwork', slug)
+}
+
+export async function hasContentPreviewAccess(token: string | undefined, type: PreviewScope['type'], slug: string) {
   if (!token) return false
   try {
     const claims = await verifyPreviewTokenWithSession(token)
-    return claims.slug === slug
+    return claims.type === type && claims.slug === slug
   } catch {
     return false
   }

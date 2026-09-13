@@ -1,3 +1,5 @@
+export type RichText = string | { _type: string; _key?: string; [key: string]: unknown }[]
+
 export type MediumSlug = 'oil' | 'acrylic' | 'watercolor' | 'graphics' | 'mosaic' | 'other'
 
 export interface Medium {
@@ -31,7 +33,7 @@ export interface Artwork {
   }
   detailImages?: Array<{ src: string; alt: string; width: number; height: number }>
   shortDescription?: string
-  story?: string
+  story?: RichText
   featured: boolean
   featuredOrder?: number
   heroCandidate: boolean
@@ -52,7 +54,7 @@ export interface JournalPost {
     width: number
     height: number
   }
-  body: string // placeholder rich text as markdown string until CMS
+  body: RichText
   relatedArtworkSlugs?: string[]
   instagramUrl?: string
 }
@@ -63,7 +65,7 @@ export interface ArtistProfile {
   portrait: { src: string; alt: string; width: number; height: number }
   atelierImages?: Array<{ src: string; alt: string; width: number; height: number }>
   shortBio?: string
-  biography?: string
+  biography?: RichText
   artistStatement?: string
   educationStatement?: string
   location?: string

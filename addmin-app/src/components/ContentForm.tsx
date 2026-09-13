@@ -3,9 +3,10 @@ import { Alert, KeyboardAvoidingView, Platform, StyleSheet, Text, View } from 'r
 import { useRouter } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
 import * as WebBrowser from 'expo-web-browser'
-import { AdminApiError, getArtworkPreviewUrl, updateArtworkStatus } from '@/api/admin'
-import { createContent, fetchContent, newContentId, publishContent, removeContent, saveContent, type ContentItem, type ContentType } from '@/api/content'
+import { AdminApiError, updateArtworkStatus } from '@/api/admin'
+import { createContent, fetchContent, getContentPreviewUrl, newContentId, publishContent, removeContent, saveContent, type ContentItem, type ContentType } from '@/api/content'
 import { useAuth } from '@/auth/AuthProvider'
+import { PortableTextEditor } from '@/components/content/PortableTextEditor'
 import { ContentFields } from '@/components/ContentFields'
 import { Button, Feedback, Screen } from '@/components/ui'
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges'
@@ -99,7 +100,7 @@ export function ContentForm({ type, initial }: { type: ContentType; initial?: Co
       }
       const slug = saved.document.slug as { current?: string } | undefined
       if (!slug?.current) throw new Error('Za pregled unesite adresu (slug) i sačuvajte nacrt.')
-      const url = await getArtworkPreviewUrl(session, slug.current)
+      const url = await getContentPreviewUrl(session, type.name as 'artwork' | 'journalPost', slug.current)
       await WebBrowser.openBrowserAsync(url)
       setNotice('Pregled je otvoren. Nacrt se objavljuje tek dugmetom Objavi.')
     } catch (e) {
@@ -133,11 +134,11 @@ export function ContentForm({ type, initial }: { type: ContentType; initial?: Co
         if (!oldSlug || oldSlug === slugify(previous[name])) next.slug = { _type: 'slug', current: slugify(value) }
       }
       return next
-    }); setNotice(null) }} disabled={busy} onBusyChange={value => { uploadRef.current = value; setUploading(value) }} />
+    }); setNotice(null) }} disabled={busy} onBusyChange={value => { uploadRef.current = value; setUploading(value) }} renderPortableText={(field, value, onChange) => <PortableTextEditor field={field} value={value} onChange={onChange} disabled={busy} onBusyChange={value => { uploadRef.current = value; setUploading(value) }} />} />
     <View style={styles.actions}>
       {uploading ? <Feedback title="Slanje fotografije…" message="Sačekajte da se fotografija pošalje pre čuvanja." tone="loading" /> : null}
       <Button label="Sačuvaj nacrt" testID="content-save-draft" variant="secondary" disabled={busy} loading={working} onPress={() => void run('draft')} />
-      {type.name === 'artwork' ? <Button label="Pregledaj na sajtu" testID="content-preview" variant="secondary" disabled={busy} onPress={() => void run('preview')} /> : null}
+      {type.name === 'artwork' || type.name === 'journalPost' ? <Button label="Pregledaj na sajtu" testID="content-preview" variant="secondary" disabled={busy} onPress={() => void run('preview')} /> : null}
       <Button label={version?.hasPublished ? 'Objavi izmene' : 'Objavi'} testID="content-publish" disabled={busy} onPress={() => confirm('publish')} />
       {type.name === 'artwork' ? <Text style={styles.body}>Objava postavlja vidljivost rada na „Objavljeno“. Arhiviranje i skrivanje menjaju javnu vidljivost zasebno.</Text> : null}
       {type.name === 'artwork' && version?.hasPublished ? <>

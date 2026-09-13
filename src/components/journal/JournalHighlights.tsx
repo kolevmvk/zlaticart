@@ -121,14 +121,14 @@ export default function JournalHighlights({ posts }: JournalHighlightsProps) {
                   className="absolute inset-0"
                   style={{ top: '-10%', bottom: '-10%' }}
                 >
-                  <Image
+                  {lead.coverImage?.src ? <Image
                     src={lead.coverImage.src}
                     alt={lead.coverImage.alt}
                     fill
                     quality={80}
                     sizes="(max-width: 768px) 100vw, 58vw"
                     className="object-cover transition-transform duration-700 group-hover:scale-[1.02]"
-                  />
+                  /> : null}
                 </div>
               </div>
 
@@ -159,14 +159,14 @@ export default function JournalHighlights({ posts }: JournalHighlightsProps) {
                 data-secondary
               >
                 <div className="relative flex-shrink-0 overflow-hidden bg-canvas w-24 h-28 md:w-28 md:h-32">
-                  <Image
+                  {post.coverImage?.src ? <Image
                     src={post.coverImage.src}
                     alt={post.coverImage.alt}
                     fill
                     quality={75}
                     sizes="120px"
                     className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
-                  />
+                  /> : null}
                 </div>
                 <div className="flex flex-col justify-center">
                   <p className="text-label text-ink/40 mb-2">{post.category} · {formatDate(post.publishedAt)}</p>

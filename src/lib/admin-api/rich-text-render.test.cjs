@@ -1,0 +1,10 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- Render the actual shared TSX component with isolated image output. */
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),ts=require('typescript'),React=require('react'),{renderToStaticMarkup}=require('react-dom/server')
+const loaded={exports:{}}
+const source=ts.transpileModule(fs.readFileSync(path.resolve(__dirname,'../../components/ui/ContentRichText.tsx'),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText
+new Function('require','exports',source)(name=>name==='next/image'?({src,alt})=>React.createElement('img',{src,alt}):require(name),loaded.exports)
+const render=value=>renderToStaticMarkup(React.createElement(loaded.exports.default,{value}))
+const paragraph=(text,extra={})=>({_type:'block',_key:'b',style:'normal',markDefs:[],children:[{_type:'span',_key:'s',text,marks:[]}],...extra})
+test('published portable text renders headings, marks and proper lists instead of object children',()=>{const html=render([paragraph('Naslov',{_key:'h',style:'h2'}),paragraph('Važno',{_key:'p',children:[{_type:'span',_key:'s',text:'Važno',marks:['strong','em']}]}),paragraph('Stavka',{_key:'l',listItem:'number',level:1})]);assert.match(html,/<h2[^>]*>Naslov<\/h2>/);assert.match(html,/<strong>/);assert.match(html,/<em>/);assert.match(html,/<ol/);assert.match(html,/<li>Stavka<\/li>/)})
+test('inline journal images render with alt text and links reject executable protocols',()=>{const html=render([{_type:'image',_key:'i',asset:{_type:'reference',_ref:'image-abc123-800x600-jpg'},alt:'Slika'},paragraph('Link',{markDefs:[{_key:'link',_type:'link',href:'javascript:alert(1)'}],children:[{_type:'span',_key:'s',text:'Link',marks:['link']}]})]);assert.match(html,/alt="Slika"/);assert.match(html,/cdn.sanity.io/);assert.doesNotMatch(html,/javascript:/)})
+test('existing seed strings and empty rich text remain renderable',()=>{assert.match(render('Stari tekst\nNovi red'),/Stari tekst/);assert.equal(render([]),'');assert.equal(render(null),'')})

@@ -1,3 +1,7 @@
+import { cookies, draftMode } from 'next/headers'
+import { hasContentPreviewAccess } from '@/lib/admin-api/auth'
+import { PREVIEW_COOKIE } from '@/lib/admin-api/preview-cookie'
+import { adminGetJournalPreviewBySlug } from '@/lib/admin-api/journal-preview'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Navigation from '@/components/nav/Navigation'
@@ -25,15 +29,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       type: 'article',
       publishedTime: post.publishedAt,
-      images: [{ url: post.coverImage.src }],
+      images: post.coverImage?.src ? [{ url: post.coverImage.src }] : [],
     },
   }
 }
 
 export default async function JournalArticlePage({ params }: Props) {
   const { slug } = await params
+  const draft = await draftMode()
+  const previewing = draft.isEnabled && await hasContentPreviewAccess((await cookies()).get(PREVIEW_COOKIE)?.value, 'journalPost', slug)
   const [post, settings] = await Promise.all([
-    getJournalPostBySlug(slug),
+    previewing ? adminGetJournalPreviewBySlug(slug) : getJournalPostBySlug(slug),
     getSiteSettings(),
   ])
 
@@ -47,6 +53,7 @@ export default async function JournalArticlePage({ params }: Props) {
     <>
       <Navigation theme="light" />
       <main className="min-h-svh bg-canvas">
+        {previewing ? <div className="sticky top-0 z-50 bg-ink text-canvas px-4 py-2 text-center">PREGLED — nije još objavljeno <a href="/api/preview/disable" className="underline">Izađi iz pregleda</a></div> : null}
         <JournalArticleContent post={post} relatedArtworks={relatedArtworks} />
         <SiteFooter
           instagramUrl={settings.instagramProfileUrl ?? null}

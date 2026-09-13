@@ -2,6 +2,7 @@ import {
   AdminAuthError,
   createPreviewToken,
   isPreviewSlug,
+  isPreviewType,
   PREVIEW_LINK_TTL_SECONDS,
   verifyAdminRequestWithSession,
 } from '@/lib/admin-api/auth'
@@ -33,8 +34,8 @@ export async function POST(request: Request) {
   }
 
   const { type, slug } = (body ?? {}) as Record<string, unknown>
-  if (type !== 'artwork' || !isPreviewSlug(slug)) {
-    return adminError('Expected { type: "artwork", slug: string }.', 400)
+  if (!isPreviewType(type) || !isPreviewSlug(slug)) {
+    return adminError('Izaberite rad ili dnevnik i ispravnu adresu.', 400)
   }
 
   const now = Math.floor(Date.now() / 1000)
